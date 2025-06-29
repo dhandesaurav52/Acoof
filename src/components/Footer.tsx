@@ -7,7 +7,7 @@ export function Footer() {
     <footer className="border-t bg-secondary/50">
       <div className="container flex flex-col items-center justify-between gap-6 py-8 md:flex-row">
         <div className="flex flex-col items-center md:items-start gap-4">
-          <Logo className="h-8 w-auto" />
+          <Logo className="h-10 w-auto" />
           <p className="text-center text-sm text-muted-foreground md:text-left">
             Style Redefined.
           </p>

@@ -75,7 +75,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center">
-          <Logo className="h-8 w-auto text-primary" />
+          <Logo className="h-10 w-auto text-primary" />
         </Link>
 
         <div className="hidden md:flex flex-1 items-center justify-start">
@@ -113,7 +113,7 @@ export function Header() {
               <SheetContent side="right">
                 <div className="p-6">
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
-                    <Logo className="h-8 w-auto" />
+                    <Logo className="h-10 w-auto" />
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                   <div className="flex flex-col gap-4 mt-8 pt-4 border-t">
