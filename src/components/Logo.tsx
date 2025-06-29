@@ -40,8 +40,8 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       
       {/* Bag shape behind the OOs */}
       <path d="M435 77h260l-25 180H460z" fill="black"/>
-      <path d="M515 82a55 55 0 0 1 100 0" stroke="black" stroke-width="25" fill="none" transform="translate(0, -10)"/>
-      <path d="M515 220a80 80 0 0 0 100 0" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M515 82a55 55 0 0 1 100 0" stroke="black" strokeWidth="25" fill="none" transform="translate(0, -10)"/>
+      <path d="M515 220a80 80 0 0 0 100 0" stroke="white" strokeWidth="10" fill="none" strokeLinecap="round"/>
 
       {/* Main Text */}
       <text x="40" y="270" className="logo-text">
