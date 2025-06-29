@@ -3,9 +3,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, ShoppingCart, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
@@ -19,6 +27,8 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // This is a mock state. Replace with your actual auth state.
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
   const NavLinks = ({ className }: { className?: string }) => (
     <nav className={cn("flex items-center gap-6 text-sm font-medium", className)}>
@@ -28,7 +38,7 @@ export function Header() {
           href={link.href}
           className={cn(
             "transition-colors hover:text-primary",
-            pathname === link.href ? "text-primary" : "text-foreground/60",
+            pathname === link.href ? "text-primary font-semibold" : "text-foreground/80",
           )}
           onClick={() => setIsMenuOpen(false)}
         >
@@ -36,6 +46,29 @@ export function Header() {
         </Link>
       ))}
     </nav>
+  );
+
+  const UserMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="rounded-full">
+          <User className="h-5 w-5" />
+          <span className="sr-only">My Account</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user">User Dashboard</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/admin">Admin Dashboard</Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>Logout</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
   return (
@@ -51,12 +84,22 @@ export function Header() {
 
         <div className="flex flex-1 items-center justify-end gap-2">
            <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild>
-                <Link href="/signup">Sign Up</Link>
-            </Button>
+             <Button variant="ghost" size="icon">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="sr-only">Shopping Cart</span>
+             </Button>
+             {isLoggedIn ? (
+                <UserMenu />
+             ) : (
+                <>
+                    <Button variant="ghost" asChild>
+                        <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild>
+                        <Link href="/signup">Sign Up</Link>
+                    </Button>
+                </>
+             )}
           </div>
 
           <div className="md:hidden">
@@ -74,12 +117,21 @@ export function Header() {
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                   <div className="flex flex-col gap-4 mt-8 pt-4 border-t">
-                     <Button variant="ghost" asChild className="w-full justify-start text-lg">
-                        <Link href="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
-                    </Button>
-                    <Button asChild className="w-full justify-start text-lg">
-                        <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
-                    </Button>
+                     {isLoggedIn ? (
+                       <>
+                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>My Account</Link>
+                        <button onClick={() => {setIsLoggedIn(false); setIsMenuOpen(false);}} className="text-lg text-left">Logout</button>
+                       </>
+                     ) : (
+                       <>
+                        <Button variant="ghost" asChild className="w-full justify-start text-lg">
+                            <Link href="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                        </Button>
+                        <Button asChild className="w-full justify-start text-lg">
+                            <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
+                        </Button>
+                       </>
+                     )}
                   </div>
                 </div>
               </SheetContent>
