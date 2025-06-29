@@ -1,18 +1,62 @@
-export function Logo({ className }: { className?: string }) {
+import * as React from 'react';
+
+export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 50 50"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
+    <svg 
+      viewBox="0 0 968 361" 
       aria-label="Acoof Logo"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      {...props}
     >
-        <path
-            d="M25,2C12.85,2,3,11.85,3,24s9.85,22,22,22s22-9.85,22-22S37.15,2,25,2z M25,41c-9.37,0-17-7.63-17-17S15.63,7,25,7 s17,7.63,17,17S34.37,41,25,41z"
-        />
-        <path
-            d="M26.47,34.4l-3.53-9.9h-5.87l-3.53,9.9h-4.33l9.07-25.6h4.33l9.07,25.6H26.47z M20.53,21.5h4.93L22.9,14.63 C22.9,14.63,20.53,21.5,20.53,21.5z"
-        />
+      <defs>
+        <style>
+          {`
+            .logo-text { 
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-weight: 900; 
+              font-size: 250px;
+              fill: white;
+              letter-spacing: -15px;
+            }
+            .swaz-text {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-weight: 700;
+              font-size: 45px;
+              fill: white;
+            }
+            .domain-text {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-weight: 900;
+              font-size: 120px;
+              fill: black;
+            }
+          `}
+        </style>
+      </defs>
+      
+      {/* Red Background */}
+      <rect width="968" height="361" fill="#D93025"/>
+      
+      {/* Bag shape behind the OOs */}
+      <path d="M435 77h260l-25 180H460z" fill="black"/>
+      <path d="M515 82a55 55 0 0 1 100 0" stroke="black" stroke-width="25" fill="none" transform="translate(0, -10)"/>
+      <path d="M515 220a80 80 0 0 0 100 0" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
+
+      {/* Main Text */}
+      <text x="40" y="270" className="logo-text">
+        <tspan>A</tspan>
+        <tspan dx="5">C</tspan>
+        <tspan dx="10">O</tspan>
+        <tspan>O</tspan>
+        <tspan>F</tspan>
+      </text>
+
+      {/* SWAZ Text inside C */}
+      <text x="275" y="215" className="swaz-text">SWAZ</text>
+      
+      {/* .in Text */}
+      <text x="800" y="270" className="domain-text">.in</text>
     </svg>
   );
 }
