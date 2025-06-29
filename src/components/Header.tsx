@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shirt, ShoppingCart, Menu } from "lucide-react";
+import { ShoppingCart, Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -39,9 +40,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex items-center gap-2">
-          <Shirt className="h-6 w-6 text-primary" />
-          <span className="font-bold">Acoof</span>
+        <Link href="/" className="mr-6 flex items-center">
+          <Logo className="h-8 w-auto text-foreground" />
         </Link>
 
         <div className="hidden md:flex flex-1 items-center justify-start">
@@ -64,9 +64,8 @@ export function Header() {
               </SheetTrigger>
               <SheetContent side="right">
                 <div className="p-6">
-                  <Link href="/" className="mb-8 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                    <Shirt className="h-6 w-6 text-primary" />
-                    <span className="font-bold">Acoof</span>
+                  <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
+                    <Logo className="h-8 w-auto text-foreground" />
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                 </div>
