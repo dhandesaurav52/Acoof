@@ -5,7 +5,7 @@ import { Footer } from '@/components/Footer';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Urban Attire Lookbook',
+  title: 'Acoof Lookbook',
   description: 'Discover the latest trends and get personalized style recommendations.',
 };
 

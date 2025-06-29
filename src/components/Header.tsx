@@ -41,7 +41,7 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center gap-2">
           <Shirt className="h-6 w-6 text-primary" />
-          <span className="font-bold">Urban Attire</span>
+          <span className="font-bold">Acoof</span>
         </Link>
 
         <div className="hidden md:flex flex-1 items-center justify-start">
@@ -66,7 +66,7 @@ export function Header() {
                 <div className="p-6">
                   <Link href="/" className="mb-8 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
                     <Shirt className="h-6 w-6 text-primary" />
-                    <span className="font-bold">Urban Attire</span>
+                    <span className="font-bold">Acoof</span>
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                 </div>

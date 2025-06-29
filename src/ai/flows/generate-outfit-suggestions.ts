@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
   name: 'generateOutfitSuggestionsPrompt',
   input: {schema: GenerateOutfitSuggestionsInputSchema},
   output: {schema: GenerateOutfitSuggestionsOutputSchema},
-  prompt: `You are a personal stylist for Urban Attire, specializing in creating personalized outfit suggestions.
+  prompt: `You are a personal stylist for Acoof, specializing in creating personalized outfit suggestions.
 
 Based on the user's browsing history, generate outfit suggestions that complement their viewed items and align with current fashion trends.
 
