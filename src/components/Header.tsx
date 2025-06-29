@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -48,11 +49,15 @@ export function Header() {
           <NavLinks />
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-4">
-          <Button variant="ghost" size="icon">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="sr-only">Shopping Cart</span>
-          </Button>
+        <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link href="/login">Login</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/signup">Sign Up</Link>
+            </Button>
+          </div>
 
           <div className="md:hidden">
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
@@ -68,6 +73,14 @@ export function Header() {
                     <Logo className="h-8 w-auto text-foreground" />
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
+                  <div className="flex flex-col gap-4 mt-8 pt-4 border-t">
+                    <Button variant="ghost" asChild className="w-full justify-start text-lg">
+                        <Link href="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                    </Button>
+                    <Button asChild className="w-full justify-start text-lg">
+                        <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
+                    </Button>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
