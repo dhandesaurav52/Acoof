@@ -3,12 +3,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -50,13 +59,38 @@ export function Header() {
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-2">
-          <div className="hidden md:flex items-center gap-2">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Sign Up</Link>
-            </Button>
+           <div className="hidden md:flex items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src="https://placehold.co/100x100.png" alt="User avatar" data-ai-hint="woman portrait" />
+                    <AvatarFallback>SD</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Sofia Davis</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      acoof@example.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/user"><User className="mr-2 h-4 w-4" /><span>User Profile</span></Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/admin"><LayoutDashboard className="mr-2 h-4 w-4" /><span>Admin Dashboard</span></Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                 <DropdownMenuItem asChild>
+                  <Link href="/login"><LogOut className="mr-2 h-4 w-4" /><span>Log out</span></Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="md:hidden">
@@ -75,10 +109,13 @@ export function Header() {
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                   <div className="flex flex-col gap-4 mt-8 pt-4 border-t">
                     <Button variant="ghost" asChild className="w-full justify-start text-lg">
-                        <Link href="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                        <Link href="/dashboard/user" onClick={() => setIsMenuOpen(false)}>User Profile</Link>
+                    </Button>
+                    <Button variant="ghost" asChild className="w-full justify-start text-lg">
+                        <Link href="/dashboard/admin" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link>
                     </Button>
                     <Button asChild className="w-full justify-start text-lg">
-                        <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
+                        <Link href="/login" onClick={() => setIsMenuOpen(false)}>Logout</Link>
                     </Button>
                   </div>
                 </div>
