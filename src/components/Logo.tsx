@@ -1,62 +1,53 @@
 import * as React from 'react';
 
 export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
-  const acoofTextStyle: React.CSSProperties = {
+  const logoTextStyle: React.CSSProperties = {
     fontFamily: "'Montserrat', sans-serif",
-    fontWeight: 800,
-    fontSize: '200px',
+    fontWeight: 900,
+    fontSize: '250px',
     fill: 'white',
+    letterSpacing: '-0.05em',
   };
 
   const swazTextStyle: React.CSSProperties = {
     fontFamily: "'Montserrat', sans-serif",
-    fontWeight: 600,
-    fontSize: '50px',
+    fontWeight: 700,
+    fontSize: '60px',
     fill: 'white',
   };
-
+  
   const inTextStyle: React.CSSProperties = {
     fontFamily: "'Montserrat', sans-serif",
-    fontWeight: 800,
-    fontSize: '100px',
+    fontWeight: 900,
+    fontSize: '80px',
     fill: 'black',
   };
 
   return (
     <svg
-      viewBox="0 0 900 350"
+      viewBox="0 0 1000 300"
       className={className}
       {...props}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Red background */}
-      <rect width="900" height="350" fill="hsl(var(--primary))" />
+      <rect width="1000" height="300" fill="hsl(var(--primary))" />
 
-      {/* Text "AC" */}
-      <text x="20" y="250" style={acoofTextStyle}>AC</text>
+      <text x="10" y="240" style={logoTextStyle}>AC</text>
+      <text x="730" y="240" style={logoTextStyle}>F</text>
       
-      {/* Text "SWAZ" inside C */}
-      <text x="215" y="180" style={swazTextStyle}>SWAZ</text>
+      <text x="255" y="165" style={swazTextStyle}>SWAZ</text>
+      
+      <text x="835" y="235" style={inTextStyle}>.in</text>
+      
+      <g transform="translate(420, 30)">
+        <path d="M10,45 h280 l-20,200 H30z" fill="black"/>
+        <path d="M80 50 a 70 70 0 0 1 140 0" stroke="black" strokeWidth="30" fill="none" />
+        
+        <circle cx="100" cy="150" r="45" fill="white" />
+        <circle cx="200" cy="150" r="45" fill="white" />
 
-      {/* Shopping Bag */}
-      <g transform="translate(380, 50)">
-        {/* Bag body */}
-        <path d="M0,20 L240,20 L210,240 L30,240 Z" fill="black" />
-        {/* Bag handle */}
-        <path d="M70,20 C70,-40 170,-40 170,20" stroke="black" strokeWidth="25" fill="none" />
-        {/* Eyes (OO) */}
-        <circle cx="85" cy="120" r="40" fill="white" />
-        <circle cx="155" cy="120" r="40" fill="white" />
-        {/* Smile */}
-        <path d="M80,180 Q120,220 160,180" stroke="white" strokeWidth={12} fill="none" strokeLinecap="round" />
+        <path d="M110 210 a 40 40 0 0 0 80 0" stroke="white" strokeWidth="12" fill="none" strokeLinecap="round"/>
       </g>
-
-      {/* Text "F" */}
-      <text x="610" y="250" style={acoofTextStyle}>F</text>
-      
-      {/* Text ".in" */}
-      <text x="750" y="250" style={inTextStyle}>.in</text>
-
     </svg>
   );
 }
