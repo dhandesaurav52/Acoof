@@ -27,14 +27,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // If auth is not initialized, we stop loading and do nothing.
     if (!auth) {
         setLoading(false);
         return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
@@ -65,8 +68,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await updateProfile(auth.currentUser, {
         displayName: `${firstName} ${lastName}`,
       });
-      // Create a new object to force a state update with the latest user info
-      setUser({ ...auth.currentUser } as User);
+      // This will trigger a state update in listeners
+      setUser(auth.currentUser);
     }
     return userCredential;
   }
@@ -81,8 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const photoURL = await getDownloadURL(fileRef);
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { photoURL });
-         // Create a new object to force a state update with the latest user info
-        setUser({ ...auth.currentUser } as User);
+        // This will trigger a state update in listeners
+        setUser(auth.currentUser);
       }
     } catch (error) {
       console.error("Error uploading profile picture", error);

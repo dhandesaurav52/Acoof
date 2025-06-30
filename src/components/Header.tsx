@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -28,7 +29,7 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user: isLoggedIn, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -71,7 +72,7 @@ export function Header() {
           <Link href="/dashboard/user">Your orders</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/user">Settings</Link>
+          <Link href="/dashboard/admin">Admin</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
@@ -96,7 +97,12 @@ export function Header() {
                 <ShoppingCart className="h-5 w-5" />
                 <span className="sr-only">Shopping Cart</span>
              </Button>
-             {isLoggedIn ? (
+             {loading ? (
+               <div className="flex items-center gap-2">
+                  <Skeleton className="h-10 w-[70px]" />
+                  <Skeleton className="h-10 w-[85px]" />
+                </div>
+             ) : user ? (
                 <UserMenu />
              ) : (
                 <>
@@ -125,11 +131,16 @@ export function Header() {
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                   <div className="flex flex-col gap-4 mt-8 pt-4 border-t">
-                     {isLoggedIn ? (
+                     {loading ? (
+                        <div className="space-y-4">
+                          <Skeleton className="h-8 w-3/4" />
+                          <Skeleton className="h-8 w-3/4" />
+                        </div>
+                     ) : user ? (
                        <>
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
-                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
+                        <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin</Link>
                         <button onClick={handleLogout} className="text-lg text-left">Logout</button>
                        </>
                      ) : (
