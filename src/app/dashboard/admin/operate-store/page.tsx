@@ -5,7 +5,6 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
-import { useProducts } from '@/hooks/use-products';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,12 +16,12 @@ import { Loader2, PlusCircle, FileImage, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
+import { addProduct } from '@/app/actions';
 
 const ADMIN_EMAIL = "admin@example.com";
 
 export default function OperateStorePage() {
     const { user, loading } = useAuth();
-    const { addProduct } = useProducts();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,14 +144,21 @@ export default function OperateStorePage() {
         };
         
         try {
-            addProduct(newProductData);
+            const result = await addProduct(newProductData);
 
-            toast({
-                title: "Product Added",
-                description: `${newProductData.name} has been successfully added to the store.`,
-            });
-
-            resetForm();
+            if (result.error) {
+                 toast({
+                    variant: "destructive",
+                    title: "Failed to Add Product",
+                    description: result.error,
+                });
+            } else {
+                toast({
+                    title: "Product Added",
+                    description: `${newProductData.name} has been successfully added to the store.`,
+                });
+                resetForm();
+            }
         } catch (error) {
             toast({
                 variant: "destructive",
