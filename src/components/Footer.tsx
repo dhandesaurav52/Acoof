@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -54,7 +55,7 @@ export function Footer() {
               <div className="space-y-4">
                 <h4 className="font-semibold font-headline">Support</h4>
                 <div className="flex flex-col gap-2">
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Contact Us</Link>
+                  <a href="tel:+917447885505" className="text-sm text-muted-foreground hover:text-primary">Contact Us</a>
                   <Link href="#" className="text-sm text-muted-foreground hover:text-primary">FAQ</Link>
                   <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Shipping & Returns</Link>
                 </div>
