@@ -19,17 +19,23 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
-    const [cart, setCart] = useState<CartItem[]>(() => {
-        // Initialize cart from localStorage
-        if (typeof window !== 'undefined') {
-            const savedCart = localStorage.getItem('acoof-cart');
-            return savedCart ? JSON.parse(savedCart) : [];
-        }
-        return [];
-    });
+    const [cart, setCart] = useState<CartItem[]>([]);
 
     useEffect(() => {
-        // Save cart to localStorage whenever it changes
+        // Load cart from localStorage on initial client-side render to avoid hydration mismatch.
+        try {
+            const savedCart = localStorage.getItem('acoof-cart');
+            if (savedCart) {
+                setCart(JSON.parse(savedCart));
+            }
+        } catch (error) {
+            console.error("Failed to parse cart from localStorage", error);
+            localStorage.removeItem('acoof-cart');
+        }
+    }, []);
+
+    // This effect runs whenever `cart` state changes, saving it to localStorage.
+    useEffect(() => {
         localStorage.setItem('acoof-cart', JSON.stringify(cart));
     }, [cart]);
 

@@ -16,17 +16,23 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
-    const [wishlist, setWishlist] = useState<Product[]>(() => {
-        // Initialize wishlist from localStorage
-        if (typeof window !== 'undefined') {
-            const savedWishlist = localStorage.getItem('acoof-wishlist');
-            return savedWishlist ? JSON.parse(savedWishlist) : [];
-        }
-        return [];
-    });
+    const [wishlist, setWishlist] = useState<Product[]>([]);
 
     useEffect(() => {
-        // Save wishlist to localStorage whenever it changes
+        // Load wishlist from localStorage on initial client-side render to avoid hydration mismatch.
+        try {
+            const savedWishlist = localStorage.getItem('acoof-wishlist');
+            if (savedWishlist) {
+                setWishlist(JSON.parse(savedWishlist));
+            }
+        } catch (error) {
+            console.error("Failed to parse wishlist from localStorage", error);
+            localStorage.removeItem('acoof-wishlist');
+        }
+    }, []);
+    
+    // This effect runs whenever `wishlist` state changes, saving it to localStorage.
+    useEffect(() => {
         localStorage.setItem('acoof-wishlist', JSON.stringify(wishlist));
     }, [wishlist]);
 
