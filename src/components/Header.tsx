@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, ShoppingCart, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,16 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // This is a mock state. Replace with your actual auth state.
   const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setIsMenuOpen(false); // Close mobile menu if open
+    router.push('/login');
+  };
 
   const NavLinks = ({ className }: { className?: string }) => (
     <nav className={cn("flex items-center gap-6 text-sm font-medium", className)}>
@@ -69,7 +76,7 @@ export function Header() {
           <Link href="/dashboard/user">Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Logout</DropdownMenuItem>
+        <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -125,7 +132,7 @@ export function Header() {
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
-                        <button onClick={() => {setIsLoggedIn(false); setIsMenuOpen(false);}} className="text-lg text-left">Logout</button>
+                        <button onClick={handleLogout} className="text-lg text-left">Logout</button>
                        </>
                      ) : (
                        <>
