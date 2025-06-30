@@ -68,9 +68,14 @@ export function Header() {
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {user?.email === ADMIN_EMAIL ? (
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/admin">Admin Dashboard</Link>
-            </DropdownMenuItem>
+            <>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/user">Your profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/admin">Admin Dashboard</Link>
+                </DropdownMenuItem>
+            </>
         ) : (
             <>
                 <DropdownMenuItem asChild>
@@ -149,7 +154,10 @@ export function Header() {
                      ) : user ? (
                        <>
                         {user.email === ADMIN_EMAIL ? (
-                            <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link>
+                            <>
+                                <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
+                                <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link>
+                            </>
                         ) : (
                             <>
                                 <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
