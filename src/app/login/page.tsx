@@ -13,6 +13,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
+const ADMIN_EMAIL = "admin@example.com";
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -24,8 +26,12 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await loginWithEmail(email, password);
-      router.push('/dashboard/user');
+      const userCredential = await loginWithEmail(email, password);
+      if (userCredential.user.email === ADMIN_EMAIL) {
+        router.push('/dashboard/admin');
+      } else {
+        router.push('/dashboard/user');
+      }
     } catch (error: any) {
       let errorMessage = "An unknown error occurred.";
       if (error.code === 'auth/invalid-credential') {
@@ -44,7 +50,12 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-        await loginWithGoogle();
+        const userCredential = await loginWithGoogle();
+        if (userCredential?.user.email === ADMIN_EMAIL) {
+            router.push('/dashboard/admin');
+        } else {
+            router.push('/dashboard/user');
+        }
     } catch (error: any) {
         toast({
             variant: 'destructive',

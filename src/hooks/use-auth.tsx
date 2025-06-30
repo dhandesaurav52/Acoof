@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<UserCredential | undefined>;
   loginWithEmail: (email:string, password:string) => Promise<any>;
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
@@ -45,8 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!auth) throw NOT_CONFIGURED_ERROR;
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard/user');
+      const result = await signInWithPopup(auth, provider);
+      return result;
     } catch (error) {
       console.error("Error signing in with Google", error);
       throw error; // Re-throw the error to be caught by the UI
@@ -61,11 +61,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signupWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
     if (!auth) throw NOT_CONFIGURED_ERROR;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    if (auth.currentUser) {
+    if (userCredential.user) {
       const displayName = `${firstName} ${lastName}`;
-      await updateProfile(auth.currentUser, { displayName });
+      await updateProfile(userCredential.user, { displayName });
       // Manually update state to ensure UI reflects new user name immediately
-      setUser(JSON.parse(JSON.stringify(auth.currentUser)));
+      setUser(JSON.parse(JSON.stringify(userCredential.user)));
     }
     return userCredential;
   }
@@ -105,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     await updateProfile(currentUser, { photoURL });
     if (auth.currentUser) {
+      await auth.currentUser.reload();
       setUser(JSON.parse(JSON.stringify(auth.currentUser)));
     }
   };
