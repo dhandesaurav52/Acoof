@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -13,6 +14,7 @@ interface AuthContextType {
   loginWithEmail: (email:string, password:string) => Promise<any>;
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
+  uploadProfilePicture: (file: File) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,6 +69,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return userCredential;
   }
 
+  const uploadProfilePicture = async (file: File) => {
+    if (!auth || !storage || !user) {
+        throw new Error("Firebase not configured or user not logged in.");
+    }
+    const fileRef = ref(storage, `profile-pictures/${user.uid}`);
+    try {
+      await uploadBytes(fileRef, file);
+      const photoURL = await getDownloadURL(fileRef);
+      await updateProfile(user, { photoURL });
+      setUser(prevUser => prevUser ? { ...prevUser, photoURL } : null);
+    } catch (error) {
+      console.error("Error uploading profile picture", error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     if (!auth) return;
     try {
@@ -77,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout };
+  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };

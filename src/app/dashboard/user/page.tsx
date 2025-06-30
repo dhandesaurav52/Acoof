@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,13 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Home, Mail, Phone, User, MapPin, Loader2 } from "lucide-react";
+import { Edit, Home, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function UserDashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, uploadProfilePicture } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [userProfile, setUserProfile] = useState({
     name: '',
@@ -44,7 +46,7 @@ export default function UserDashboardPage() {
             address: '123 Dream Lane',
             city: 'Styleville',
             state: 'CA',
-            avatar: user.photoURL || 'https://placehold.co/100x100.png',
+            avatar: user.photoURL || `https://placehold.co/100x100.png`,
             initials: initials
         };
         setUserProfile(profileData);
@@ -73,6 +75,34 @@ export default function UserDashboardPage() {
         description: "City and State have been set to your current location."
     });
   };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && user) {
+      setIsUploading(true);
+      try {
+        await uploadProfilePicture(file);
+        toast({
+          title: "Profile Picture Updated",
+          description: "Your new profile picture has been saved.",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: "There was an error uploading your profile picture.",
+        });
+        console.error(error);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
 
   if (loading || !user) {
     return (
@@ -149,10 +179,32 @@ export default function UserDashboardPage() {
         
         <Card>
           <CardHeader className="flex flex-row items-center gap-6 space-y-0">
-              <Avatar className="h-24 w-24 border">
-                <AvatarImage src={userProfile.avatar} alt={userProfile.name} data-ai-hint="woman portrait" />
-                <AvatarFallback>{userProfile.initials}</AvatarFallback>
-              </Avatar>
+              <div className="relative group">
+                <Avatar className="h-24 w-24 border">
+                  <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
+                  <AvatarFallback>{userProfile.initials}</AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={handleAvatarClick}
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-75 disabled:cursor-not-allowed"
+                  disabled={isUploading}
+                  aria-label="Change profile picture"
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                  ) : (
+                    <Camera className="h-8 w-8 text-white" />
+                  )}
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/png, image/jpeg"
+                  disabled={isUploading}
+                />
+              </div>
               <div className="grid gap-1">
                 <CardTitle className="text-3xl">{userProfile.name}</CardTitle>
                 <CardDescription>View and manage your personal information.</CardDescription>
