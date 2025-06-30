@@ -27,51 +27,46 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Special handling for the admin user to auto-create the account on first login.
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        try {
-          // On first login, this will create and sign in the admin user.
-          await signupWithEmail(email, password, "Admin", "User");
-          // A successful signup automatically signs the user in.
-          router.push('/dashboard/admin');
-          return; // Exit after successful signup and redirect.
-        } catch (error: any) {
-          // If the admin user already exists, this will fail.
-          // We can safely ignore the "email-already-in-use" error and proceed to a normal login.
-          if (error.code !== 'auth/email-already-in-use') {
-            // For any other signup error, we should show it and stop.
-            toast({
-              variant: 'destructive',
-              title: "Admin Account Creation Failed",
-              description: error.message,
-            });
-            console.error('Admin signup failed:', error);
-            return;
-          }
-          // If error is 'auth/email-already-in-use', we fall through to the login logic below.
+        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+            try {
+                // Try to sign up the admin user. This will fail if the user already exists.
+                await signupWithEmail(email, password, "Admin", "User");
+                // A successful signup automatically logs the user in.
+                router.push('/dashboard/admin');
+            } catch (error: any) {
+                // If signup failed because the email is already in use, it means the admin account exists.
+                // So, we try to log in instead.
+                if (error.code === 'auth/email-already-in-use') {
+                    await loginWithEmail(email, password);
+                    router.push('/dashboard/admin');
+                } else {
+                    // If signup failed for another reason (e.g., weak password, network error),
+                    // we show the error by re-throwing it to the outer catch block.
+                    throw error;
+                }
+            }
+        } else {
+            // Standard login for regular users.
+            const userCredential = await loginWithEmail(email, password);
+            if (userCredential.user.email === ADMIN_EMAIL) {
+                router.push('/dashboard/admin');
+            } else {
+                router.push('/dashboard/user');
+            }
         }
-      }
-
-      // Proceed with normal login for all other users, or for the admin on subsequent logins.
-      const userCredential = await loginWithEmail(email, password);
-      if (userCredential.user.email === ADMIN_EMAIL) {
-        router.push('/dashboard/admin');
-      } else {
-        router.push('/dashboard/user');
-      }
     } catch (error: any) {
-      let errorMessage = "An unknown error occurred.";
-      if (error.code === 'auth/invalid-credential') {
-        errorMessage = "Invalid email or password. Please try again.";
-      } else {
-        errorMessage = error.message;
-      }
-      toast({
-        variant: 'destructive',
-        title: "Login Failed",
-        description: errorMessage,
-      });
-      console.error('Login failed:', error);
+        let errorMessage = "An unknown error occurred.";
+        if (error.code === 'auth/invalid-credential') {
+            errorMessage = "Invalid email or password. Please try again.";
+        } else {
+            errorMessage = error.message;
+        }
+        toast({
+            variant: 'destructive',
+            title: "Login Failed",
+            description: errorMessage,
+        });
+        console.error('Login failed:', error);
     }
   };
 
