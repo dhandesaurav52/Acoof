@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential, sendPasswordResetEmail as firebaseSendPasswordResetEmail } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,8 @@ interface AuthContextType {
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
   uploadProfilePicture: (file: File) => Promise<void>;
-  updateUserProfile: (data: { name: string; email: string }) => Promise<void>;
+  updateUserProfile: (data: { name?: string; email?: string }) => Promise<void>;
+  sendPasswordResetEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,13 +65,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (userCredential.user) {
       const displayName = `${firstName} ${lastName}`;
       await updateProfile(userCredential.user, { displayName });
-      // Manually update state to ensure UI reflects new user name immediately
-      setUser(JSON.parse(JSON.stringify(userCredential.user)));
+      // The onAuthStateChanged listener will handle the user state update.
     }
     return userCredential;
   }
 
-  const updateUserProfile = async (data: { name: string; email: string; }) => {
+  const updateUserProfile = async (data: { name?: string; email?: string }) => {
     const currentUser = auth?.currentUser;
     if (!auth || !currentUser) {
         throw new Error("Firebase not configured or user not logged in.");
@@ -86,10 +86,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (updates.length > 0) {
         await Promise.all(updates);
-        // Manually trigger a state update because onAuthStateChanged might not fire for profile updates.
-        if (auth.currentUser) {
-          setUser(JSON.parse(JSON.stringify(auth.currentUser)));
-        }
+        // After updates, the auth.currentUser object has the new values.
+        // The `user` object in our state is stale. We need to trigger a re-render.
+        // onAuthStateChanged does not fire for profile updates, so we manually refresh.
+        await currentUser.reload();
+        // Create a new object to ensure React detects the change.
+        setUser(auth.currentUser ? { ...auth.currentUser } as User : null);
     }
   };
 
@@ -98,16 +100,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!auth || !storage || !currentUser) {
         throw new Error("Firebase not configured or user not logged in.");
     }
-    const fileRef = ref(storage, `profile-pictures/${currentUser.uid}`);
     
+    const fileRef = ref(storage, `profile-pictures/${currentUser.uid}`);
     await uploadBytes(fileRef, file);
     const photoURL = await getDownloadURL(fileRef);
     
     await updateProfile(currentUser, { photoURL });
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      setUser(JSON.parse(JSON.stringify(auth.currentUser)));
-    }
+    await currentUser.reload();
+    setUser(auth.currentUser ? { ...auth.currentUser } as User : null);
+  };
+  
+  const sendPasswordResetEmail = async (email: string) => {
+    if (!auth) throw NOT_CONFIGURED_ERROR;
+    await firebaseSendPasswordResetEmail(auth, email);
   };
 
   const logout = async () => {
@@ -120,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile };
+  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile, sendPasswordResetEmail };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
