@@ -33,6 +33,11 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
     return { error: 'Please fill out all required fields.' };
   }
 
+  const price = parseFloat(productPrice);
+  if (isNaN(price)) {
+    return { error: 'Invalid price. Please enter a valid number.' };
+  }
+
   if (!storage) {
     return { error: 'Firebase Storage is not configured. Cannot upload images.' };
   }
@@ -57,7 +62,7 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
       id: Date.now(),
       name: productName,
       description: productDescription,
-      price: parseFloat(productPrice),
+      price: price,
       category: productCategory as Product['category'],
       isNew,
       images: imageUrls,
