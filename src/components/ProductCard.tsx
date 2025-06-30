@@ -28,7 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-secondary border-secondary group">
+    <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-secondary border-secondary group">
       <CardHeader className="p-0">
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-lg">
           <Image
@@ -45,7 +45,7 @@ export function ProductCard({ product }: ProductCardProps) {
            <Button 
             variant="ghost" 
             size="icon" 
-            className="absolute right-2 top-2 h-8 w-8 rounded-full bg-background/50 text-foreground hover:bg-background/75"
+            className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-background/50 text-foreground hover:bg-background/75"
             onClick={handleFavoriteClick}
             aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
            >
