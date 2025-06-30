@@ -4,7 +4,7 @@ export interface Product {
   description: string;
   price: number;
   category: 'Shirts' | 'Pants' | 'Shoes' | 'Tshirts' | 'Jeans' | 'Trousers' | 'Socks' | 'Wallets' | 'Bags' | 'Belts';
-  image: string;
+  images: string[];
   isNew: boolean;
   aiHint: string;
 }

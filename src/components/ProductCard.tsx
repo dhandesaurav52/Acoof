@@ -16,7 +16,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardHeader className="p-0">
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-lg">
           <Image
-            src={product.image}
+            src={product.images[0] || 'https://placehold.co/600x800.png'}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"

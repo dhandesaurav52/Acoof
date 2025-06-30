@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
@@ -30,7 +30,7 @@ export default function OperateStorePage() {
     const [productPrice, setProductPrice] = useState('');
     const [productCategory, setProductCategory] = useState<Product['category'] | ''>('');
     const [isNew, setIsNew] = useState(true);
-    const [productImage, setProductImage] = useState('');
+    const [productImages, setProductImages] = useState<string[]>(['']);
 
     useEffect(() => {
         if (loading) return;
@@ -49,18 +49,38 @@ export default function OperateStorePage() {
             </div>
         );
     }
+
+    const handleImageChange = (index: number, value: string) => {
+        const newImages = [...productImages];
+        newImages[index] = value;
+        setProductImages(newImages);
+    };
+
+    const addImageInput = () => {
+        setProductImages([...productImages, '']);
+    };
+
+    const removeImageInput = (index: number) => {
+        const newImages = productImages.filter((_, i) => i !== index);
+        setProductImages(newImages);
+    };
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         // In a real app, you'd send this data to a server action or API endpoint
+        const finalImages = productImages.filter(img => img.trim() !== '');
+        if (finalImages.length === 0) {
+            finalImages.push('https://placehold.co/600x800.png');
+        }
+        
         console.log({
             name: productName,
             description: productDescription,
             price: parseFloat(productPrice),
             category: productCategory,
             isNew,
-            image: productImage || 'https://placehold.co/600x800.png',
+            images: finalImages,
             aiHint: productName.toLowerCase()
         });
 
@@ -78,7 +98,7 @@ export default function OperateStorePage() {
         setProductPrice('');
         setProductCategory('');
         setIsNew(true);
-        setProductImage('');
+        setProductImages(['']);
         setIsSubmitting(false);
     };
 
@@ -126,10 +146,37 @@ export default function OperateStorePage() {
                                     </Select>
                                 </div>
                             </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="product-image">Image URL</Label>
-                                <Input id="product-image" value={productImage} onChange={e => setProductImage(e.target.value)} placeholder="https://placehold.co/600x800.png (optional)" />
-                                <p className="text-xs text-muted-foreground">If left blank, a default placeholder will be used.</p>
+                            <div className="space-y-2">
+                                <Label>Image URLs</Label>
+                                <div className="space-y-2">
+                                    {productImages.map((image, index) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <Input
+                                                id={`product-image-${index}`}
+                                                value={image}
+                                                onChange={(e) => handleImageChange(index, e.target.value)}
+                                                placeholder="https://placehold.co/600x800.png"
+                                            />
+                                            {productImages.length > 1 ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => removeImageInput(index)}
+                                                    className="flex-shrink-0"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                    <span className="sr-only">Remove Image</span>
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button type="button" variant="outline" size="sm" onClick={addImageInput} className="mt-2">
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Another Image
+                                </Button>
+                                <p className="text-xs text-muted-foreground">The first image is the main display image. If all are blank, a placeholder is used.</p>
                             </div>
                              <div className="flex items-center space-x-2">
                                 <Switch id="is-new" checked={isNew} onCheckedChange={setIsNew} />

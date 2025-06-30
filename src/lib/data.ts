@@ -8,7 +8,7 @@ export const products: Product[] = [
     description: 'A timeless staple for any wardrobe, made from 100% premium cotton.',
     price: 25.0,
     category: 'Tshirts',
-    image: 'https://placehold.co/600x800.png',
+    images: ['https://placehold.co/600x800.png'],
     isNew: true,
     aiHint: 'white shirt'
   },
@@ -18,7 +18,7 @@ export const products: Product[] = [
     description: 'Modern slim-fit jeans in a versatile dark wash.',
     price: 75.0,
     category: 'Jeans',
-    image: 'https://placehold.co/600x800.png',
+    images: ['https://placehold.co/600x800.png'],
     isNew: true,
     aiHint: 'denim jeans'
   },
@@ -28,7 +28,7 @@ export const products: Product[] = [
     description: 'Classic derby shoes crafted from genuine leather, perfect for any occasion.',
     price: 120.0,
     category: 'Shoes',
-    image: 'https://placehold.co/600x800.png',
+    images: ['https://placehold.co/600x800.png'],
     isNew: true,
     aiHint: 'leather shoes'
   },
@@ -38,7 +38,7 @@ export const products: Product[] = [
     description: 'Comfortable cotton hoodie with a bold back print.',
     price: 65.0,
     category: 'Shirts',
-    image: 'https://placehold.co/600x800.png',
+    images: ['https://placehold.co/600x800.png'],
     isNew: false,
     aiHint: 'graphic hoodie'
   },
@@ -48,7 +48,7 @@ export const products: Product[] = [
     description: 'Utilitarian cargo pants with multiple pockets for functionality.',
     price: 80.0,
     category: 'Trousers',
-    image: 'https://placehold.co/600x800.png',
+    images: ['https://placehold.co/600x800.png'],
     isNew: false,
     aiHint: 'cargo pants'
   },
@@ -58,7 +58,7 @@ export const products: Product[] = [
     description: 'Clean and simple sneakers that pair with everything.',
     price: 90.0,
     category: 'Shoes',
-    image: 'https://placehold.co/600x800.png',
+    images: ['https://placehold.co/600x800.png'],
     isNew: false,
     aiHint: 'white sneakers'
   },
@@ -68,7 +68,7 @@ export const products: Product[] = [
     description: 'A breezy linen shirt, ideal for warmer weather.',
     price: 55.0,
     category: 'Shirts',
-    image: 'https://placehold.co/600x800.png',
+    images: ['https://placehold.co/600x800.png'],
     isNew: false,
     aiHint: 'linen shirt'
   },
@@ -78,7 +78,7 @@ export const products: Product[] = [
     description: 'A durable and stylish canvas tote for your daily essentials.',
     price: 40.0,
     category: 'Bags',
-    image: 'https://placehold.co/600x600.png',
+    images: ['https://placehold.co/600x600.png'],
     isNew: true,
     aiHint: 'tote bag'
   }
