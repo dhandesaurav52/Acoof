@@ -68,20 +68,7 @@ export async function deleteProduct(productId: string, imageUrls: string[]): Pro
     return { error: 'Firebase is not configured. Cannot delete product.' };
   }
 
-  // --- Step 1: Attempt to delete product from Realtime Database ---
-  try {
-    const productRef = dbRef(database, `products/${productId}`);
-    await remove(productRef);
-  } catch (error: any) {
-    console.error('Database deletion failed:', error);
-    // Use a more generic check for permission denied errors
-    if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
-      return { error: "Database permission denied. Please check your Realtime Database security rules." };
-    }
-    return { error: `An unexpected error occurred while deleting product data: ${error.message}` };
-  }
-
-  // --- Step 2: Attempt to delete associated images from Firebase Storage ---
+  // --- Step 1: Attempt to delete associated images from Firebase Storage ---
   // The Firebase SDK can create a reference directly from a gs:// or https:// URL.
   // This is more robust than manual parsing.
   const imageDeletionPromises = imageUrls
@@ -118,13 +105,25 @@ export async function deleteProduct(productId: string, imageUrls: string[]): Pro
           });
         
           const firstError = (failedDeletions[0] as PromiseRejectedResult).reason;
-          let errorMessage = "Product data deleted, but failed to remove one or more images.";
           
           if (firstError?.code === 'storage/unauthorized') {
-              errorMessage = "Product data deleted, but Storage permission was denied for image removal. Please check your Firebase Storage security rules.";
+              const errorMessage = "Storage permission was denied for image removal. Please check your Firebase Storage security rules.";
+              return { error: errorMessage };
           }
-          return { error: errorMessage };
+           return { error: "Failed to remove one or more images." };
       }
+  }
+
+  // --- Step 2: Attempt to delete product from Realtime Database ---
+  try {
+    const productRef = dbRef(database, `products/${productId}`);
+    await remove(productRef);
+  } catch (error: any) {
+    console.error('Database deletion failed:', error);
+    if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
+      return { error: "Images deleted, but database permission was denied for product data. Please check your Realtime Database security rules." };
+    }
+    return { error: `Images deleted, but an unexpected error occurred while deleting product data: ${error.message}` };
   }
 
   return { success: 'Product and associated images were successfully deleted.' };
