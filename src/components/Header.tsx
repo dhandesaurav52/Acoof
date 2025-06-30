@@ -92,6 +92,9 @@ export function Header() {
             </>
         )}
         <DropdownMenuItem asChild>
+          <Link href="/dashboard/notifications">Notifications</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/dashboard/settings">Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -169,6 +172,7 @@ export function Header() {
                                 <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
                             </>
                         )}
+                        <Link href="/dashboard/notifications" className="text-lg" onClick={() => setIsMenuOpen(false)}>Notifications</Link>
                         <Link href="/dashboard/settings" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
                         <button onClick={handleLogout} className="text-lg text-left">Logout</button>
                        </>

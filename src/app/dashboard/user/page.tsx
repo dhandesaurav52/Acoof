@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Home, Mail, Phone, User, MapPin, Loader2, Camera, Bell, Package, Tag } from "lucide-react";
+import { Edit, Home, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -35,30 +35,6 @@ export default function UserDashboardPage() {
   });
 
   const [editedUser, setEditedUser] = useState(userProfile);
-
-  const userNotifications = [
-      {
-        id: 1,
-        icon: Package,
-        color: 'text-green-500',
-        text: 'Your order #ORD007 has been delivered!',
-        time: '2 days ago',
-      },
-      {
-        id: 2,
-        icon: Tag,
-        color: 'text-primary',
-        text: 'The new Summer collection just dropped. Check it out!',
-        time: '4 days ago',
-      },
-      {
-        id: 3,
-        icon: Bell,
-        color: 'text-blue-500',
-        text: 'Welcome to Acoof! Complete your profile to get personalized recommendations.',
-        time: '1 week ago',
-      },
-  ];
 
   useEffect(() => {
     if (!loading && !user) {
@@ -276,23 +252,6 @@ export default function UserDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Notifications</CardTitle>
-                <CardDescription>Updates about your orders and store news.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {userNotifications.map((notification) => (
-                    <div key={notification.id} className="flex items-start gap-4 p-4 rounded-lg bg-secondary/50">
-                        <notification.icon className={cn("h-6 w-6 mt-1 flex-shrink-0", notification.color)} />
-                        <div className="flex-1">
-                            <p className="text-sm font-medium">{notification.text}</p>
-                            <p className="text-xs text-muted-foreground">{notification.time}</p>
-                        </div>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, AlertCircle, UserPlus } from 'lucide-react';
+import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,30 +80,6 @@ const initialOrders: Order[] = [
              { productId: 7, productName: 'Linen Button-Up Shirt', quantity: 1, price: 55.00 },
         ]
     },
-];
-
-const notifications = [
-    {
-        id: 1,
-        icon: AlertCircle,
-        color: 'text-yellow-500',
-        text: "Product 'Minimalist Sneakers' is low on stock. Only 2 items left.",
-        time: '15 minutes ago',
-    },
-    {
-        id: 2,
-        icon: UserPlus,
-        color: 'text-green-500',
-        text: 'A new user, alex.doe@example.com, just signed up.',
-        time: '1 hour ago',
-    },
-    {
-        id: 3,
-        icon: ShoppingCart,
-        color: 'text-blue-500',
-        text: 'Order ORD011 has been successfully shipped.',
-        time: '4 hours ago',
-    }
 ];
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -250,25 +226,6 @@ export default function AdminDashboardPage() {
                         ))}
                     </TableBody>
                 </Table>
-                </CardContent>
-            </Card>
-
-            {/* Notifications Card */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Notifications</CardTitle>
-                    <CardDescription>Recent activity and alerts for your store.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {notifications.map((notification) => (
-                        <div key={notification.id} className="flex items-start gap-4 p-4 rounded-lg bg-secondary/50">
-                            <notification.icon className={cn("h-6 w-6 mt-1 flex-shrink-0", notification.color)} />
-                            <div className="flex-1">
-                                <p className="text-sm font-medium">{notification.text}</p>
-                                <p className="text-xs text-muted-foreground">{notification.time}</p>
-                            </div>
-                        </div>
-                    ))}
                 </CardContent>
             </Card>
 
