@@ -1,4 +1,4 @@
-import type { Product, Look } from '@/types';
+import type { Product, Look, LookCategory } from '@/types';
 
 export const products: Product[] = [
   {
@@ -87,31 +87,69 @@ export const looks: Look[] = [
     {
         id: 1,
         name: 'Casual Weekend',
-        image: 'https://placehold.co/800x1000.png',
+        image: 'https://images.pexels.com/photos/3775588/pexels-photo-3775588.jpeg',
         products: [1, 2, 6],
-        aiHint: 'man standing'
+        aiHint: 'man standing',
+        category: 'Weekend',
     },
     {
         id: 2,
         name: 'Street Style',
-        image: 'https://placehold.co/800x1000.png',
+        image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg',
         products: [4, 5, 6],
-        aiHint: 'street fashion'
+        aiHint: 'street fashion',
+        category: 'Streetwear',
     },
     {
         id: 3,
         name: 'Smart Casual',
-        image: 'https://placehold.co/800x1000.png',
+        image: 'https://images.pexels.com/photos/837140/pexels-photo-837140.jpeg',
         products: [7, 2, 3],
-        aiHint: 'fashion model'
+        aiHint: 'fashion model',
+        category: 'Smart Casual',
     },
     {
         id: 4,
         name: 'Summer Vibe',
-        image: 'https://placehold.co/800x1000.png',
+        image: 'https://images.pexels.com/photos/157675/fashion-men-s-fashion-model-157675.jpeg',
         products: [1, 8],
-        aiHint: 'summer style'
+        aiHint: 'summer style',
+        category: 'Summer',
+    },
+    {
+        id: 5,
+        name: 'Urban Explorer',
+        image: 'https://placehold.co/800x1000.png',
+        products: [4, 5, 6],
+        aiHint: 'urban fashion',
+        category: 'Streetwear'
+    },
+    {
+        id: 6,
+        name: 'Office Ready',
+        image: 'https://placehold.co/800x1000.png',
+        products: [7, 5, 3],
+        aiHint: 'business casual',
+        category: 'Smart Casual'
+    },
+    {
+        id: 7,
+        name: 'Relaxed Day Off',
+        image: 'https://placehold.co/800x1000.png',
+        products: [1, 2, 6],
+        aiHint: 'casual outfit',
+        category: 'Weekend'
+    },
+    {
+        id: 8,
+        name: 'Beach Day',
+        image: 'https://placehold.co/800x1000.png',
+        products: [7, 8],
+        aiHint: 'beach fashion',
+        category: 'Summer'
     }
 ];
+export const lookCategories: LookCategory[] = ['Streetwear', 'Smart Casual', 'Weekend', 'Summer'];
+
 
 export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Bags', 'Belts', 'Socks', 'Wallets'];

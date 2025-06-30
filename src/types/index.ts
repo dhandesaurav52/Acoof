@@ -9,10 +9,13 @@ export interface Product {
   aiHint: string;
 }
 
+export type LookCategory = 'Streetwear' | 'Smart Casual' | 'Weekend' | 'Summer';
+
 export interface Look {
   id: number;
   name: string;
   image: string;
   products: number[];
   aiHint: string;
+  category: LookCategory;
 }
