@@ -37,7 +37,7 @@ export default function Home() {
         </div>
         <div className="container relative mx-auto px-4 text-white">
           <div className="max-w-2xl text-left">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl font-headline">
+            <h1 className="text-5xl font-bold tracking-tighter sm:text-6xl lg:text-8xl font-headline">
               Own Your Style
             </h1>
             <p className="mt-6 max-w-lg text-lg md:text-xl text-foreground/80">
