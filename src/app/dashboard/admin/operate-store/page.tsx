@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, FileImage } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
+import { addProduct } from '@/app/actions';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -23,6 +24,7 @@ export default function OperateStorePage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
 
     // Form state
     const [productName, setProductName] = useState('');
@@ -30,7 +32,7 @@ export default function OperateStorePage() {
     const [productPrice, setProductPrice] = useState('');
     const [productCategory, setProductCategory] = useState<Product['category'] | ''>('');
     const [isNew, setIsNew] = useState(true);
-    const [productImages, setProductImages] = useState<string[]>(['']);
+    const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
 
     useEffect(() => {
         if (loading) return;
@@ -50,55 +52,53 @@ export default function OperateStorePage() {
         );
     }
 
-    const handleImageChange = (index: number, value: string) => {
-        const newImages = [...productImages];
-        newImages[index] = value;
-        setProductImages(newImages);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setProductImageFiles(Array.from(e.target.files));
+        }
     };
 
-    const addImageInput = () => {
-        setProductImages([...productImages, '']);
-    };
-
-    const removeImageInput = (index: number) => {
-        const newImages = productImages.filter((_, i) => i !== index);
-        setProductImages(newImages);
+    const removeFile = (index: number) => {
+        const newFiles = productImageFiles.filter((_, i) => i !== index);
+        setProductImageFiles(newFiles);
+        // Also clear the file input
+        const dt = new DataTransfer();
+        newFiles.forEach(file => dt.items.add(file));
+        const fileInput = formRef.current?.elements.namedItem('images') as HTMLInputElement;
+        if (fileInput) {
+          fileInput.files = dt.files;
+        }
     };
     
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // In a real app, you'd send this data to a server action or API endpoint
-        const finalImages = productImages.filter(img => img.trim() !== '');
-        if (finalImages.length === 0) {
-            finalImages.push('https://placehold.co/600x800.png');
+
+        const formData = new FormData(e.currentTarget);
+        
+        const result = await addProduct(formData);
+
+        if (result.error) {
+            toast({
+                variant: "destructive",
+                title: "Failed to Add Product",
+                description: result.error,
+            });
+        } else {
+            toast({
+                title: "Product Added",
+                description: `${result.product?.name} has been successfully added to the store.`,
+            });
+            // Reset form
+            formRef.current?.reset();
+            setProductName('');
+            setProductDescription('');
+            setProductPrice('');
+            setProductCategory('');
+            setIsNew(true);
+            setProductImageFiles([]);
         }
         
-        console.log({
-            name: productName,
-            description: productDescription,
-            price: parseFloat(productPrice),
-            category: productCategory,
-            isNew,
-            images: finalImages,
-            aiHint: productName.toLowerCase()
-        });
-
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        toast({
-            title: "Product Added",
-            description: `${productName} has been successfully added to the store.`,
-        });
-
-        // Reset form
-        setProductName('');
-        setProductDescription('');
-        setProductPrice('');
-        setProductCategory('');
-        setIsNew(true);
-        setProductImages(['']);
         setIsSubmitting(false);
     };
 
@@ -112,7 +112,7 @@ export default function OperateStorePage() {
                     </p>
                 </div>
                 
-                <form onSubmit={handleSubmit}>
+                <form ref={formRef} onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Add New Product</CardTitle>
@@ -121,20 +121,20 @@ export default function OperateStorePage() {
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="product-name">Product Name</Label>
-                                <Input id="product-name" value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g., Classic White Tee" required />
+                                <Input id="product-name" name="productName" value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g., Classic White Tee" required />
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="product-description">Description</Label>
-                                <Textarea id="product-description" value={productDescription} onChange={e => setProductDescription(e.target.value)} placeholder="A timeless staple for any wardrobe..." required />
+                                <Textarea id="product-description" name="productDescription" value={productDescription} onChange={e => setProductDescription(e.target.value)} placeholder="A timeless staple for any wardrobe..." required />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="product-price">Price ($)</Label>
-                                    <Input id="product-price" type="number" value={productPrice} onChange={e => setProductPrice(e.target.value)} placeholder="e.g., 25.00" required step="0.01" />
+                                    <Input id="product-price" name="productPrice" type="number" value={productPrice} onChange={e => setProductPrice(e.target.value)} placeholder="e.g., 25.00" required step="0.01" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="product-category">Category</Label>
-                                    <Select value={productCategory} onValueChange={(value: Product['category']) => setProductCategory(value)} required>
+                                    <Select name="productCategory" value={productCategory} onValueChange={(value: Product['category']) => setProductCategory(value)} required>
                                         <SelectTrigger id="product-category">
                                             <SelectValue placeholder="Select a category" />
                                         </SelectTrigger>
@@ -147,39 +147,40 @@ export default function OperateStorePage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label>Image URLs</Label>
-                                <div className="space-y-2">
-                                    {productImages.map((image, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                            <Input
-                                                id={`product-image-${index}`}
-                                                value={image}
-                                                onChange={(e) => handleImageChange(index, e.target.value)}
-                                                placeholder="https://placehold.co/600x800.png"
-                                            />
-                                            {productImages.length > 1 ? (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => removeImageInput(index)}
-                                                    className="flex-shrink-0"
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                    <span className="sr-only">Remove Image</span>
-                                                </Button>
-                                            ) : null}
-                                        </div>
-                                    ))}
-                                </div>
-                                <Button type="button" variant="outline" size="sm" onClick={addImageInput} className="mt-2">
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add Another Image
-                                </Button>
-                                <p className="text-xs text-muted-foreground">The first image is the main display image. If all are blank, a placeholder is used.</p>
+                                <Label htmlFor="product-images">Product Images</Label>
+                                <Input 
+                                    id="product-images"
+                                    name="images"
+                                    type="file"
+                                    multiple
+                                    accept="image/png, image/jpeg"
+                                    onChange={handleFileChange}
+                                    className="file:text-primary file:font-medium"
+                                />
+                                <p className="text-xs text-muted-foreground">You can select multiple images. If none are selected, a placeholder will be used.</p>
+                                
+                                {productImageFiles.length > 0 && (
+                                    <div className="mt-4 space-y-2 border rounded-md p-3">
+                                        <p className="text-sm font-medium">Selected files:</p>
+                                        <ul className="space-y-2">
+                                            {productImageFiles.map((file, index) => (
+                                                <li key={index} className="flex items-center justify-between text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md">
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        <FileImage className="h-4 w-4 flex-shrink-0" />
+                                                        <span className="truncate">{file.name}</span>
+                                                    </div>
+                                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeFile(index)} className="h-6 w-6 flex-shrink-0">
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                        <span className="sr-only">Remove {file.name}</span>
+                                                    </Button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
                              <div className="flex items-center space-x-2">
-                                <Switch id="is-new" checked={isNew} onCheckedChange={setIsNew} />
+                                <Switch name="isNew" id="is-new" checked={isNew} onCheckedChange={setIsNew} />
                                 <Label htmlFor="is-new">Mark as New Arrival</Label>
                             </div>
                         </CardContent>
