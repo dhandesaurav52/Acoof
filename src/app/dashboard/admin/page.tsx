@@ -16,9 +16,15 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { seedDatabase, deleteProduct } from '@/app/actions';
+import { seedDatabase } from '@/app/actions';
 import { useProducts } from '@/hooks/use-products';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+// --- Imports for Deletion Logic ---
+import { database, storage } from '@/lib/firebase';
+import { ref as dbRef, remove } from "firebase/database";
+import { ref as storageRef, deleteObject } from 'firebase/storage';
+
 
 const initialOrders: Order[] = [
     { 
@@ -132,6 +138,60 @@ export default function AdminDashboardPage() {
         }
         setIsSeeding(false);
     };
+
+    // --- Product Deletion Logic (Moved from actions.ts) ---
+    async function deleteProduct(productId: string, imageUrls: string[]): Promise<{ success?: string; error?: string; }> {
+      if (!database || !storage) {
+        return { error: 'Firebase is not configured. Cannot delete product.' };
+      }
+
+      const imageDeletionPromises = imageUrls
+        .filter(url => url && url.includes('firebasestorage.googleapis.com'))
+        .map(url => {
+          try {
+            const imageRef = storageRef(storage, url);
+            return deleteObject(imageRef).catch(err => {
+                if (err.code === 'storage/object-not-found') {
+                    console.warn(`Image not found, skipping deletion: ${url}`);
+                    return null;
+                }
+                throw err;
+            });
+          } catch (e) {
+            console.error(`Invalid storage URL, skipping deletion: ${url}`, e);
+            return null;
+          }
+        });
+      
+      const validPromises = imageDeletionPromises.filter((p): p is Promise<void> => p !== null);
+
+      if (validPromises.length > 0) {
+          const results = await Promise.allSettled(validPromises);
+          const failedDeletions = results.filter(result => result.status === 'rejected');
+
+          if (failedDeletions.length > 0) {
+              const firstError = (failedDeletions[0] as PromiseRejectedResult).reason;
+              let errorMessage = "Failed to remove one or more images.";
+              if (firstError?.code === 'storage/unauthorized') {
+                  errorMessage = "Storage permission was denied for image removal. Please check your Firebase Storage security rules.";
+              }
+              return { error: errorMessage };
+          }
+      }
+
+      try {
+        const productRef = dbRef(database, `products/${productId}`);
+        await remove(productRef);
+      } catch (error: any) {
+        console.error('Database deletion failed:', error);
+        if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
+          return { error: "Database permission was denied for product data. Please check your Realtime Database security rules." };
+        }
+        return { error: `An unexpected error occurred while deleting product data: ${error.message}` };
+      }
+
+      return { success: 'Product and associated images were successfully deleted.' };
+    }
 
     const handleConfirmDelete = async () => {
         if (!productToDelete) return;
@@ -464,3 +524,4 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
