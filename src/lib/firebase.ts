@@ -20,7 +20,7 @@ let storage: FirebaseStorage | null = null;
 let database: Database | null = null;
 
 // The app will crash if the config is not set, so we need to check for it.
-if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.databaseURL) {
+if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
     try {
         app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
         auth = getAuth(app);
