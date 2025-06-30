@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,7 +16,9 @@ import { Loader2, PlusCircle, FileImage, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
-import { addProduct } from '@/app/actions';
+import { database, storage } from '@/lib/firebase';
+import { ref as dbRef, set, push, child } from "firebase/database";
+import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -47,6 +49,84 @@ export default function OperateStorePage() {
         }
     }, [user, loading, router]);
     
+    const addProduct = useCallback(async (productData: Omit<Product, 'id'>): Promise<{ success?: string; error?: string; }> => {
+        if (!database || !storage) {
+            return { error: 'Firebase is not configured. Cannot add product.' };
+        }
+        
+        if (!productData.name || !productData.price || !productData.category) {
+            return { error: 'Missing required product fields: name, price, or category.' };
+        }
+
+        try {
+            let imageUrls: string[] = [];
+            
+            if (productData.images && productData.images.length > 0 && productData.images[0].startsWith('data:')) {
+                let uploadErrorOccurred: string | null = null;
+
+                const uploadPromises = productData.images.map(async (imgDataUri, index) => {
+                    const newIdForImage = push(child(dbRef(database), 'products')).key || `image_${Date.now()}`;
+                    const fileExtensionMatch = imgDataUri.match(/data:image\/(.+);base64,/);
+                    const fileExtension = fileExtensionMatch ? fileExtensionMatch[1] : 'png';
+                    const imageFileName = `${newIdForImage}_${index}.${fileExtension}`;
+                    const imageStorageRef = storageRef(storage, `products/${imageFileName}`);
+                    
+                    try {
+                        const snapshot = await uploadString(imageStorageRef, imgDataUri, 'data_url');
+                        return getDownloadURL(snapshot.ref);
+                    } catch (uploadError: any) {
+                        console.error(`Failed to upload image ${index}:`, uploadError);
+                        if (uploadError.code === 'storage/unauthorized') {
+                            uploadErrorOccurred = "Permission denied for Firebase Storage. Please check your Storage security rules to allow writes to the 'products' path for authenticated users.";
+                        } else {
+                            uploadErrorOccurred = `An error occurred during image upload: ${uploadError.message}`;
+                        }
+                        return null;
+                    }
+                });
+
+                const settledImageUrls = await Promise.all(uploadPromises);
+
+                if (uploadErrorOccurred) {
+                    return { error: uploadErrorOccurred };
+                }
+
+                imageUrls = settledImageUrls.filter((url): url is string => url !== null);
+                
+                if (imageUrls.length !== productData.images.length) {
+                    return { error: "One or more images failed to upload. Product not added." };
+                }
+
+            } else {
+                imageUrls = productData.images?.length > 0 ? productData.images : ['https://placehold.co/600x800.png'];
+            }
+
+            const newProductRef = push(dbRef(database, 'products'));
+            const newId = newProductRef.key;
+            if (!newId) {
+                 return { error: 'Failed to generate a new product ID from Firebase.' };
+            }
+
+            const productToSave: Product = {
+                ...productData,
+                id: newId,
+                images: imageUrls,
+            };
+
+            await set(newProductRef, productToSave);
+
+            return { success: `Successfully added product: ${productToSave.name}` };
+
+        } catch (error: any) {
+            console.error('Failed to add product:', error);
+            let errorMessage = error.message || 'An unknown error occurred while adding the product.';
+            if (error.code === 'database/permission-denied') {
+                errorMessage = "Permission denied for Firebase Realtime Database. Please check your Database security rules.";
+            }
+            return { error: errorMessage };
+        }
+    }, []);
+
     if (loading || !user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-screen">
