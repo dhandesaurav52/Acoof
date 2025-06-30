@@ -61,10 +61,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signupWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
     if (!auth) throw NOT_CONFIGURED_ERROR;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    if (userCredential.user) {
-      await updateProfile(userCredential.user, {
+    if (userCredential.user && auth.currentUser) {
+      await updateProfile(auth.currentUser, {
         displayName: `${firstName} ${lastName}`,
       });
+      // To ensure the user object is updated in the context, create a new object reference
+      const refreshedUser = Object.assign(
+          Object.create(Object.getPrototypeOf(auth.currentUser)),
+          auth.currentUser
+      );
+      setUser(refreshedUser);
     }
     return userCredential;
   }
@@ -77,11 +83,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await uploadBytes(fileRef, file);
       const photoURL = await getDownloadURL(fileRef);
-      await updateProfile(user, { photoURL });
-      // The user object in the auth context needs to be updated to trigger a re-render.
-      // We create a new object from auth.currentUser to ensure React detects the change.
       if (auth.currentUser) {
-        setUser({ ...auth.currentUser });
+        await updateProfile(auth.currentUser, { photoURL });
+        // To ensure the user object is updated in the context, create a new object reference
+        const refreshedUser = Object.assign(
+            Object.create(Object.getPrototypeOf(auth.currentUser)),
+            auth.currentUser
+        );
+        setUser(refreshedUser);
       }
     } catch (error) {
       console.error("Error uploading profile picture", error);
