@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User } from "lucide-react";
+import { Menu, ShoppingCart, User, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,6 +74,9 @@ export function Header() {
         <DropdownMenuItem asChild>
           <Link href="/dashboard/admin">Admin</Link>
         </DropdownMenuItem>
+         <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings">Settings</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
       </DropdownMenuContent>
@@ -141,6 +144,7 @@ export function Header() {
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
                         <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin</Link>
+                        <Link href="/dashboard/settings" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
                         <button onClick={handleLogout} className="text-lg text-left">Logout</button>
                        </>
                      ) : (
