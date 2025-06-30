@@ -4,7 +4,7 @@
 import { useState, useMemo, type ChangeEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/ProductCard';
-import { ListFilter, Search } from 'lucide-react';
+import { ListFilter, Search, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProducts } from '@/hooks/use-products';
 import { categories } from '@/lib/data';
@@ -110,27 +110,37 @@ export default function ProductsPage() {
               </SelectContent>
             </Select>
 
-           <Select value={selectedColor} onValueChange={setSelectedColor}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Colors" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableColors.map(color => (
-                <SelectItem key={color} value={color}>{color === 'All' ? 'All Colors' : color}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {selectedColor === 'All' ? 'All Colors' : selectedColor}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuRadioGroup value={selectedColor} onValueChange={setSelectedColor}>
+                  {availableColors.map(color => (
+                    <DropdownMenuRadioItem key={color} value={color}>{color === 'All' ? 'All Colors' : color}</DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-           <Select value={selectedSize} onValueChange={setSelectedSize}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Sizes" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableSizes.map(size => (
-                <SelectItem key={size} value={size}>{size === 'All' ? 'All Sizes' : size}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {selectedSize === 'All' ? 'All Sizes' : selectedSize}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuRadioGroup value={selectedSize} onValueChange={setSelectedSize}>
+                  {availableSizes.map(size => (
+                    <DropdownMenuRadioItem key={size} value={size}>{size === 'All' ? 'All Sizes' : size}</DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           
           <DropdownMenu>
               <DropdownMenuTrigger asChild>
