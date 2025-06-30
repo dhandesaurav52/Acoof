@@ -65,12 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await updateProfile(auth.currentUser, {
         displayName: `${firstName} ${lastName}`,
       });
-      // To ensure the user object is updated in the context, create a new object reference
-      const refreshedUser = Object.assign(
-          Object.create(Object.getPrototypeOf(auth.currentUser)),
-          auth.currentUser
-      );
-      setUser(refreshedUser);
+      // Create a new object to force a state update with the latest user info
+      setUser({ ...auth.currentUser } as User);
     }
     return userCredential;
   }
@@ -85,12 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const photoURL = await getDownloadURL(fileRef);
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { photoURL });
-        // To ensure the user object is updated in the context, create a new object reference
-        const refreshedUser = Object.assign(
-            Object.create(Object.getPrototypeOf(auth.currentUser)),
-            auth.currentUser
-        );
-        setUser(refreshedUser);
+         // Create a new object to force a state update with the latest user info
+        setUser({ ...auth.currentUser } as User);
       }
     } catch (error) {
       console.error("Error uploading profile picture", error);
@@ -110,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
