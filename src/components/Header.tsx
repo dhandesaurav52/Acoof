@@ -33,9 +33,9 @@ const ADMIN_EMAIL = "admin@example.com";
 export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, loading, logout } = useAuth();
-  const { wishlist } = useWishlist();
-  const { cartCount } = useCart();
+  const { user, loading: authLoading, logout } = useAuth();
+  const { wishlist, loading: wishlistLoading } = useWishlist();
+  const { cartCount, loading: cartLoading } = useCart();
 
   const navLinks = [
       ...defaultNavLinks,
@@ -123,6 +123,9 @@ export function Header() {
 
         <div className="flex flex-1 items-center justify-end gap-2">
            <div className="hidden md:flex items-center gap-2">
+            {cartLoading ? (
+              <Skeleton className="h-10 w-10 rounded-full" />
+            ) : (
              <Button variant="ghost" size="icon" asChild>
                 <Link href="/cart" className="relative">
                     <ShoppingCart className="h-5 w-5" />
@@ -134,24 +137,29 @@ export function Header() {
                     <span className="sr-only">Shopping Cart</span>
                 </Link>
              </Button>
-             {loading ? (
+            )}
+             {authLoading ? (
                <div className="flex items-center gap-2">
-                  <Skeleton className="h-10 w-[70px]" />
-                  <Skeleton className="h-10 w-[85px]" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <Skeleton className="h-10 w-24" />
                 </div>
              ) : user ? (
                 <>
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link href="/dashboard/user/wishlist" className="relative">
-                      <Heart className="h-5 w-5" />
-                      {wishlist.length > 0 && (
-                          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                              {wishlist.length}
-                          </span>
-                      )}
-                      <span className="sr-only">Wishlist</span>
-                    </Link>
-                  </Button>
+                  {wishlistLoading ? (
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                  ) : (
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link href="/dashboard/user/wishlist" className="relative">
+                        <Heart className="h-5 w-5" />
+                        {wishlist.length > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                                {wishlist.length}
+                            </span>
+                        )}
+                        <span className="sr-only">Wishlist</span>
+                      </Link>
+                    </Button>
+                  )}
                   <UserMenu />
                 </>
              ) : (
@@ -181,13 +189,17 @@ export function Header() {
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                    <div className="mt-8 pt-4 border-t">
+                    {cartLoading ? (
+                      <Skeleton className="h-8 w-24" />
+                    ) : (
                       <Link href="/cart" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
                           <ShoppingCart className="h-5 w-5" />
                           <span>Cart ({cartCount})</span>
                       </Link>
+                    )}
                   </div>
                   <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
-                     {loading ? (
+                     {authLoading ? (
                         <div className="space-y-4">
                           <Skeleton className="h-8 w-3/4" />
                           <Skeleton className="h-8 w-3/4" />
@@ -203,7 +215,13 @@ export function Header() {
                             <>
                                 <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
                                 <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
-                                <Link href="/dashboard/user/wishlist" className="text-lg" onClick={() => setIsMenuOpen(false)}>Wishlist</Link>
+                                {wishlistLoading ? (
+                                  <Skeleton className="h-8 w-32" />
+                                ): (
+                                  <Link href="/dashboard/user/wishlist" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                                    Wishlist ({wishlist.length})
+                                  </Link>
+                                )}
                             </>
                         )}
                         <Link href="/dashboard/notifications" className="text-lg" onClick={() => setIsMenuOpen(false)}>Notifications</Link>

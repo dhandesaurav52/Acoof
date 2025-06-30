@@ -10,6 +10,7 @@ interface WishlistContextType {
     addToWishlist: (product: Product) => void;
     removeFromWishlist: (productId: string) => void;
     isInWishlist: (productId: string) => boolean;
+    loading: boolean;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -17,9 +18,9 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
     const [wishlist, setWishlist] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Load wishlist from localStorage on initial client-side render to avoid hydration mismatch.
         try {
             const savedWishlist = localStorage.getItem('acoof-wishlist');
             if (savedWishlist) {
@@ -28,13 +29,16 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
             console.error("Failed to parse wishlist from localStorage", error);
             localStorage.removeItem('acoof-wishlist');
+        } finally {
+            setLoading(false);
         }
     }, []);
     
-    // This effect runs whenever `wishlist` state changes, saving it to localStorage.
     useEffect(() => {
-        localStorage.setItem('acoof-wishlist', JSON.stringify(wishlist));
-    }, [wishlist]);
+        if (!loading) {
+            localStorage.setItem('acoof-wishlist', JSON.stringify(wishlist));
+        }
+    }, [wishlist, loading]);
 
     const addToWishlist = useCallback((product: Product) => {
         setWishlist(prevWishlist => {
@@ -59,7 +63,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     }, [wishlist]);
 
     return (
-        <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isInWishlist }}>
+        <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isInWishlist, loading }}>
             {children}
         </WishlistContext.Provider>
     );

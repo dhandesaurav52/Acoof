@@ -13,6 +13,7 @@ interface CartContextType {
     clearCart: () => void;
     cartCount: number;
     cartTotal: number;
+    loading: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -20,9 +21,9 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Load cart from localStorage on initial client-side render to avoid hydration mismatch.
         try {
             const savedCart = localStorage.getItem('acoof-cart');
             if (savedCart) {
@@ -31,13 +32,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
             console.error("Failed to parse cart from localStorage", error);
             localStorage.removeItem('acoof-cart');
+        } finally {
+            setLoading(false);
         }
     }, []);
 
-    // This effect runs whenever `cart` state changes, saving it to localStorage.
     useEffect(() => {
-        localStorage.setItem('acoof-cart', JSON.stringify(cart));
-    }, [cart]);
+        if (!loading) {
+            localStorage.setItem('acoof-cart', JSON.stringify(cart));
+        }
+    }, [cart, loading]);
 
 
     const addToCart = useCallback((product: Product) => {
@@ -90,7 +94,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, loading }}>
             {children}
         </CartContext.Provider>
     );
