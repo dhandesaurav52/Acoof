@@ -42,6 +42,29 @@ export default function SettingsPage() {
 
             <Card>
                 <CardHeader>
+                    <CardTitle>Notifications</CardTitle>
+                    <CardDescription>Manage how you receive notifications.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between">
+                         <Label htmlFor="email-notifications" className="flex flex-col gap-1">
+                            <span>Email Notifications</span>
+                            <span className="font-normal text-muted-foreground">Receive emails about your account and new products.</span>
+                        </Label>
+                        <Switch id="email-notifications" defaultChecked/>
+                    </div>
+                     <div className="flex items-center justify-between">
+                         <Label htmlFor="push-notifications" className="flex flex-col gap-1">
+                            <span>Push Notifications</span>
+                            <span className="font-normal text-muted-foreground">Get push notifications on your devices.</span>
+                        </Label>
+                        <Switch id="push-notifications" />
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>Appearance</CardTitle>
                     <CardDescription>Customize the look and feel of the application.</CardDescription>
                 </CardHeader>
@@ -62,29 +85,6 @@ export default function SettingsPage() {
                                 <Monitor className="h-5 w-5" />
                             </Button>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Notifications</CardTitle>
-                    <CardDescription>Manage how you receive notifications.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                         <Label htmlFor="email-notifications" className="flex flex-col gap-1">
-                            <span>Email Notifications</span>
-                            <span className="font-normal text-muted-foreground">Receive emails about your account and new products.</span>
-                        </Label>
-                        <Switch id="email-notifications" defaultChecked/>
-                    </div>
-                     <div className="flex items-center justify-between">
-                         <Label htmlFor="push-notifications" className="flex flex-col gap-1">
-                            <span>Push Notifications</span>
-                            <span className="font-normal text-muted-foreground">Get push notifications on your devices.</span>
-                        </Label>
-                        <Switch id="push-notifications" />
                     </div>
                 </CardContent>
             </Card>
