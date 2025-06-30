@@ -27,10 +27,16 @@ export default function LoginPage() {
       await loginWithEmail(email, password);
       router.push('/dashboard/user');
     } catch (error: any) {
+      let errorMessage = "An unknown error occurred.";
+      if (error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else {
+        errorMessage = error.message;
+      }
       toast({
         variant: 'destructive',
         title: "Login Failed",
-        description: error.message,
+        description: errorMessage,
       });
       console.error('Login failed:', error);
     }

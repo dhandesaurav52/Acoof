@@ -39,10 +39,25 @@ export default function SignupPage() {
       await signupWithEmail(email, password, firstName, lastName);
       router.push('/dashboard/user');
     } catch (error: any) {
+      let errorMessage = "An unknown error occurred during sign up.";
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'This email address is already in use by another account.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password should be at least 6 characters.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'The email address is not valid.';
+          break;
+        default:
+          errorMessage = error.message;
+          break;
+      }
       toast({
         variant: "destructive",
         title: "Signup Failed",
-        description: error.message,
+        description: errorMessage,
       });
       console.error('Signup failed:', error);
     }
