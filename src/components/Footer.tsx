@@ -6,7 +6,7 @@ import { Facebook, Instagram, Twitter } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Footer() {
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState<number>();
 
   useEffect(() => {
     setYear(new Date().getFullYear());
