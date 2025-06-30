@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/hooks/use-auth';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ProductsProvider } from '@/hooks/use-products';
 
 export default function RootLayout({
   children,
@@ -31,10 +32,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Header />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-            <Toaster />
+            <ProductsProvider>
+              <Header />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+              <Toaster />
+            </ProductsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

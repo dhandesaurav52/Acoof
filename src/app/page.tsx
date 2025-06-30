@@ -1,13 +1,17 @@
 
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shirt, ShoppingBag, Truck } from 'lucide-react';
 import Image from 'next/image';
 import { ProductCard } from '@/components/ProductCard';
-import { products } from '@/lib/data';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { useProducts } from '@/hooks/use-products';
 
 export default function Home() {
+  const { products } = useProducts();
+  
   const featuredStyles = [
     { name: 'HipHop', image: 'https://images.pexels.com/photos/7957440/pexels-photo-7957440.jpeg', aiHint: 'hiphop fashion' },
     { name: 'Casual', image: 'https://images.pexels.com/photos/17035517/pexels-photo-17035517.png', aiHint: 'casual fashion' },

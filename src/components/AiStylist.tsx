@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAiSuggestions } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
-import { products } from "@/lib/data";
+import { useProducts } from "@/hooks/use-products";
 
 export function AiStylist() {
+  const { products } = useProducts();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

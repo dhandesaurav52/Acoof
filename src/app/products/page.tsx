@@ -5,11 +5,13 @@ import { useState, useMemo, type ChangeEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/ProductCard';
-import { products, categories } from '@/lib/data';
+import { categories } from '@/lib/data';
 import { Search, X } from 'lucide-react';
 import type { Product } from '@/types';
+import { useProducts } from '@/hooks/use-products';
 
 export default function ProductsPage() {
+  const { products } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Product['category'] | null>(null);
 
@@ -34,7 +36,7 @@ export default function ProductsPage() {
     }
     
     return filtered;
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, products]);
   
   const handleClearFilters = () => {
       setSearchQuery('');

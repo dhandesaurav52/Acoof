@@ -19,7 +19,7 @@ export async function getAiSuggestions(browsingHistory: string) {
   }
 }
 
-export async function addProduct(formData: FormData): Promise<{ success?: boolean; error?: string; product?: Partial<Product> }> {
+export async function addProduct(formData: FormData): Promise<{ success?: boolean; error?: string; product?: Product }> {
   const productName = formData.get('productName') as string;
   const productDescription = formData.get('productDescription') as string;
   const productPrice = formData.get('productPrice') as string;
@@ -51,7 +51,8 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
       imageUrls.push('https://placehold.co/600x800.png');
     }
 
-    const newProduct: Partial<Product> = {
+    const newProduct: Product = {
+      id: Date.now(),
       name: productName,
       description: productDescription,
       price: parseFloat(productPrice),
