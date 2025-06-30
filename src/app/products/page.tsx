@@ -4,22 +4,25 @@
 import { useState, useMemo, type ChangeEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/ProductCard';
-import { Search } from 'lucide-react';
+import { ListFilter, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProducts } from '@/hooks/use-products';
 import { categories } from '@/lib/data';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function ProductsPage() {
   const { products } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [sortOption, setSortOption] = useState('default');
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
   const filteredProducts = useMemo(() => {
-    return products
+    let filtered = products
       .filter(product => {
         // Category filter
         if (selectedCategory === 'All') {
@@ -39,7 +42,22 @@ export default function ProductsPage() {
           product.category.toLowerCase().includes(lowercasedQuery)
         );
       });
-  }, [searchQuery, products, selectedCategory]);
+      
+    const sorted = [...filtered];
+
+    switch (sortOption) {
+      case 'price-asc':
+        sorted.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        sorted.sort((a, b) => b.price - a.price);
+        break;
+      default:
+        break;
+    }
+
+    return sorted;
+  }, [searchQuery, products, selectedCategory, sortOption]);
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -50,8 +68,8 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <div className="mb-12 max-w-2xl mx-auto flex flex-col md:flex-row gap-4">
-        <div className="relative flex-grow">
+      <div className="mb-12 max-w-2xl mx-auto flex flex-col sm:flex-row items-center gap-4">
+        <div className="relative flex-grow w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="text"
@@ -61,7 +79,7 @@ export default function ProductsPage() {
             className="pl-10"
           />
         </div>
-        <div className="md:w-1/3">
+        <div className="sm:w-1/3 w-full">
            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger>
               <SelectValue placeholder="Filter by category" />
@@ -73,6 +91,25 @@ export default function ProductsPage() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex-shrink-0">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-10 w-10">
+                        <ListFilter className="h-4 w-4" />
+                        <span className="sr-only">Filter</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+                        <DropdownMenuRadioItem value="default">Default</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </div>
 
