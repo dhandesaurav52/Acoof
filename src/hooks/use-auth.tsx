@@ -60,12 +60,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signupWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
     if (!auth) throw NOT_CONFIGURED_ERROR;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    if (user) {
+    const createdUser = userCredential.user;
+    if (createdUser && auth.currentUser) {
       const displayName = `${firstName} ${lastName}`;
-      await updateProfile(user, { displayName });
-      // Manually update the user state to reflect the new display name immediately
-      setUser({ ...user, displayName });
+      await updateProfile(auth.currentUser, { displayName });
+      // The user object is now updated on the backend, reload it to get fresh data
+      await auth.currentUser.reload();
+      // Create a new object to force re-render with the new display name
+      setUser({ ...auth.currentUser });
     }
     return userCredential;
   }
@@ -80,10 +82,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await uploadBytes(fileRef, file);
       const photoURL = await getDownloadURL(fileRef);
       await updateProfile(currentUser, { photoURL });
-      // Manually update the user state to reflect the new profile picture immediately
-      setUser({ ...currentUser, photoURL });
+      
+      // Manually trigger a re-fetch of the user object to get the latest state
+      await currentUser.reload();
+      // Create a new object from the reloaded user to force a UI re-render
+      setUser({ ...currentUser });
     } catch (error) {
       console.error("Error uploading profile picture", error);
+      // Re-throw the error so the calling component's catch block can handle it
       throw error;
     }
   };
