@@ -25,15 +25,18 @@ export async function addProduct(productData: Omit<Product, 'id'>): Promise<{ su
     if (!database || !storage) {
         return { error: 'Firebase is not configured. Cannot add product.' };
     }
+    
+    // Stricter validation
+    if (!productData.name || !productData.price || !productData.category) {
+        return { error: 'Missing required product fields: name, price, or category.' };
+    }
 
     try {
-        if (!productData.name || !productData.price || !productData.category) {
-            return { error: 'Missing required product fields: name, price, or category.' };
-        }
-        
         let imageUrls: string[] = [];
-
+        
         if (productData.images && productData.images.length > 0 && productData.images[0].startsWith('data:')) {
+            let uploadErrorOccurred: string | null = null;
+
             const uploadPromises = productData.images.map(async (imgDataUri, index) => {
                 const newIdForImage = push(child(dbRef(database), 'products')).key || `image_${Date.now()}`;
                 const fileExtensionMatch = imgDataUri.match(/data:image\/(.+);base64,/);
@@ -46,21 +49,37 @@ export async function addProduct(productData: Omit<Product, 'id'>): Promise<{ su
                     return getDownloadURL(snapshot.ref);
                 } catch (uploadError: any) {
                     console.error(`Failed to upload image ${index}:`, uploadError);
-                     if (uploadError.code === 'storage/unauthorized') {
-                        throw new Error("Permission denied for Firebase Storage. Check your security rules to allow writes.");
+                    if (uploadError.code === 'storage/unauthorized') {
+                        uploadErrorOccurred = "Permission denied for Firebase Storage. Please check your Storage security rules to allow writes to the 'products' path for authenticated users.";
+                    } else {
+                        uploadErrorOccurred = `An error occurred during image upload: ${uploadError.message}`;
                     }
-                    throw new Error(`Failed to upload image ${index}.`);
+                    return null; // Return null on failure to prevent Promise.all from rejecting immediately
                 }
             });
-            imageUrls = await Promise.all(uploadPromises);
+
+            const settledImageUrls = await Promise.all(uploadPromises);
+
+            if (uploadErrorOccurred) {
+                return { error: uploadErrorOccurred };
+            }
+
+            // Filter out any nulls which indicate a failed upload.
+            imageUrls = settledImageUrls.filter((url): url is string => url !== null);
+            
+            if (imageUrls.length !== productData.images.length) {
+                return { error: "One or more images failed to upload. Product not added." };
+            }
+
         } else {
+            // Use placeholder if no images are provided
             imageUrls = productData.images?.length > 0 ? productData.images : ['https://placehold.co/600x800.png'];
         }
 
         const newProductRef = push(dbRef(database, 'products'));
         const newId = newProductRef.key;
         if (!newId) {
-             return { error: 'Failed to generate a new product ID.' };
+             return { error: 'Failed to generate a new product ID from Firebase.' };
         }
 
         const productToSave: Product = {
@@ -77,11 +96,12 @@ export async function addProduct(productData: Omit<Product, 'id'>): Promise<{ su
         console.error('Failed to add product:', error);
         let errorMessage = error.message || 'An unknown error occurred while adding the product.';
         if (error.code === 'database/permission-denied') {
-            errorMessage = "Permission denied. Please check your Firebase Realtime Database security rules.";
+            errorMessage = "Permission denied for Firebase Realtime Database. Please check your Database security rules.";
         }
         return { error: errorMessage };
     }
 }
+
 
 export async function seedDatabase(): Promise<{ success?: string; error?: string; }> {
   if (!database) {
@@ -106,8 +126,13 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
     });
     
     if(Object.keys(productsToSeed).length > 0) {
+      // Use set on the parent ref to write all products at once
       await set(productsRef, productsToSeed);
+    } else if (staticProducts.length > 0) {
+        // This case handles if all push() calls failed, which is highly unlikely
+        return { error: 'Failed to generate IDs for seeding.' };
     }
+
 
     return { success: `Successfully seeded ${staticProducts.length} products.` };
   } catch (error: any) {
