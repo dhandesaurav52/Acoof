@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Facebook, Instagram } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function Footer() {
   const [year, setYear] = useState<number>();
@@ -55,7 +56,22 @@ export function Footer() {
               <div className="space-y-4">
                 <h4 className="font-semibold font-headline">Support</h4>
                 <div className="flex flex-col gap-2">
-                  <a href="tel:+917447885505" className="text-sm text-muted-foreground hover:text-primary">Contact Us</a>
+                   <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="text-sm text-muted-foreground hover:text-primary text-left">Contact Us</button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Contact Information</DialogTitle>
+                        <DialogDescription>
+                          You can reach us at the number below.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex items-center justify-center pt-4">
+                        <p className="text-xl font-mono font-semibold text-primary tracking-widest">+917447885505</p>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Link href="#" className="text-sm text-muted-foreground hover:text-primary">FAQ</Link>
                   <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Shipping & Returns</Link>
                 </div>
