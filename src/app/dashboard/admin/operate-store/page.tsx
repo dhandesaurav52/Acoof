@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, PlusCircle, FileImage } from 'lucide-react';
+import { Loader2, PlusCircle, FileImage, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
@@ -97,6 +97,26 @@ export default function OperateStorePage() {
         }
     };
 
+    const resetForm = () => {
+        formRef.current?.reset();
+        setProductName('');
+        setProductDescription('');
+        setProductPrice('');
+        setProductCategory('');
+        setProductColors('');
+        setProductSizes('');
+        setIsNew(true);
+        setImagePreviews([]);
+    };
+
+    const handleCancel = () => {
+        resetForm();
+        toast({
+            title: "Form Cleared",
+            description: "The new product form has been reset.",
+        });
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -132,16 +152,7 @@ export default function OperateStorePage() {
                 description: `${newProductData.name} has been successfully added to the store.`,
             });
 
-            // Reset form
-            formRef.current?.reset();
-            setProductName('');
-            setProductDescription('');
-            setProductPrice('');
-            setProductCategory('');
-            setProductColors('');
-            setProductSizes('');
-            setIsNew(true);
-            setImagePreviews([]);
+            resetForm();
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -266,7 +277,7 @@ export default function OperateStorePage() {
                                 <Label htmlFor="is-new">Mark as New Arrival</Label>
                             </div>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex gap-2">
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -274,6 +285,10 @@ export default function OperateStorePage() {
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                 )}
                                 Add Product
+                            </Button>
+                             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                                <X className="mr-2 h-4 w-4" />
+                                Cancel
                             </Button>
                         </CardFooter>
                     </Card>
