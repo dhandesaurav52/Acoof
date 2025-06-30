@@ -27,7 +27,6 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
   const productColors = formData.get('productColors') as string;
   const productSizes = formData.get('productSizes') as string;
   const isNew = formData.get('isNew') === 'true';
-  const imageFiles = formData.getAll('images') as File[];
 
   if (!productName || !productDescription || !productPrice || !productCategory) {
     return { error: 'Please fill out all required fields.' };
@@ -44,9 +43,13 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
 
   try {
     let imageUrls: string[] = [];
-    // Filter out empty file objects that can be sent if no file is selected.
-    const validImageFiles = imageFiles.filter(file => file.size > 0);
     
+    // Robustly handle file uploads
+    const imageFileEntries = formData.getAll('images');
+    const validImageFiles = imageFileEntries.filter(
+        (entry): entry is File => entry instanceof File && entry.size > 0
+    );
+
     if (validImageFiles.length > 0) {
       const uploadPromises = validImageFiles.map(async (file) => {
         const storageRef = ref(storage, `products/${Date.now()}-${file.name}`);
@@ -55,6 +58,7 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
       });
       imageUrls = await Promise.all(uploadPromises);
     } else {
+      // Use a placeholder if no valid files are uploaded
       imageUrls.push('https://placehold.co/600x800.png');
     }
 
@@ -71,7 +75,6 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
       sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
     };
     
-    // In a real app, this is where you would save the newProduct object to a database (e.g., Firestore).
     console.log("New Product Added:", newProduct);
 
     return { success: true, product: newProduct };
