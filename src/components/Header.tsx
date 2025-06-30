@@ -72,8 +72,8 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
+      <div className="container flex h-20 items-center">
         <Link href="/" className="mr-6 flex items-center">
           <Logo className="h-10 w-auto text-primary" />
         </Link>
@@ -83,7 +83,7 @@ export function Header() {
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-2">
-           <div className="hidden md:flex items-center gap-4">
+           <div className="hidden md:flex items-center gap-2">
              <Button variant="ghost" size="icon">
                 <ShoppingCart className="h-5 w-5" />
                 <span className="sr-only">Shopping Cart</span>
@@ -110,7 +110,7 @@ export function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right">
+              <SheetContent side="right" className="bg-background">
                 <div className="p-6">
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
                     <Logo className="h-10 w-auto" />

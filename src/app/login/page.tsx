@@ -21,11 +21,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary/50 py-12">
-      <Card className="mx-auto max-w-sm w-full">
+    <div className="flex items-center justify-center min-h-screen bg-background py-12">
+      <Card className="mx-auto max-w-sm w-full bg-card/80 backdrop-blur-sm">
         <CardHeader className="space-y-4 text-center">
             <Logo className="w-32 h-auto mx-auto" />
-            <CardTitle className="text-2xl">Login</CardTitle>
+            <CardTitle className="text-2xl font-headline">Login</CardTitle>
             <CardDescription>
                 Enter your email below to login to your account
             </CardDescription>

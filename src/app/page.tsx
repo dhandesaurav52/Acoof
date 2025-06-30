@@ -1,50 +1,49 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Shirt, ShoppingBag, Truck } from 'lucide-react';
 import Image from 'next/image';
+import { ProductCard } from '@/components/ProductCard';
+import { products } from '@/lib/data';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 export default function Home() {
   const featuredStyles = [
-    { name: 'HipHop', image: 'https://placehold.co/400x400.png', aiHint: 'hiphop fashion' },
-    { name: 'Casual', image: 'https://placehold.co/400x400.png', aiHint: 'casual fashion' },
-    { name: 'Party Wear', image: 'https://placehold.co/400x400.png', aiHint: 'party fashion' },
-    { name: 'Shoes', image: 'https://placehold.co/400x400.png', aiHint: 'stylish shoes' },
-    { name: 'Socks', image: 'https://placehold.co/400x400.png', aiHint: 'colorful socks' },
-    { name: 'Bags', image: 'https://placehold.co/400x400.png', aiHint: 'fashion bag' },
-    { name: 'Wallet', image: 'https://placehold.co/400x400.png', aiHint: 'leather wallet' },
-    { name: 'T-Shirts', image: 'https://placehold.co/400x400.png', aiHint: 'graphic t-shirt' },
-    { name: 'Shirts', image: 'https://placehold.co/400x400.png', aiHint: 'dress shirt' },
+    { name: 'HipHop', image: 'https://placehold.co/400x500.png', aiHint: 'hiphop fashion' },
+    { name: 'Casual', image: 'https://placehold.co/400x500.png', aiHint: 'casual fashion' },
+    { name: 'Party Wear', image: 'https://placehold.co/400x500.png', aiHint: 'party fashion' },
   ];
+  
+  const newArrivals = products.filter(p => p.isNew).slice(0, 8);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative bg-secondary h-[80vh] flex items-center justify-center">
+      <section className="relative h-[90vh] min-h-[600px] flex items-center">
         <div className="absolute inset-0">
             <Image 
                 src="https://placehold.co/1920x1080.png" 
                 alt="Hero background" 
                 fill
-                className="object-cover"
+                className="object-cover object-center"
                 priority
-                data-ai-hint="fashion clothes"
+                data-ai-hint="male fashion model"
             />
-            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
         </div>
-        <div className="container relative mx-auto flex flex-col items-center justify-center gap-12 px-4 text-center text-white">
-          <div className="space-y-6">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
-              Style Redefined.
+        <div className="container relative mx-auto px-4 text-white">
+          <div className="max-w-2xl text-left">
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl font-headline">
+              Own Your Style
             </h1>
-            <p className="max-w-[600px] text-lg md:text-xl">
-              Discover curated collections and find your unique look with Acoof.
+            <p className="mt-6 max-w-lg text-lg md:text-xl text-foreground/80">
+              Discover curated collections and find your unique look with Acoof. Premium quality, modern designs, and a style for every story.
             </p>
-            <div className="flex flex-col gap-4 sm:flex-row justify-center">
-              <Button asChild size="lg">
-                <Link href="/products">Shop Now</Link>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <Button asChild size="lg" className="text-lg">
+                <Link href="/products">Shop The Collection <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
-               <Button asChild size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-black">
+               <Button asChild size="lg" variant="link" className="text-lg text-white">
                 <Link href="/lookbook">Explore Lookbook</Link>
               </Button>
             </div>
@@ -52,8 +51,68 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Shop by Style Section */}
+      {/* Why Choose Us Section */}
+      <section className="py-16 md:py-24 bg-secondary">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+            <div className="flex flex-col items-center">
+              <ShoppingBag className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold font-headline">Exclusive Designs</h3>
+              <p className="text-muted-foreground mt-2">Curated pieces you won't find anywhere else.</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <Shirt className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold font-headline">Premium Quality</h3>
+              <p className="text-muted-foreground mt-2">Crafted from the finest materials for lasting comfort.</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <Truck className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold font-headline">Fast Shipping</h3>
+              <p className="text-muted-foreground mt-2">Get your new look delivered to your door in days.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* New Arrivals Section */}
       <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4">
+           <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl font-headline">New Arrivals</h2>
+            <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
+              Check out the latest additions to our collection.
+            </p>
+          </div>
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent>
+              {newArrivals.map((product) => (
+                <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                  <div className="p-1">
+                    <ProductCard product={product} />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden sm:flex" />
+            <CarouselNext className="hidden sm:flex" />
+          </Carousel>
+          <div className="text-center mt-12">
+            <Button asChild variant="outline">
+              <Link href="/products">View All Products</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+
+      {/* Shop by Style Section */}
+      <section className="py-16 md:py-24 bg-secondary">
         <div className="container mx-auto px-4">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl font-headline">Shop by Style</h2>
@@ -64,7 +123,7 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
             {featuredStyles.map((style) => (
               <Link href="/products" key={style.name} className="group block">
-                <div className="relative aspect-square overflow-hidden rounded-lg">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-lg shadow-lg">
                   <Image
                     src={style.image}
                     alt={style.name}
@@ -73,9 +132,9 @@ export default function Home() {
                     data-ai-hint={style.aiHint}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
-                  <div className="absolute inset-0 bg-black/40 transition-colors group-hover:bg-black/50" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h3 className="text-2xl font-bold text-white tracking-tight">{style.name}</h3>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-6">
+                    <h3 className="text-2xl font-bold text-white tracking-tight font-headline">{style.name}</h3>
                   </div>
                 </div>
               </Link>
