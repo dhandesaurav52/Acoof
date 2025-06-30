@@ -3,7 +3,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  category: 'Shirts' | 'Pants' | 'Shoes' | 'Accessories';
+  category: 'Shirts' | 'Pants' | 'Shoes' | 'Accessories' | 'Tshirts' | 'Jeans' | 'Trousers' | 'Socks' | 'Wallets' | 'Bags' | 'Belts';
   image: string;
   isNew: boolean;
   aiHint: string;

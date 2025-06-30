@@ -6,7 +6,7 @@ export const products: Product[] = [
     name: 'Classic White Tee',
     description: 'A timeless staple for any wardrobe, made from 100% premium cotton.',
     price: 25.0,
-    category: 'Shirts',
+    category: 'Tshirts',
     image: 'https://placehold.co/600x800.png',
     isNew: true,
     aiHint: 'white shirt'
@@ -16,7 +16,7 @@ export const products: Product[] = [
     name: 'Slim-Fit Denim Jeans',
     description: 'Modern slim-fit jeans in a versatile dark wash.',
     price: 75.0,
-    category: 'Pants',
+    category: 'Jeans',
     image: 'https://placehold.co/600x800.png',
     isNew: true,
     aiHint: 'denim jeans'
@@ -46,7 +46,7 @@ export const products: Product[] = [
     name: 'Cargo Trousers',
     description: 'Utilitarian cargo pants with multiple pockets for functionality.',
     price: 80.0,
-    category: 'Pants',
+    category: 'Trousers',
     image: 'https://placehold.co/600x800.png',
     isNew: false,
     aiHint: 'cargo pants'
@@ -76,7 +76,7 @@ export const products: Product[] = [
     name: 'Canvas Tote Bag',
     description: 'A durable and stylish canvas tote for your daily essentials.',
     price: 40.0,
-    category: 'Accessories',
+    category: 'Bags',
     image: 'https://placehold.co/600x600.png',
     isNew: true,
     aiHint: 'tote bag'
@@ -124,4 +124,4 @@ export const looks: Look[] = [
     }
 ];
 
-export const categories: Product['category'][] = ['Shirts', 'Pants', 'Shoes', 'Accessories'];
+export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Accessories', 'Bags', 'Belts', 'Socks', 'Wallets'];
