@@ -100,13 +100,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Firebase not configured or user not logged in.");
     }
     
-    const fileRef = ref(storage, `profile-pictures/${currentUser.uid}`);
-    await uploadBytes(fileRef, file);
-    const photoURL = await getDownloadURL(fileRef);
-    
-    await updateProfile(currentUser, { photoURL });
-    await currentUser.reload();
-    setUser(auth.currentUser ? { ...auth.currentUser } as User : null);
+    try {
+      const fileRef = ref(storage, `profile-pictures/${currentUser.uid}`);
+      await uploadBytes(fileRef, file);
+      const photoURL = await getDownloadURL(fileRef);
+      
+      await updateProfile(currentUser, { photoURL });
+      await currentUser.reload();
+      setUser(auth.currentUser ? { ...auth.currentUser } as User : null);
+    } catch (error: any) {
+      // Check for specific Firebase Storage errors
+      if (error.code === 'storage/unauthorized') {
+          throw new Error("You don't have permission to upload this file. Please check your Firebase Storage security rules.");
+      }
+      if (error.code === 'storage/object-not-found') {
+            throw new Error("File not found. The upload may have been interrupted.");
+      }
+      // Re-throw other errors
+      throw error;
+    }
   };
 
   const logout = async () => {

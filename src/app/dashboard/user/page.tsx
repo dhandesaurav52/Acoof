@@ -113,11 +113,11 @@ export default function UserDashboardPage() {
           title: "Profile Picture Updated",
           description: "Your new profile picture has been saved.",
         });
-      } catch (error) {
+      } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Upload Failed",
-          description: "There was an error uploading your profile picture.",
+          description: error.message || "There was an error uploading your profile picture.",
         });
         console.error(error);
       } finally {
