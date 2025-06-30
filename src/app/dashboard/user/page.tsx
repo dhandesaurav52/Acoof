@@ -2,13 +2,14 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, Mail, Phone, User } from "lucide-react";
+import { Edit, Home, Mail, Phone, User } from "lucide-react";
 
 export default function UserDashboardPage() {
   const user = {
     name: 'Sofia Davis',
     email: 'sofia.davis@example.com',
     phone: '+1 (555) 123-4567',
+    address: '123 Dream Lane, Styleville, ST 12345',
     avatar: 'https://placehold.co/100x100.png',
     initials: 'SD'
   };
@@ -50,6 +51,11 @@ export default function UserDashboardPage() {
                 <Phone className="h-5 w-5 text-muted-foreground" />
                 <span className="w-32 text-muted-foreground">Phone Number</span>
                 <span className="text-foreground font-medium">{user.phone}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <Home className="h-5 w-5 text-muted-foreground" />
+                <span className="w-32 text-muted-foreground">Address</span>
+                <span className="text-foreground font-medium">{user.address}</span>
               </div>
           </CardContent>
         </Card>
