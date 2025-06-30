@@ -9,7 +9,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 
 export default function Home() {
   const featuredStyles = [
-    { name: 'HipHop', image: 'https://placehold.co/400x500.png', aiHint: 'hiphop fashion' },
+    { name: 'HipHop', image: 'https://images.pexels.com/photos/7957440/pexels-photo-7957440.jpeg', aiHint: 'hiphop fashion' },
     { name: 'Casual', image: 'https://placehold.co/400x500.png', aiHint: 'casual fashion' },
     { name: 'Party Wear', image: 'https://placehold.co/400x500.png', aiHint: 'party fashion' },
   ];
