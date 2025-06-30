@@ -30,10 +30,35 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             if (snapshot.exists()) {
                 const productsData = snapshot.val();
                 // Firebase returns an object, so we convert it to an array
-                const productsList = Object.keys(productsData).map(key => ({
-                    ...productsData[key],
-                    id: key,
-                })).reverse(); // Show newest products first
+                const productsList: Product[] = Object.keys(productsData)
+                    .map(key => {
+                        const product = productsData[key];
+                        // Data validation and sanitization
+                        if (
+                            !product ||
+                            typeof product.name !== 'string' ||
+                            typeof product.price !== 'number' ||
+                            !Array.isArray(product.images)
+                        ) {
+                            console.warn(`Skipping malformed product with key: ${key}`, product);
+                            return null;
+                        }
+
+                        return {
+                            id: key,
+                            name: product.name,
+                            description: product.description || '',
+                            price: product.price,
+                            category: product.category || 'Tshirts',
+                            images: product.images.length > 0 ? product.images : ['https://placehold.co/600x800.png'],
+                            isNew: product.isNew ?? false,
+                            aiHint: product.aiHint || '',
+                            colors: product.colors || [],
+                            sizes: product.sizes || [],
+                        };
+                    })
+                    .filter((p): p is Product => p !== null)
+                    .reverse(); // Show newest products first
                 setProducts(productsList);
             } else {
                 setProducts([]); // Handle case where there are no products
