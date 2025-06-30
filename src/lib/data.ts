@@ -1,3 +1,4 @@
+
 import type { Product, Look, LookCategory } from '@/types';
 
 export const products: Product[] = [
@@ -146,6 +147,70 @@ export const looks: Look[] = [
         image: 'https://placehold.co/800x1000.png',
         products: [7, 8],
         aiHint: 'beach fashion',
+        category: 'Summer'
+    },
+    {
+        id: 9,
+        name: 'Downtown Cool',
+        image: 'https://placehold.co/800x1000.png',
+        products: [4, 2, 6],
+        aiHint: 'downtown style',
+        category: 'Streetwear'
+    },
+    {
+        id: 10,
+        name: 'Skater Vibe',
+        image: 'https://placehold.co/800x1000.png',
+        products: [1, 5, 6],
+        aiHint: 'skater fashion',
+        category: 'Streetwear'
+    },
+    {
+        id: 11,
+        name: 'Modern Professional',
+        image: 'https://placehold.co/800x1000.png',
+        products: [7, 5, 3],
+        aiHint: 'professional attire',
+        category: 'Smart Casual'
+    },
+    {
+        id: 12,
+        name: 'Evening Out',
+        image: 'https://placehold.co/800x1000.png',
+        products: [7, 2, 3],
+        aiHint: 'night out fashion',
+        category: 'Smart Casual'
+    },
+    {
+        id: 13,
+        name: 'Coffee Run',
+        image: 'https://placehold.co/800x1000.png',
+        products: [4, 2, 6],
+        aiHint: 'man drinking coffee',
+        category: 'Weekend'
+    },
+    {
+        id: 14,
+        name: 'Park Stroll',
+        image: 'https://placehold.co/800x1000.png',
+        products: [1, 5, 6],
+        aiHint: 'man walking park',
+        category: 'Weekend'
+    },
+    {
+        id: 15,
+        name: 'Vacation Mode',
+        image: 'https://placehold.co/800x1000.png',
+        products: [7, 8],
+        aiHint: 'vacation outfit',
+        category: 'Summer'
+    },
+    {
+        id: 16,
+        name: 'City Heat',
+        image: 'https://placehold.co/800x1000.png',
+        products: [1, 8],
+        aiHint: 'summer city fashion',
         category: 'Summer'
     }
 ];
