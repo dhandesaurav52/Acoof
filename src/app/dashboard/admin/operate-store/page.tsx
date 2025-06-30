@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { useProducts } from '@/hooks/use-products';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ export default function OperateStorePage() {
     const [productColors, setProductColors] = useState('');
     const [productSizes, setProductSizes] = useState('');
     const [isNew, setIsNew] = useState(true);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         if (loading) return;
@@ -54,6 +56,27 @@ export default function OperateStorePage() {
         );
     }
     
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          if (file.size > 4 * 1024 * 1024) { // 4MB limit
+            toast({
+              variant: 'destructive',
+              title: 'Image too large',
+              description: 'Please select an image smaller than 4MB.',
+            });
+            return;
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        } else {
+            setImagePreview(null);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -75,7 +98,7 @@ export default function OperateStorePage() {
             price: price,
             category: productCategory as Product['category'],
             isNew: isNew,
-            images: ['https://placehold.co/600x800.png'], // Default placeholder
+            images: imagePreview ? [imagePreview] : ['https://placehold.co/600x800.png'],
             aiHint: productName.toLowerCase(),
             colors: productColors ? productColors.split(',').map(s => s.trim()).filter(Boolean) : [],
             sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
@@ -98,6 +121,7 @@ export default function OperateStorePage() {
             setProductColors('');
             setProductSizes('');
             setIsNew(true);
+            setImagePreview(null);
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -166,12 +190,32 @@ export default function OperateStorePage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label>Product Images</Label>
-                                <div className="p-4 border-2 border-dashed rounded-md text-center text-muted-foreground bg-secondary/30">
-                                    <FileImage className="mx-auto h-8 w-8 mb-2" />
-                                    <p className="text-sm">A placeholder image will be automatically used.</p>
-                                    <p className="text-xs">Product data is managed in local storage.</p>
-                                </div>
+                                <Label htmlFor="product-image">Product Image</Label>
+                                <Input
+                                    id="product-image"
+                                    type="file"
+                                    accept="image/png, image/jpeg, image/webp"
+                                    onChange={handleImageChange}
+                                    className="file:text-foreground"
+                                />
+                                <p className="text-xs text-muted-foreground">Max file size: 4MB.</p>
+                                {imagePreview ? (
+                                    <div className="mt-4 relative aspect-[4/5] w-full max-w-xs mx-auto">
+                                        <p className="text-sm font-medium mb-2 text-center">Image Preview:</p>
+                                        <Image
+                                            src={imagePreview}
+                                            alt="Product image preview"
+                                            fill
+                                            className="rounded-md object-cover border"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="mt-4 p-4 border-2 border-dashed rounded-md text-center text-muted-foreground bg-secondary/30">
+                                        <FileImage className="mx-auto h-8 w-8 mb-2" />
+                                        <p className="text-sm">No image selected.</p>
+                                        <p className="text-xs">If no image is chosen, a placeholder will be used.</p>
+                                    </div>
+                                )}
                             </div>
                              <div className="flex items-center space-x-2">
                                 <Switch name="isNew" id="is-new" checked={isNew} onCheckedChange={setIsNew} />
