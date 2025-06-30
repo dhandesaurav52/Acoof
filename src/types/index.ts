@@ -19,3 +19,23 @@ export interface Look {
   aiHint: string;
   category: LookCategory;
 }
+
+export type OrderStatus = 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+
+export interface OrderItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+export interface Order {
+  id: string;
+  user: string;
+  userEmail: string;
+  date: string;
+  total: number;
+  status: OrderStatus;
+  shippingAddress: string;
+  items: OrderItem[];
+}

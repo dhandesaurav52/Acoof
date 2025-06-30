@@ -1,18 +1,90 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { BarChart, Package, ShoppingCart, Users, Loader2 } from 'lucide-react';
+import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, CreditCard } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { Order, OrderStatus } from '@/types';
+import { Separator } from '@/components/ui/separator';
+
+const ordersData: Order[] = [
+    { 
+        id: 'ORD012', 
+        user: 'Liam Johnson', 
+        userEmail: 'liam@example.com',
+        date: '2023-10-27', 
+        total: 325.00, 
+        status: 'Pending',
+        shippingAddress: '123 Maple St, Springfield, IL 62704',
+        items: [
+            { productId: 1, productName: 'Classic White Tee', quantity: 2, price: 25.00 },
+            { productId: 4, productName: 'Urban Graphic Hoodie', quantity: 1, price: 65.00 },
+            { productId: 2, productName: 'Slim-Fit Denim Jeans', quantity: 1, price: 75.00 },
+            { productId: 3, productName: 'Leather Derby Shoes', quantity: 1, price: 120.00 },
+        ]
+    },
+    { 
+        id: 'ORD011', 
+        user: 'Olivia Smith', 
+        userEmail: 'olivia@example.com',
+        date: '2023-10-26', 
+        total: 150.00, 
+        status: 'Shipped',
+        shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
+        items: [
+            { productId: 2, productName: 'Slim-Fit Denim Jeans', quantity: 2, price: 75.00 },
+        ]
+    },
+    { 
+        id: 'ORD010', 
+        user: 'Noah Williams', 
+        userEmail: 'noah@example.com',
+        date: '2023-10-25', 
+        total: 350.00, 
+        status: 'Delivered',
+        shippingAddress: '789 Pine Ln, Gotham, NJ 07001',
+        items: [
+            { productId: 7, productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
+            { productId: 5, productName: 'Cargo Trousers', quantity: 3, price: 80.00 },
+        ]
+    },
+    { 
+        id: 'ORD009', 
+        user: 'Emma Brown', 
+        userEmail: 'emma@example.com',
+        date: '2023-10-24', 
+        total: 450.00, 
+        status: 'Delivered',
+        shippingAddress: '321 Birch Rd, Star City, CA 90210',
+        items: [
+            { productId: 6, productName: 'Minimalist Sneakers', quantity: 5, price: 90.00 },
+        ]
+    },
+    { 
+        id: 'ORD008', 
+        user: 'Ava Jones', 
+        userEmail: 'ava@example.com',
+        date: '2023-10-23', 
+        total: 55.00, 
+        status: 'Cancelled',
+        shippingAddress: '654 Cedar Blvd, Central City, MO 63101',
+        items: [
+             { productId: 7, productName: 'Linen Button-Up Shirt', quantity: 1, price: 55.00 },
+        ]
+    },
+];
 
 export default function AdminDashboardPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [isViewOrderOpen, setIsViewOrderOpen] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -20,14 +92,6 @@ export default function AdminDashboardPage() {
         }
     }, [user, loading, router]);
     
-    const orders = [
-        { id: 'ORD012', user: 'Liam Johnson', date: '2023-10-27', total: '$250.00', status: 'Pending' },
-        { id: 'ORD011', user: 'Olivia Smith', date: '2023-10-26', total: '$150.00', status: 'Shipped' },
-        { id: 'ORD010', user: 'Noah Williams', date: '2023-10-25', total: '$350.00', status: 'Shipped' },
-        { id: 'ORD009', user: 'Emma Brown', date: '2023-10-24', total: '$450.00', status: 'Delivered' },
-        { id: 'ORD008', user: 'Ava Jones', date: '2023-10-23', total: '$550.00', status: 'Delivered' },
-    ];
-
     if (loading || !user) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -36,7 +100,13 @@ export default function AdminDashboardPage() {
         );
     }
 
+    const handleViewOrder = (order: Order) => {
+        setSelectedOrder(order);
+        setIsViewOrderOpen(true);
+    }
+
   return (
+    <>
     <div className="container mx-auto py-12 px-4">
         <div className="flex flex-col gap-8">
             <div className="text-left">
@@ -109,25 +179,26 @@ export default function AdminDashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {orders.map((order) => (
+                        {ordersData.map((order) => (
                         <TableRow key={order.id}>
                             <TableCell className="font-medium">{order.id}</TableCell>
                             <TableCell>{order.user}</TableCell>
                             <TableCell>{order.date}</TableCell>
-                            <TableCell>{order.total}</TableCell>
+                            <TableCell>${order.total.toFixed(2)}</TableCell>
                             <TableCell>
                             <Badge 
                                 variant={
                                     order.status === 'Pending' ? 'destructive' :
                                     order.status === 'Shipped' ? 'default' :
-                                    'secondary'
+                                    order.status === 'Delivered' ? 'secondary' :
+                                    'outline'
                                 }
                             >
                                 {order.status}
                             </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                            <Button variant="link" size="sm">View Order</Button>
+                                <Button variant="link" size="sm" onClick={() => handleViewOrder(order)}>View Order</Button>
                             </TableCell>
                         </TableRow>
                         ))}
@@ -137,5 +208,93 @@ export default function AdminDashboardPage() {
             </Card>
         </div>
     </div>
+    
+    {selectedOrder && (
+        <Dialog open={isViewOrderOpen} onOpenChange={setIsViewOrderOpen}>
+            <DialogContent className="sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Order Details</DialogTitle>
+                    <DialogDescription>Order ID: {selectedOrder.id}</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Customer Details</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <UserCircle className="h-5 w-5 text-muted-foreground" />
+                                    <span>{selectedOrder.user}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Mail className="h-5 w-5 text-muted-foreground" />
+                                    <span>{selectedOrder.userEmail}</span>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
+                                    <span>{selectedOrder.shippingAddress}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Order Summary</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Status</span>
+                                    <Badge 
+                                        variant={
+                                            selectedOrder.status === 'Pending' ? 'destructive' :
+                                            selectedOrder.status === 'Shipped' ? 'default' :
+                                            selectedOrder.status === 'Delivered' ? 'secondary' :
+                                            'outline'
+                                        }
+                                    >
+                                        {selectedOrder.status}
+                                    </Badge>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Date</span>
+                                    <span>{selectedOrder.date}</span>
+                                </div>
+                                <Separator />
+                                <div className="flex justify-between font-bold text-lg">
+                                    <span className="text-primary">Total Amount</span>
+                                    <span className="text-primary">${selectedOrder.total.toFixed(2)}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Items Ordered</h3>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Product</TableHead>
+                                    <TableHead className="text-center">Quantity</TableHead>
+                                    <TableHead className="text-right">Price</TableHead>
+                                    <TableHead className="text-right">Subtotal</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {selectedOrder.items.map(item => (
+                                    <TableRow key={item.productId}>
+                                        <TableCell className="font-medium">{item.productName}</TableCell>
+                                        <TableCell className="text-center">{item.quantity}</TableCell>
+                                        <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right font-medium">${(item.quantity * item.price).toFixed(2)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )}
+    </>
   );
 }
