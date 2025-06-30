@@ -64,8 +64,12 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
 
     const productsRef = dbRef(database, 'products');
     const newProductRef = push(productsRef);
-    const newProductId = newProductRef.key;
+    
+    if (!newProductRef) {
+        throw new Error("Could not create a reference for a new product.");
+    }
 
+    const newProductId = newProductRef.key;
     if (!newProductId) {
       throw new Error("Could not generate a new product ID.");
     }
@@ -89,6 +93,10 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
 
   } catch (error: any) {
     console.error('Failed to add product:', error);
+    // You can add more specific error checks here if needed, e.g., for permission errors.
+    // if (error.code === 'storage/unauthorized' || error.code === 'permission-denied') {
+    //   return { error: "Permission denied. Please check your Firebase security rules." };
+    // }
     return { error: error.message || 'An unknown error occurred during product creation.' };
   }
 }
@@ -109,8 +117,10 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
     const productsToSeed: { [key: string]: Product } = {};
     staticProducts.forEach(product => {
       const newProductRef = push(productsRef); // Generate a unique key
-      const newId = newProductRef.key!;
-      productsToSeed[newId] = { ...product, id: newId };
+      const newId = newProductRef.key;
+      if (newId) {
+        productsToSeed[newId] = { ...product, id: newId };
+      }
     });
     
     await set(productsRef, productsToSeed);
