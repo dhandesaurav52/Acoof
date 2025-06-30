@@ -81,6 +81,8 @@ const initialOrders: Order[] = [
     },
 ];
 
+const ADMIN_EMAIL = "admin@example.com";
+
 export default function AdminDashboardPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
@@ -90,12 +92,16 @@ export default function AdminDashboardPage() {
     const [updatedStatus, setUpdatedStatus] = useState<OrderStatus | null>(null);
 
     useEffect(() => {
-        if (!loading && !user) {
+        if (loading) return; // Wait until loading is finished
+
+        if (!user) {
             router.push('/login');
+        } else if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
         }
     }, [user, loading, router]);
     
-    if (loading || !user) {
+    if (loading || !user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
