@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
@@ -36,8 +37,11 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
 
   try {
     let imageUrls: string[] = [];
-    if (imageFiles.length > 0 && imageFiles[0].size > 0) {
-      const uploadPromises = imageFiles.map(async (file) => {
+    // Filter out empty file objects that can be sent if no file is selected.
+    const validImageFiles = imageFiles.filter(file => file.size > 0);
+    
+    if (validImageFiles.length > 0) {
+      const uploadPromises = validImageFiles.map(async (file) => {
         const storageRef = ref(storage, `products/${Date.now()}-${file.name}`);
         await uploadBytes(storageRef, file);
         return getDownloadURL(storageRef);
