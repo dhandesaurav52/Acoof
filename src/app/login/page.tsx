@@ -27,19 +27,32 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // One-time auto-signup for the admin user for convenience
+      // Special handling for the admin user to auto-create the account on first login.
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
         try {
-          // Try to sign up the admin user. If they already exist, this will fail.
+          // On first login, this will create and sign in the admin user.
           await signupWithEmail(email, password, "Admin", "User");
+          // A successful signup automatically signs the user in.
+          router.push('/dashboard/admin');
+          return; // Exit after successful signup and redirect.
         } catch (error: any) {
-          // We can ignore the "email-already-in-use" error and proceed to login.
+          // If the admin user already exists, this will fail.
+          // We can safely ignore the "email-already-in-use" error and proceed to a normal login.
           if (error.code !== 'auth/email-already-in-use') {
-            throw error; // For other signup errors, we should stop.
+            // For any other signup error, we should show it and stop.
+            toast({
+              variant: 'destructive',
+              title: "Admin Account Creation Failed",
+              description: error.message,
+            });
+            console.error('Admin signup failed:', error);
+            return;
           }
+          // If error is 'auth/email-already-in-use', we fall through to the login logic below.
         }
       }
-      
+
+      // Proceed with normal login for all other users, or for the admin on subsequent logins.
       const userCredential = await loginWithEmail(email, password);
       if (userCredential.user.email === ADMIN_EMAIL) {
         router.push('/dashboard/admin');
