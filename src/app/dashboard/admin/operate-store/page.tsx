@@ -4,6 +4,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { useProducts } from '@/hooks/use-products';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,16 +12,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, PlusCircle, Trash2, FileImage } from 'lucide-react';
+import { Loader2, PlusCircle, FileImage } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
-import { addProduct as addProductAction } from '@/app/actions';
 
 const ADMIN_EMAIL = "admin@example.com";
 
 export default function OperateStorePage() {
     const { user, loading } = useAuth();
+    const { addProduct } = useProducts();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +35,6 @@ export default function OperateStorePage() {
     const [productColors, setProductColors] = useState('');
     const [productSizes, setProductSizes] = useState('');
     const [isNew, setIsNew] = useState(true);
-    const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
 
     useEffect(() => {
         if (loading) return;
@@ -53,45 +53,42 @@ export default function OperateStorePage() {
             </div>
         );
     }
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            setProductImageFiles(Array.from(e.target.files));
-        }
-    };
-
-    const removeFile = (index: number) => {
-        const newFiles = productImageFiles.filter((_, i) => i !== index);
-        setProductImageFiles(newFiles);
-        // Also clear the file input
-        const dt = new DataTransfer();
-        newFiles.forEach(file => dt.items.add(file));
-        const fileInput = formRef.current?.elements.namedItem('images') as HTMLInputElement;
-        if (fileInput) {
-          fileInput.files = dt.files;
-        }
-    };
     
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        const formData = new FormData(e.currentTarget);
-        formData.append('isNew', String(isNew));
-        
-        const result = await addProductAction(formData);
-
-        if (result.error) {
+        const price = parseFloat(productPrice);
+        if (isNaN(price)) {
             toast({
                 variant: "destructive",
-                title: "Failed to Add Product",
-                description: result.error,
+                title: "Invalid Price",
+                description: "Please enter a valid number for the price.",
             });
-        } else if (result.success && result.product) {
+            setIsSubmitting(false);
+            return;
+        }
+
+        const newProductData: Omit<Product, 'id'> = {
+            name: productName,
+            description: productDescription,
+            price: price,
+            category: productCategory as Product['category'],
+            isNew: isNew,
+            images: ['https://placehold.co/600x800.png'], // Default placeholder
+            aiHint: productName.toLowerCase(),
+            colors: productColors ? productColors.split(',').map(s => s.trim()).filter(Boolean) : [],
+            sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
+        };
+        
+        try {
+            addProduct(newProductData);
+
             toast({
                 title: "Product Added",
-                description: `${result.product.name} has been successfully added to the store.`,
+                description: `${newProductData.name} has been successfully added to the store.`,
             });
+
             // Reset form
             formRef.current?.reset();
             setProductName('');
@@ -101,10 +98,15 @@ export default function OperateStorePage() {
             setProductColors('');
             setProductSizes('');
             setIsNew(true);
-            setProductImageFiles([]);
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Failed to Add Product",
+                description: "An unexpected error occurred.",
+            });
+        } finally {
+            setIsSubmitting(false);
         }
-        
-        setIsSubmitting(false);
     };
 
     return (
@@ -164,37 +166,12 @@ export default function OperateStorePage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="product-images">Product Images</Label>
-                                <Input 
-                                    id="product-images"
-                                    name="images"
-                                    type="file"
-                                    multiple
-                                    accept="image/png, image/jpeg"
-                                    onChange={handleFileChange}
-                                    className="file:text-primary file:font-medium"
-                                />
-                                <p className="text-xs text-muted-foreground">You can select multiple images. If none are selected, a placeholder will be used.</p>
-                                
-                                {productImageFiles.length > 0 && (
-                                    <div className="mt-4 space-y-2 border rounded-md p-3">
-                                        <p className="text-sm font-medium">Selected files:</p>
-                                        <ul className="space-y-2">
-                                            {productImageFiles.map((file, index) => (
-                                                <li key={index} className="flex items-center justify-between text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md">
-                                                    <div className="flex items-center gap-2 truncate">
-                                                        <FileImage className="h-4 w-4 flex-shrink-0" />
-                                                        <span className="truncate">{file.name}</span>
-                                                    </div>
-                                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeFile(index)} className="h-6 w-6 flex-shrink-0">
-                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                        <span className="sr-only">Remove {file.name}</span>
-                                                    </Button>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
+                                <Label>Product Images</Label>
+                                <div className="p-4 border-2 border-dashed rounded-md text-center text-muted-foreground bg-secondary/30">
+                                    <FileImage className="mx-auto h-8 w-8 mb-2" />
+                                    <p className="text-sm">A placeholder image will be automatically used.</p>
+                                    <p className="text-xs">Product data is managed in local storage.</p>
+                                </div>
                             </div>
                              <div className="flex items-center space-x-2">
                                 <Switch name="isNew" id="is-new" checked={isNew} onCheckedChange={setIsNew} />
