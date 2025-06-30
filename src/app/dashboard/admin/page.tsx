@@ -4,16 +4,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, CreditCard } from 'lucide-react';
+import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { Order, OrderStatus } from '@/types';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const ordersData: Order[] = [
+const initialOrders: Order[] = [
     { 
         id: 'ORD012', 
         user: 'Liam Johnson', 
@@ -83,8 +84,10 @@ const ordersData: Order[] = [
 export default function AdminDashboardPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const [orders, setOrders] = useState<Order[]>(initialOrders);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isViewOrderOpen, setIsViewOrderOpen] = useState(false);
+    const [updatedStatus, setUpdatedStatus] = useState<OrderStatus | null>(null);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -102,8 +105,20 @@ export default function AdminDashboardPage() {
 
     const handleViewOrder = (order: Order) => {
         setSelectedOrder(order);
+        setUpdatedStatus(order.status);
         setIsViewOrderOpen(true);
     }
+
+    const handleUpdateOrderStatus = () => {
+        if (!selectedOrder || !updatedStatus) return;
+
+        setOrders(prevOrders =>
+            prevOrders.map(order =>
+                order.id === selectedOrder.id ? { ...order, status: updatedStatus } : order
+            )
+        );
+        setIsViewOrderOpen(false);
+    };
 
   return (
     <>
@@ -179,7 +194,7 @@ export default function AdminDashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {ordersData.map((order) => (
+                        {orders.map((order) => (
                         <TableRow key={order.id}>
                             <TableCell className="font-medium">{order.id}</TableCell>
                             <TableCell>{order.user}</TableCell>
@@ -242,18 +257,19 @@ export default function AdminDashboardPage() {
                                 <CardTitle className="text-lg">Order Summary</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground">Status</span>
-                                    <Badge 
-                                        variant={
-                                            selectedOrder.status === 'Pending' ? 'destructive' :
-                                            selectedOrder.status === 'Shipped' ? 'default' :
-                                            selectedOrder.status === 'Delivered' ? 'secondary' :
-                                            'outline'
-                                        }
-                                    >
-                                        {selectedOrder.status}
-                                    </Badge>
+                                    <Select value={updatedStatus ?? ''} onValueChange={(value: OrderStatus) => setUpdatedStatus(value)}>
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Update status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Pending">Pending</SelectItem>
+                                            <SelectItem value="Shipped">Shipped</SelectItem>
+                                            <SelectItem value="Delivered">Delivered</SelectItem>
+                                            <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Date</span>
@@ -292,6 +308,10 @@ export default function AdminDashboardPage() {
                         </Table>
                     </div>
                 </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsViewOrderOpen(false)}>Cancel</Button>
+                    <Button onClick={handleUpdateOrderStatus}>Update Status</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )}
