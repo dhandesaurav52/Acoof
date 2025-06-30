@@ -36,7 +36,7 @@ export default function OperateStorePage() {
     const [productColors, setProductColors] = useState('');
     const [productSizes, setProductSizes] = useState('');
     const [isNew, setIsNew] = useState(true);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
     useEffect(() => {
         if (loading) return;
@@ -56,24 +56,44 @@ export default function OperateStorePage() {
         );
     }
     
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          if (file.size > 4 * 1024 * 1024) { // 4MB limit
-            toast({
-              variant: 'destructive',
-              title: 'Image too large',
-              description: 'Please select an image smaller than 4MB.',
-            });
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) {
+            setImagePreviews([]);
             return;
-          }
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setImagePreview(reader.result as string);
-          };
-          reader.readAsDataURL(file);
-        } else {
-            setImagePreview(null);
+        }
+
+        const fileReadPromises: Promise<string>[] = [];
+
+        for (const file of Array.from(files)) {
+            if (file.size > 4 * 1024 * 1024) { // 4MB limit
+                toast({
+                    variant: 'destructive',
+                    title: 'Image too large',
+                    description: `${file.name} is larger than 4MB and will not be included.`,
+                });
+                continue; // Skip this file
+            }
+
+            const promise = new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            fileReadPromises.push(promise);
+        }
+
+        try {
+            const results = await Promise.all(fileReadPromises);
+            setImagePreviews(results);
+        } catch (error) {
+            console.error("Error reading one or more files:", error);
+            toast({
+                variant: 'destructive',
+                title: 'File Read Error',
+                description: 'Could not read one of the selected image files.',
+            });
         }
     };
 
@@ -98,7 +118,7 @@ export default function OperateStorePage() {
             price: price,
             category: productCategory as Product['category'],
             isNew: isNew,
-            images: imagePreview ? [imagePreview] : ['https://placehold.co/600x800.png'],
+            images: imagePreviews.length > 0 ? imagePreviews : ['https://placehold.co/600x800.png'],
             aiHint: productName.toLowerCase(),
             colors: productColors ? productColors.split(',').map(s => s.trim()).filter(Boolean) : [],
             sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
@@ -121,7 +141,7 @@ export default function OperateStorePage() {
             setProductColors('');
             setProductSizes('');
             setIsNew(true);
-            setImagePreview(null);
+            setImagePreviews([]);
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -190,30 +210,54 @@ export default function OperateStorePage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="product-image">Product Image</Label>
+                                <Label htmlFor="product-image">Product Images</Label>
                                 <Input
                                     id="product-image"
                                     type="file"
                                     accept="image/png, image/jpeg, image/webp"
                                     onChange={handleImageChange}
                                     className="file:text-foreground"
+                                    multiple
                                 />
-                                <p className="text-xs text-muted-foreground">Max file size: 4MB.</p>
-                                {imagePreview ? (
-                                    <div className="mt-4 relative aspect-[4/5] w-full max-w-xs mx-auto">
-                                        <p className="text-sm font-medium mb-2 text-center">Image Preview:</p>
-                                        <Image
-                                            src={imagePreview}
-                                            alt="Product image preview"
-                                            fill
-                                            className="rounded-md object-cover border"
-                                        />
+                                <p className="text-xs text-muted-foreground">Max file size: 4MB per image.</p>
+                                {imagePreviews.length > 0 ? (
+                                    <div className="mt-4 space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-sm font-medium">Image Previews:</p>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setImagePreviews([]);
+                                                    if (formRef.current) {
+                                                        const fileInput = formRef.current.querySelector<HTMLInputElement>('#product-image');
+                                                        if (fileInput) fileInput.value = '';
+                                                    }
+                                                }}
+                                            >
+                                                Clear Images
+                                            </Button>
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            {imagePreviews.map((src, index) => (
+                                                <div key={index} className="relative aspect-square">
+                                                    <Image
+                                                        src={src}
+                                                        alt={`Product image preview ${index + 1}`}
+                                                        fill
+                                                        className="rounded-md object-cover border"
+                                                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="mt-4 p-4 border-2 border-dashed rounded-md text-center text-muted-foreground bg-secondary/30">
                                         <FileImage className="mx-auto h-8 w-8 mb-2" />
-                                        <p className="text-sm">No image selected.</p>
-                                        <p className="text-xs">If no image is chosen, a placeholder will be used.</p>
+                                        <p className="text-sm">No images selected.</p>
+                                        <p className="text-xs">If no images are chosen, a placeholder will be used.</p>
                                     </div>
                                 )}
                             </div>
