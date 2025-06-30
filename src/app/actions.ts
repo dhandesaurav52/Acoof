@@ -2,8 +2,9 @@
 'use server';
 
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage, database } from '@/lib/firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as dbRef, set, push } from "firebase/database";
 import type { Product } from '@/types';
 
 export async function getAiSuggestions(browsingHistory: string) {
@@ -37,14 +38,13 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
     return { error: 'Invalid price. Please enter a valid number.' };
   }
 
-  if (!storage) {
-    return { error: 'Firebase Storage is not configured. Cannot upload images.' };
+  if (!storage || !database) {
+    return { error: 'Firebase is not configured. Cannot add product.' };
   }
 
   try {
     let imageUrls: string[] = [];
     
-    // Robustly handle file uploads
     const imageFileEntries = formData.getAll('images');
     const validImageFiles = imageFileEntries.filter(
         (entry): entry is File => entry instanceof File && entry.size > 0
@@ -52,18 +52,25 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
 
     if (validImageFiles.length > 0) {
       const uploadPromises = validImageFiles.map(async (file) => {
-        const storageRef = ref(storage, `products/${Date.now()}-${file.name}`);
-        await uploadBytes(storageRef, file);
-        return getDownloadURL(storageRef);
+        const fileStorageRef = storageRef(storage, `products/${Date.now()}-${file.name}`);
+        await uploadBytes(fileStorageRef, file);
+        return getDownloadURL(fileStorageRef);
       });
       imageUrls = await Promise.all(uploadPromises);
     } else {
-      // Use a placeholder if no valid files are uploaded
       imageUrls.push('https://placehold.co/600x800.png');
     }
 
+    const productsRef = dbRef(database, 'products');
+    const newProductRef = push(productsRef);
+    const newProductId = newProductRef.key;
+
+    if (!newProductId) {
+      throw new Error("Could not generate a new product ID.");
+    }
+
     const newProduct: Product = {
-      id: Date.now(),
+      id: newProductId,
       name: productName,
       description: productDescription,
       price: price,
@@ -75,12 +82,12 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
       sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
     };
     
-    console.log("New Product Added:", newProduct);
+    await set(newProductRef, newProduct);
 
     return { success: true, product: newProduct };
 
   } catch (error: any) {
     console.error('Failed to add product:', error);
-    return { error: error.message || 'An unknown error occurred during file upload.' };
+    return { error: error.message || 'An unknown error occurred during product creation.' };
   }
 }

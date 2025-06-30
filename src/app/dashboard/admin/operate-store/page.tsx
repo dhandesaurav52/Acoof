@@ -16,13 +16,11 @@ import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
 import { addProduct as addProductAction } from '@/app/actions';
-import { useProducts } from '@/hooks/use-products';
 
 const ADMIN_EMAIL = "admin@example.com";
 
 export default function OperateStorePage() {
     const { user, loading } = useAuth();
-    const { addProduct } = useProducts();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,7 +88,6 @@ export default function OperateStorePage() {
                 description: result.error,
             });
         } else if (result.success && result.product) {
-            addProduct(result.product);
             toast({
                 title: "Product Added",
                 description: `${result.product.name} has been successfully added to the store.`,

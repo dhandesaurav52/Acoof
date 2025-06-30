@@ -25,10 +25,10 @@ const initialOrders: Order[] = [
         status: 'Pending',
         shippingAddress: '123 Maple St, Springfield, IL 62704',
         items: [
-            { productId: 1, productName: 'Classic White Tee', quantity: 2, price: 25.00 },
-            { productId: 4, productName: 'Urban Graphic Hoodie', quantity: 1, price: 65.00 },
-            { productId: 2, productName: 'Slim-Fit Denim Jeans', quantity: 1, price: 75.00 },
-            { productId: 3, productName: 'Leather Derby Shoes', quantity: 1, price: 120.00 },
+            { productId: '1', productName: 'Classic White Tee', quantity: 2, price: 25.00 },
+            { productId: '4', productName: 'Urban Graphic Hoodie', quantity: 1, price: 65.00 },
+            { productId: '2', productName: 'Slim-Fit Denim Jeans', quantity: 1, price: 75.00 },
+            { productId: '3', productName: 'Leather Derby Shoes', quantity: 1, price: 120.00 },
         ]
     },
     { 
@@ -40,7 +40,7 @@ const initialOrders: Order[] = [
         status: 'Shipped',
         shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
         items: [
-            { productId: 2, productName: 'Slim-Fit Denim Jeans', quantity: 2, price: 75.00 },
+            { productId: '2', productName: 'Slim-Fit Denim Jeans', quantity: 2, price: 75.00 },
         ]
     },
     { 
@@ -52,8 +52,8 @@ const initialOrders: Order[] = [
         status: 'Delivered',
         shippingAddress: '789 Pine Ln, Gotham, NJ 07001',
         items: [
-            { productId: 7, productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
-            { productId: 5, productName: 'Cargo Trousers', quantity: 3, price: 80.00 },
+            { productId: '7', productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
+            { productId: '5', productName: 'Cargo Trousers', quantity: 3, price: 80.00 },
         ]
     },
     { 
@@ -65,7 +65,7 @@ const initialOrders: Order[] = [
         status: 'Delivered',
         shippingAddress: '321 Birch Rd, Star City, CA 90210',
         items: [
-            { productId: 6, productName: 'Minimalist Sneakers', quantity: 5, price: 90.00 },
+            { productId: '6', productName: 'Minimalist Sneakers', quantity: 5, price: 90.00 },
         ]
     },
     { 
@@ -77,7 +77,7 @@ const initialOrders: Order[] = [
         status: 'Cancelled',
         shippingAddress: '654 Cedar Blvd, Central City, MO 63101',
         items: [
-             { productId: 7, productName: 'Linen Button-Up Shirt', quantity: 1, price: 55.00 },
+             { productId: '7', productName: 'Linen Button-Up Shirt', quantity: 1, price: 55.00 },
         ]
     },
 ];

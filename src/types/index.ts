@@ -1,6 +1,6 @@
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;
@@ -20,7 +20,7 @@ export interface Look {
   id: number;
   name: string;
   image: string;
-  products: number[];
+  products: string[];
   aiHint: string;
   category: LookCategory;
 }
@@ -28,7 +28,7 @@ export interface Look {
 export type OrderStatus = 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
 
 export interface OrderItem {
-  productId: number;
+  productId: string;
   productName: string;
   quantity: number;
   price: number;

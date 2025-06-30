@@ -1,15 +1,15 @@
 
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import type { Product, CartItem } from '@/types';
 import { useToast } from './use-toast';
 
 interface CartContextType {
     cart: CartItem[];
     addToCart: (product: Product) => void;
-    removeFromCart: (productId: number) => void;
-    updateQuantity: (productId: number, quantity: number) => void;
+    removeFromCart: (productId: string) => void;
+    updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;
     cartCount: number;
     cartTotal: number;
@@ -18,8 +18,21 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-    const [cart, setCart] = useState<CartItem[]>([]);
     const { toast } = useToast();
+    const [cart, setCart] = useState<CartItem[]>(() => {
+        // Initialize cart from localStorage
+        if (typeof window !== 'undefined') {
+            const savedCart = localStorage.getItem('acoof-cart');
+            return savedCart ? JSON.parse(savedCart) : [];
+        }
+        return [];
+    });
+
+    useEffect(() => {
+        // Save cart to localStorage whenever it changes
+        localStorage.setItem('acoof-cart', JSON.stringify(cart));
+    }, [cart]);
+
 
     const addToCart = useCallback((product: Product) => {
         setCart(prevCart => {
@@ -36,21 +49,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` });
     }, [toast]);
 
-    const removeFromCart = useCallback((productId: number) => {
+    const removeFromCart = useCallback((productId: string) => {
         const product = cart.find(p => p.id === productId);
+        setCart(prevCart => prevCart.filter(item => item.id !== productId));
         if (product) {
-            setCart(prevCart => prevCart.filter(item => item.id !== productId));
             toast({ title: "Removed from Cart", description: `${product.name} has been removed from your cart.` });
         }
     }, [cart, toast]);
 
-    const updateQuantity = useCallback((productId: number, quantity: number) => {
+    const updateQuantity = useCallback((productId: string, quantity: number) => {
         if (quantity <= 0) {
-            const product = cart.find(p => p.id === productId);
-            if (product) {
-                toast({ title: "Removed from Cart", description: `${product.name} has been removed from your cart.` });
-            }
-            setCart(prevCart => prevCart.filter(item => item.id !== productId));
+            removeFromCart(productId);
         } else {
             setCart(prevCart =>
                 prevCart.map(item =>
@@ -58,7 +67,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 )
             );
         }
-    }, [cart, toast]);
+    }, [removeFromCart]);
 
     const clearCart = useCallback(() => {
         setCart([]);

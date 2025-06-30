@@ -22,9 +22,9 @@ const userOrders: Order[] = [
         status: 'Delivered',
         shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
         items: [
-            { productId: 7, productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
-            { productId: 5, productName: 'Cargo Trousers', quantity: 1, price: 80.00 },
-            { productId: 6, productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
+            { productId: '7', productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
+            { productId: '5', productName: 'Cargo Trousers', quantity: 1, price: 80.00 },
+            { productId: '6', productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
         ]
     },
     { 
@@ -36,7 +36,7 @@ const userOrders: Order[] = [
         status: 'Shipped',
         shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
         items: [
-            { productId: 6, productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
+            { productId: '6', productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
         ]
     },
     { 
@@ -48,7 +48,7 @@ const userOrders: Order[] = [
         status: 'Cancelled',
         shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
         items: [
-            { productId: 1, productName: 'Classic White Tee', quantity: 4, price: 25.00 },
+            { productId: '1', productName: 'Classic White Tee', quantity: 4, price: 25.00 },
         ]
     },
 ];

@@ -1,26 +1,48 @@
 
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Product } from '@/types';
-import { products as initialProducts } from '@/lib/data';
+import { database } from '@/lib/firebase';
+import { ref, onValue } from 'firebase/database';
 
 interface ProductsContextType {
     products: Product[];
-    addProduct: (product: Product) => void;
 }
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-    const [products, setProducts] = useState<Product[]>(initialProducts);
+    const [products, setProducts] = useState<Product[]>([]);
 
-    const addProduct = (newProduct: Product) => {
-        setProducts(prevProducts => [newProduct, ...prevProducts]);
-    };
+    useEffect(() => {
+        if (!database) {
+            console.warn("Firebase Database is not configured, products will not be loaded.");
+            return;
+        }
+
+        const productsRef = ref(database, 'products');
+        const unsubscribe = onValue(productsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const productsList = Object.keys(data).map(key => ({
+                    ...data[key],
+                    id: key
+                }));
+                // Show newest products first
+                setProducts(productsList.reverse());
+            } else {
+                setProducts([]);
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, []);
+
 
     return (
-        <ProductsContext.Provider value={{ products, addProduct }}>
+        <ProductsContext.Provider value={{ products }}>
             {children}
         </ProductsContext.Provider>
     );

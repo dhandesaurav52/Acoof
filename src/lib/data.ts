@@ -3,7 +3,7 @@ import type { Product, Look, LookCategory } from '@/types';
 
 export const products: Product[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Classic White Tee',
     description: 'A timeless staple for any wardrobe, made from 100% premium cotton.',
     price: 25.0,
@@ -15,7 +15,7 @@ export const products: Product[] = [
     sizes: ['S', 'M', 'L', 'XL']
   },
   {
-    id: 2,
+    id: '2',
     name: 'Slim-Fit Denim Jeans',
     description: 'Modern slim-fit jeans in a versatile dark wash.',
     price: 75.0,
@@ -27,7 +27,7 @@ export const products: Product[] = [
     sizes: ['30', '32', '34', '36']
   },
   {
-    id: 3,
+    id: '3',
     name: 'Leather Derby Shoes',
     description: 'Classic derby shoes crafted from genuine leather, perfect for any occasion.',
     price: 120.0,
@@ -39,7 +39,7 @@ export const products: Product[] = [
     sizes: ['9', '10', '11', '12']
   },
   {
-    id: 4,
+    id: '4',
     name: 'Urban Graphic Hoodie',
     description: 'Comfortable cotton hoodie with a bold back print.',
     price: 65.0,
@@ -51,7 +51,7 @@ export const products: Product[] = [
     sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
   {
-    id: 5,
+    id: '5',
     name: 'Cargo Trousers',
     description: 'Utilitarian cargo pants with multiple pockets for functionality.',
     price: 80.0,
@@ -63,7 +63,7 @@ export const products: Product[] = [
     sizes: ['S', 'M', 'L']
   },
   {
-    id: 6,
+    id: '6',
     name: 'Minimalist Sneakers',
     description: 'Clean and simple sneakers that pair with everything.',
     price: 90.0,
@@ -75,7 +75,7 @@ export const products: Product[] = [
     sizes: ['8', '9', '10', '11', '12', '13']
   },
   {
-    id: 7,
+    id: '7',
     name: 'Linen Button-Up Shirt',
     description: 'A breezy linen shirt, ideal for warmer weather.',
     price: 55.0,
@@ -87,7 +87,7 @@ export const products: Product[] = [
     sizes: ['S', 'M', 'L', 'XL']
   },
   {
-    id: 8,
+    id: '8',
     name: 'Canvas Tote Bag',
     description: 'A durable and stylish canvas tote for your daily essentials.',
     price: 40.0,
@@ -105,7 +105,7 @@ export const looks: Look[] = [
         id: 1,
         name: 'Casual Weekend',
         image: 'https://images.pexels.com/photos/3775588/pexels-photo-3775588.jpeg',
-        products: [1, 2, 6],
+        products: ['1', '2', '6'],
         aiHint: 'man standing',
         category: 'Weekend',
     },
@@ -113,7 +113,7 @@ export const looks: Look[] = [
         id: 2,
         name: 'Street Style',
         image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg',
-        products: [4, 5, 6],
+        products: ['4', '5', '6'],
         aiHint: 'street fashion',
         category: 'Streetwear',
     },
@@ -121,7 +121,7 @@ export const looks: Look[] = [
         id: 3,
         name: 'Smart Casual',
         image: 'https://images.pexels.com/photos/837140/pexels-photo-837140.jpeg',
-        products: [7, 2, 3],
+        products: ['7', '2', '3'],
         aiHint: 'fashion model',
         category: 'Smart Casual',
     },
@@ -129,7 +129,7 @@ export const looks: Look[] = [
         id: 4,
         name: 'Summer Vibe',
         image: 'https://images.pexels.com/photos/157675/fashion-men-s-fashion-model-157675.jpeg',
-        products: [1, 8],
+        products: ['1', '8'],
         aiHint: 'summer style',
         category: 'Summer',
     },
@@ -137,7 +137,7 @@ export const looks: Look[] = [
         id: 5,
         name: 'Urban Explorer',
         image: 'https://placehold.co/800x1000.png',
-        products: [4, 5, 6],
+        products: ['4', '5', '6'],
         aiHint: 'urban fashion',
         category: 'Streetwear'
     },
@@ -145,7 +145,7 @@ export const looks: Look[] = [
         id: 6,
         name: 'Office Ready',
         image: 'https://placehold.co/800x1000.png',
-        products: [7, 5, 3],
+        products: ['7', '5', '3'],
         aiHint: 'business casual',
         category: 'Smart Casual'
     },
@@ -153,7 +153,7 @@ export const looks: Look[] = [
         id: 7,
         name: 'Relaxed Day Off',
         image: 'https://placehold.co/800x1000.png',
-        products: [1, 2, 6],
+        products: ['1', '2', '6'],
         aiHint: 'casual outfit',
         category: 'Weekend'
     },
@@ -161,7 +161,7 @@ export const looks: Look[] = [
         id: 8,
         name: 'Beach Day',
         image: 'https://placehold.co/800x1000.png',
-        products: [7, 8],
+        products: ['7', '8'],
         aiHint: 'beach fashion',
         category: 'Summer'
     },
@@ -169,7 +169,7 @@ export const looks: Look[] = [
         id: 9,
         name: 'Downtown Cool',
         image: 'https://placehold.co/800x1000.png',
-        products: [4, 2, 6],
+        products: ['4', '2', '6'],
         aiHint: 'downtown style',
         category: 'Streetwear'
     },
@@ -177,7 +177,7 @@ export const looks: Look[] = [
         id: 10,
         name: 'Skater Vibe',
         image: 'https://placehold.co/800x1000.png',
-        products: [1, 5, 6],
+        products: ['1', '5', '6'],
         aiHint: 'skater fashion',
         category: 'Streetwear'
     },
@@ -185,7 +185,7 @@ export const looks: Look[] = [
         id: 11,
         name: 'Modern Professional',
         image: 'https://placehold.co/800x1000.png',
-        products: [7, 5, 3],
+        products: ['7', '5', '3'],
         aiHint: 'professional attire',
         category: 'Smart Casual'
     },
@@ -193,7 +193,7 @@ export const looks: Look[] = [
         id: 12,
         name: 'Evening Out',
         image: 'https://placehold.co/800x1000.png',
-        products: [7, 2, 3],
+        products: ['7', '2', '3'],
         aiHint: 'night out fashion',
         category: 'Smart Casual'
     },
@@ -201,7 +201,7 @@ export const looks: Look[] = [
         id: 13,
         name: 'Coffee Run',
         image: 'https://placehold.co/800x1000.png',
-        products: [4, 2, 6],
+        products: ['4', '2', '6'],
         aiHint: 'man drinking coffee',
         category: 'Weekend'
     },
@@ -209,7 +209,7 @@ export const looks: Look[] = [
         id: 14,
         name: 'Park Stroll',
         image: 'https://placehold.co/800x1000.png',
-        products: [1, 5, 6],
+        products: ['1', '5', '6'],
         aiHint: 'man walking park',
         category: 'Weekend'
     },
@@ -217,7 +217,7 @@ export const looks: Look[] = [
         id: 15,
         name: 'Vacation Mode',
         image: 'https://placehold.co/800x1000.png',
-        products: [7, 8],
+        products: ['7', '8'],
         aiHint: 'vacation outfit',
         category: 'Summer'
     },
@@ -225,7 +225,7 @@ export const looks: Look[] = [
         id: 16,
         name: 'City Heat',
         image: 'https://placehold.co/800x1000.png',
-        products: [1, 8],
+        products: ['1', '8'],
         aiHint: 'summer city fashion',
         category: 'Summer'
     }
