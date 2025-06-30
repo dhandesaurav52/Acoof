@@ -99,9 +99,14 @@ export async function deleteProduct(productId: string, imageUrls: string[]): Pro
             return { success: 'Product data deleted. Note: Some images were not found in storage and may have been deleted previously.' };
         } catch (dbError: any) {
             errorMessage = `Failed to delete product data from the database. Original error: ${dbError.message}`;
+            if ((dbError as any).code === 'database/permission-denied') {
+                errorMessage = "Database permission denied. Please check your Firebase Realtime Database security rules to allow deletion.";
+            }
         }
-    } else if (error.code === 'storage/unauthorized' || error.code === 'database/permission-denied') {
-        errorMessage = "Permission denied. Please check your Firebase security rules to ensure you have deletion permissions.";
+    } else if (error.code === 'storage/unauthorized') {
+        errorMessage = "Storage permission denied. Please check your Firebase Storage security rules.";
+    } else if (error.code === 'database/permission-denied') {
+        errorMessage = "Database permission denied. Please check your Firebase Realtime Database security rules.";
     }
     
     return { error: errorMessage };
