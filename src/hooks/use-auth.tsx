@@ -78,7 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await uploadBytes(fileRef, file);
       const photoURL = await getDownloadURL(fileRef);
       await updateProfile(user, { photoURL });
-      setUser(prevUser => prevUser ? { ...prevUser, photoURL } : null);
+      // The user object in the auth context needs to be updated to trigger a re-render.
+      // We create a new object from auth.currentUser to ensure React detects the change.
+      if (auth.currentUser) {
+        setUser({ ...auth.currentUser });
+      }
     } catch (error) {
       console.error("Error uploading profile picture", error);
       throw error;
