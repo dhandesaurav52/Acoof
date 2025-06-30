@@ -69,45 +69,37 @@ export async function deleteProduct(productId: string, imageUrls: string[]): Pro
   }
 
   try {
-    // 1. Delete product data from Realtime Database first.
-    // If this fails due to permissions, we won't try to delete images.
+    // Step 1: Delete product data from Realtime Database.
     const productRef = dbRef(database, `products/${productId}`);
     await remove(productRef);
 
-    // 2. Delete associated images from Firebase Storage.
-    // We won't block the success message if image deletion fails, but we'll log it.
+    // Step 2: Delete associated images from Firebase Storage.
+    // Filter out placeholder images and only attempt to delete files from Firebase Storage.
     const imageDeletionPromises = imageUrls
-      .filter(url => url && !url.includes('placehold.co') && url.includes('firebasestorage.googleapis.com'))
+      .filter(url => url && url.includes('firebasestorage.googleapis.com'))
       .map(url => {
-        try {
-          const imageRef = storageRef(storage, url);
-          return deleteObject(imageRef);
-        } catch (e) {
-          console.error(`Error creating storage reference for ${url}. Skipping deletion.`, e);
-          return Promise.resolve(); // Don't block other deletions
-        }
+        const imageRef = storageRef(storage, url);
+        return deleteObject(imageRef);
       });
 
-    const results = await Promise.allSettled(imageDeletionPromises);
-    const failedDeletions = results.filter(r => r.status === 'rejected');
-    if (failedDeletions.length > 0) {
-      console.error('Some product images failed to delete:', failedDeletions);
-      // We can still return a success message for the product data deletion, with a warning.
-      return { success: `Product data deleted, but ${failedDeletions.length} image(s) could not be removed. Please check Storage rules and delete them manually.` };
+    // Use Promise.all to wait for all deletions. If one fails, it will throw and be caught.
+    if (imageDeletionPromises.length > 0) {
+      await Promise.all(imageDeletionPromises);
     }
 
-    return { success: 'Product and associated images successfully deleted.' };
+    return { success: 'Product and associated images were successfully deleted.' };
   } catch (error: any) {
     console.error('Product deletion failed:', error);
+    
     let errorMessage = 'An unknown error occurred during product deletion.';
     
+    // Provide specific error messages based on the error code.
     if (error.code === 'database/permission-denied') {
-      errorMessage = "Database permission denied. Please ensure you are logged in as admin and that your Realtime Database rules allow writes for 'admin@example.com'.";
+      errorMessage = "Database permission denied. Please ensure your Realtime Database rules allow writes for the admin user.";
     } else if (error.code === 'storage/unauthorized') {
-      // This error would likely be caught by allSettled, but it's here as a fallback.
-      errorMessage = "Storage permission denied during image cleanup. Please check your Firebase Storage security rules.";
-    } else if (error.message) {
-      errorMessage = error.message;
+      errorMessage = "Storage permission denied. The product data was deleted, but its images could not be removed. Please check your Firebase Storage security rules.";
+    } else {
+      errorMessage = error.message || errorMessage;
     }
     
     return { error: errorMessage };
