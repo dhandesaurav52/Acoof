@@ -1,10 +1,17 @@
+'use client';
+
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Facebook, Instagram, Twitter } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export function Footer() {
+  const [year, setYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   return (
     <footer className="border-t bg-secondary">
       <div className="container py-12">
@@ -61,7 +68,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <p className="text-center text-sm leading-loose text-muted-foreground">
-              © {new Date().getFullYear()} Acoof. All Rights Reserved.
+              © {year} Acoof. All Rights Reserved.
             </p>
             <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">Payments accepted:</p>
