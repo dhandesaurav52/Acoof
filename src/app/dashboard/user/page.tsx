@@ -61,52 +61,42 @@ export default function UserDashboardPage() {
                   Edit Profile
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Edit profile</DialogTitle>
                   <DialogDescription>
                     Make changes to your profile here. Click save when you're done.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                      Name
-                    </Label>
-                    <Input id="name" value={editedUser.name} onChange={handleInputChange} className="col-span-3" />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" value={editedUser.name} onChange={handleInputChange} />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email" className="text-right">
-                      Email
-                    </Label>
-                    <Input id="email" type="email" value={editedUser.email} onChange={handleInputChange} className="col-span-3" />
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={editedUser.email} onChange={handleInputChange} />
                   </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="phone" className="text-right">
-                      Phone
-                    </Label>
-                    <Input id="phone" value={editedUser.phone} onChange={handleInputChange} className="col-span-3" />
+                   <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input id="phone" value={editedUser.phone} onChange={handleInputChange} />
                   </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="address" className="text-right">
-                      Address
-                    </Label>
-                    <Input id="address" value={editedUser.address} onChange={handleInputChange} className="col-span-3" />
+                   <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input id="address" value={editedUser.address} onChange={handleInputChange} />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="city" className="text-right">
-                      City
-                    </Label>
-                    <Input id="city" value={editedUser.city} onChange={handleInputChange} className="col-span-3" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input id="city" value={editedUser.city} onChange={handleInputChange} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State</Label>
+                      <Input id="state" value={editedUser.state} onChange={handleInputChange} />
+                    </div>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="state" className="text-right">
-                      State
-                    </Label>
-                    <Input id="state" value={editedUser.state} onChange={handleInputChange} className="col-span-3" />
-                  </div>
-                  <div className="col-span-4 flex justify-end">
-                    <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm">
+                  <div className="flex justify-end">
+                    <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary">
                         <MapPin className="mr-2 h-4 w-4" />
                         Use current location
                     </Button>
