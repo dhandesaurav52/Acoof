@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Settings } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const defaultNavLinks = [
@@ -32,6 +33,7 @@ export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, loading, logout } = useAuth();
+  const { wishlist } = useWishlist();
 
   const navLinks = [
       ...defaultNavLinks,
@@ -129,7 +131,20 @@ export function Header() {
                   <Skeleton className="h-10 w-[85px]" />
                 </div>
              ) : user ? (
-                <UserMenu />
+                <>
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link href="/dashboard/user/wishlist" className="relative">
+                      <Heart className="h-5 w-5" />
+                      {wishlist.length > 0 && (
+                          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                              {wishlist.length}
+                          </span>
+                      )}
+                      <span className="sr-only">Wishlist</span>
+                    </Link>
+                  </Button>
+                  <UserMenu />
+                </>
              ) : (
                 <>
                     <Button variant="ghost" asChild>
