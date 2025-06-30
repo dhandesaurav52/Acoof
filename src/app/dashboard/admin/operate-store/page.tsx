@@ -16,7 +16,7 @@ import { Loader2, PlusCircle, FileImage, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { categories } from '@/lib/data';
 import type { Product } from '@/types';
-import { database, storage } from '@/lib/firebase';
+import { database, storage, auth } from '@/lib/firebase';
 import { ref as dbRef, set, push, child } from "firebase/database";
 import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 
@@ -49,21 +49,33 @@ export default function OperateStorePage() {
         }
     }, [user, loading, router]);
     
-    const addProduct = async (productData: Omit<Product, 'id'>): Promise<{ success?: string; error?: string; }> => {
+    const addProduct = async (productData: Omit<Product, 'id'>) => {
+        if (!auth?.currentUser) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Error',
+                description: 'You are not logged in. Please log in again and retry.',
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
         if (!database || !storage) {
-            return { error: 'Firebase is not configured. Cannot add product.' };
+            toast({ variant: "destructive", title: "Firebase Not Configured", description: 'Cannot add product.' });
+            setIsSubmitting(false);
+            return;
         }
         
         if (!productData.name || !productData.price || !productData.category) {
-            return { error: 'Missing required product fields: name, price, or category.' };
+            toast({ variant: "destructive", title: "Validation Error", description: 'Missing required product fields: name, price, or category.' });
+            setIsSubmitting(false);
+            return;
         }
 
         try {
             let imageUrls: string[] = [];
             
             if (productData.images && productData.images.length > 0 && productData.images[0].startsWith('data:')) {
-                let uploadErrorOccurred: string | null = null;
-
                 const uploadPromises = productData.images.map(async (imgDataUri, index) => {
                     const newIdForImage = push(child(dbRef(database), 'products')).key || `image_${Date.now()}`;
                     const fileExtensionMatch = imgDataUri.match(/data:image\/(.+);base64,/);
@@ -76,26 +88,12 @@ export default function OperateStorePage() {
                         return getDownloadURL(snapshot.ref);
                     } catch (uploadError: any) {
                         console.error(`Failed to upload image ${index}:`, uploadError);
-                        if (uploadError.code === 'storage/unauthorized') {
-                            uploadErrorOccurred = "Permission denied for Firebase Storage. Please check your Storage security rules to allow writes to the 'products' path for authenticated users.";
-                        } else {
-                            uploadErrorOccurred = `An error occurred during image upload: ${uploadError.message}`;
-                        }
-                        return null;
+                        // Re-throw the specific error to be caught by the outer catch block
+                        throw uploadError;
                     }
                 });
 
-                const settledImageUrls = await Promise.all(uploadPromises);
-
-                if (uploadErrorOccurred) {
-                    return { error: uploadErrorOccurred };
-                }
-
-                imageUrls = settledImageUrls.filter((url): url is string => url !== null);
-                
-                if (imageUrls.length !== productData.images.length) {
-                    return { error: "One or more images failed to upload. Product not added." };
-                }
+                imageUrls = await Promise.all(uploadPromises);
 
             } else {
                 imageUrls = productData.images?.length > 0 ? productData.images : ['https://placehold.co/600x800.png'];
@@ -104,7 +102,7 @@ export default function OperateStorePage() {
             const newProductRef = push(dbRef(database, 'products'));
             const newId = newProductRef.key;
             if (!newId) {
-                 return { error: 'Failed to generate a new product ID from Firebase.' };
+                 throw new Error('Failed to generate a new product ID from Firebase.');
             }
 
             const productToSave: Product = {
@@ -115,15 +113,28 @@ export default function OperateStorePage() {
 
             await set(newProductRef, productToSave);
 
-            return { success: `Successfully added product: ${productToSave.name}` };
+            toast({
+                title: "Product Added",
+                description: `Successfully added product: ${productToSave.name}`
+            });
+            resetForm();
 
         } catch (error: any) {
             console.error('Failed to add product:', error);
             let errorMessage = error.message || 'An unknown error occurred while adding the product.';
-            if (error.code === 'database/permission-denied') {
+            if (error.code === 'storage/unauthorized') {
+                errorMessage = "Permission denied for Firebase Storage. Please double-check your Storage security rules to allow writes for authenticated users.";
+            } else if (error.code === 'database/permission-denied') {
                 errorMessage = "Permission denied for Firebase Realtime Database. Please check your Database security rules.";
             }
-            return { error: errorMessage };
+            
+            toast({
+                variant: "destructive",
+                title: "Failed to Add Product",
+                description: errorMessage,
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -223,31 +234,7 @@ export default function OperateStorePage() {
             sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
         };
         
-        try {
-            const result = await addProduct(newProductData);
-
-            if (result.error) {
-                 toast({
-                    variant: "destructive",
-                    title: "Failed to Add Product",
-                    description: result.error,
-                });
-            } else {
-                toast({
-                    title: "Product Added",
-                    description: `${newProductData.name} has been successfully added to the store.`,
-                });
-                resetForm();
-            }
-        } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Failed to Add Product",
-                description: "An unexpected error occurred.",
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+        await addProduct(newProductData);
     };
 
     return (
