@@ -26,6 +26,8 @@ const navLinks = [
   { href: "/lookbook", label: "Lookbook" },
 ];
 
+const ADMIN_EMAIL = "admin@example.com";
+
 export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,16 +67,21 @@ export function Header() {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {user?.email === ADMIN_EMAIL ? (
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/admin">Admin Dashboard</Link>
+            </DropdownMenuItem>
+        ) : (
+            <>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/user">Your profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/user/orders">Your orders</Link>
+                </DropdownMenuItem>
+            </>
+        )}
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/user">Your profile</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/user/orders">Your orders</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/admin">Admin</Link>
-        </DropdownMenuItem>
-         <DropdownMenuItem asChild>
           <Link href="/dashboard/settings">Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -141,9 +148,14 @@ export function Header() {
                         </div>
                      ) : user ? (
                        <>
-                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
-                        <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
-                        <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin</Link>
+                        {user.email === ADMIN_EMAIL ? (
+                            <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link>
+                        ) : (
+                            <>
+                                <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
+                                <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
+                            </>
+                        )}
                         <Link href="/dashboard/settings" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
                         <button onClick={handleLogout} className="text-lg text-left">Logout</button>
                        </>
