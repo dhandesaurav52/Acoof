@@ -1,11 +1,25 @@
 
-import { BarChart, Package, ShoppingCart, Users } from 'lucide-react';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { BarChart, Package, ShoppingCart, Users, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function AdminDashboardPage() {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+    
     const orders = [
         { id: 'ORD012', user: 'Liam Johnson', date: '2023-10-27', total: '$250.00', status: 'Pending' },
         { id: 'ORD011', user: 'Olivia Smith', date: '2023-10-26', total: '$150.00', status: 'Shipped' },
@@ -13,6 +27,14 @@ export default function AdminDashboardPage() {
         { id: 'ORD009', user: 'Emma Brown', date: '2023-10-24', total: '$450.00', status: 'Delivered' },
         { id: 'ORD008', user: 'Ava Jones', date: '2023-10-23', total: '$550.00', status: 'Delivered' },
     ];
+
+    if (loading || !user) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
   return (
     <div className="container mx-auto py-12 px-4">

@@ -10,15 +10,44 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/Logo"
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
+  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/dashboard/user');
+    try {
+      await loginWithEmail(email, password);
+      router.push('/dashboard/user');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: "Login Failed",
+        description: error.message,
+      });
+      console.error('Login failed:', error);
+    }
   };
+
+  const handleGoogleLogin = async () => {
+    try {
+        await loginWithGoogle();
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: "Google Login Failed",
+            description: error.message,
+        });
+        console.error('Google login failed:', error);
+    }
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background py-12">
@@ -39,6 +68,8 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
@@ -57,6 +88,8 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   required
                   className="pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
@@ -71,7 +104,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full">
               Login
             </Button>
-            <Button variant="outline" className="w-full" type="button">
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin}>
               Login with Google
             </Button>
           </form>

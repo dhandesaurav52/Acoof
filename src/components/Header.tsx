@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Menu, ShoppingCart, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
+import { useAuth } from "@/hooks/use-auth";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -26,15 +27,12 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // This is a mock state. Replace with your actual auth state.
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const { user: isLoggedIn, logout } = useAuth();
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setIsMenuOpen(false); // Close mobile menu if open
-    router.push('/login');
+    logout();
+    setIsMenuOpen(false);
   };
 
   const NavLinks = ({ className }: { className?: string }) => (
