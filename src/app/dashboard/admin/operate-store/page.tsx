@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
@@ -49,7 +49,7 @@ export default function OperateStorePage() {
         }
     }, [user, loading, router]);
     
-    const addProduct = useCallback(async (productData: Omit<Product, 'id'>): Promise<{ success?: string; error?: string; }> => {
+    const addProduct = async (productData: Omit<Product, 'id'>): Promise<{ success?: string; error?: string; }> => {
         if (!database || !storage) {
             return { error: 'Firebase is not configured. Cannot add product.' };
         }
@@ -125,7 +125,7 @@ export default function OperateStorePage() {
             }
             return { error: errorMessage };
         }
-    }, []);
+    };
 
     if (loading || !user || user.email !== ADMIN_EMAIL) {
         return (
