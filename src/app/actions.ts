@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
@@ -68,48 +67,64 @@ export async function deleteProduct(productId: string, imageUrls: string[]): Pro
     return { error: 'Firebase is not configured. Cannot delete product.' };
   }
 
+  // --- Step 1: Attempt to delete product from Realtime Database ---
   try {
-    // Step 1: Delete product data from Realtime Database.
     const productRef = dbRef(database, `products/${productId}`);
     await remove(productRef);
-
-    // Step 2: Delete associated images from Firebase Storage.
-    const imageDeletionPromises = imageUrls
-      .filter(url => url && url.includes('firebasestorage.googleapis.com'))
-      .map(url => {
-        try {
-          // Manually parse the file path from the full HTTPS URL to be more robust.
-          const imagePath = new URL(url).pathname.split('/o/')[1];
-          const decodedPath = decodeURIComponent(imagePath);
-          const imageRef = storageRef(storage, decodedPath);
-          return deleteObject(imageRef);
-        } catch (e) {
-          console.error(`Failed to parse URL or create storage ref for: ${url}`, e);
-          // Return a resolved promise to not break Promise.all for other valid URLs
-          return Promise.resolve(); 
-        }
-      });
-
-    if (imageDeletionPromises.length > 0) {
-      await Promise.all(imageDeletionPromises);
-    }
-
-    return { success: 'Product and associated images were successfully deleted.' };
   } catch (error: any) {
-    console.error('Product deletion failed:', error);
-    
-    let errorMessage = 'An unknown error occurred during product deletion.';
-    
-    if (error.code === 'database/permission-denied') {
-      errorMessage = "Database permission denied. Please check your Realtime Database rules.";
-    } else if (error.code === 'storage/unauthorized') {
-      errorMessage = "Storage permission denied. The product data may have been deleted, but its images could not be removed. Please check your Firebase Storage security rules.";
-    } else if (error.code === 'storage/object-not-found') {
-        errorMessage = "Storage object not found. The product data was deleted, but an image was not found at the specified URL. It might have been deleted already.";
-    } else {
-      errorMessage = error.message || errorMessage;
+    console.error('Database deletion failed:', error);
+    if (error.code === 'database/permission-denied' || error.code === 'PERMISSION_DENIED') {
+      return { error: "Database permission denied. Please check your Realtime Database security rules." };
     }
-    
-    return { error: errorMessage };
+    return { error: `An unexpected error occurred while deleting product data: ${error.message}` };
   }
+
+  // --- Step 2: Attempt to delete associated images from Firebase Storage ---
+  const imageDeletionPromises = imageUrls
+    .filter(url => url && url.includes('firebasestorage.googleapis.com'))
+    .map(url => {
+      try {
+        const imagePathWithQuery = new URL(url).pathname.split('/o/')[1];
+        if (!imagePathWithQuery) {
+            console.warn(`Could not extract path from storage URL: ${url}`);
+            return Promise.resolve(); // Skip this invalid URL
+        }
+        const imagePath = imagePathWithQuery.split('?')[0];
+        const decodedPath = decodeURIComponent(imagePath);
+        const imageRef = storageRef(storage, decodedPath);
+        return deleteObject(imageRef);
+      } catch (e) {
+        console.error(`Failed to parse URL or create storage ref for: ${url}`, e);
+        return Promise.resolve(); // Skip this invalid URL
+      }
+    });
+  
+  const validPromises = imageDeletionPromises.filter(Boolean);
+
+  if (validPromises.length > 0) {
+      const results = await Promise.allSettled(validPromises);
+      const failedDeletions = results.filter(result => result.status === 'rejected');
+
+      if (failedDeletions.length > 0) {
+          // Log all failures for debugging and return a summary error.
+          failedDeletions.forEach(failure => {
+              if ('reason' in failure) {
+                console.error('An image failed to delete:', (failure as PromiseRejectedResult).reason);
+              }
+          });
+        
+          const firstError = (failedDeletions[0] as PromiseRejectedResult).reason;
+          let errorMessage = "Product data deleted, but failed to remove one or more images.";
+          if (firstError?.code === 'storage/unauthorized') {
+              errorMessage = "Product data deleted, but Storage permission was denied for image removal. Please check your Firebase Storage security rules.";
+          }
+          // We don't treat "not found" as a hard error, as the image might already be gone.
+          else if (firstError?.code === 'storage/object-not-found') {
+              return { success: 'Product deleted. Some images were not found in storage and may have been already removed.' };
+          }
+          return { error: errorMessage };
+      }
+  }
+
+  return { success: 'Product and associated images were successfully deleted.' };
 }
