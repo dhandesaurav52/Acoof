@@ -28,7 +28,8 @@ export default function ProductsPage() {
       const lowercasedQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(p =>
         p.name.toLowerCase().includes(lowercasedQuery) ||
-        p.description.toLowerCase().includes(lowercasedQuery)
+        p.description.toLowerCase().includes(lowercasedQuery) ||
+        p.category.toLowerCase().includes(lowercasedQuery)
       );
     }
     
