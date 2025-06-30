@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Button } from "./ui/button";
@@ -16,15 +15,15 @@ export function Footer() {
               Style Redefined. Dress with confidence.
             </p>
             <div className="flex gap-4 mt-4">
-              <Link href="https://m.facebook.com/acoof.in/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+              <a href="https://m.facebook.com/acoof.in/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
                 <Facebook className="h-5 w-5" />
-              </Link>
-              <Link href="https://www.instagram.com/acoof/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+              </a>
+              <a href="https://www.instagram.com/acoof/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
                 <Instagram className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary">
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-primary">
                 <Twitter className="h-5 w-5" />
-              </Link>
+              </a>
             </div>
           </div>
           
