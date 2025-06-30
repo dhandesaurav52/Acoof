@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, ShoppingCart, User, Heart } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,6 +36,11 @@ export function Header() {
   const { user, loading: authLoading, logout } = useAuth();
   const { wishlist, loading: wishlistLoading } = useWishlist();
   const { cartCount, loading: cartLoading } = useCart();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const navLinks = [
       ...defaultNavLinks,
@@ -123,7 +128,7 @@ export function Header() {
 
         <div className="flex flex-1 items-center justify-end gap-2">
            <div className="hidden md:flex items-center gap-2">
-            {cartLoading ? (
+            {!isMounted || cartLoading ? (
               <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
              <Button variant="ghost" size="icon" asChild>
@@ -138,14 +143,14 @@ export function Header() {
                 </Link>
              </Button>
             )}
-             {authLoading ? (
+             {!isMounted || authLoading ? (
                <div className="flex items-center gap-2">
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <Skeleton className="h-10 w-24" />
                 </div>
              ) : user ? (
                 <>
-                  {wishlistLoading ? (
+                  {!isMounted || wishlistLoading ? (
                     <Skeleton className="h-10 w-10 rounded-full" />
                   ) : (
                     <Button variant="ghost" size="icon" asChild>
@@ -189,7 +194,7 @@ export function Header() {
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                    <div className="mt-8 pt-4 border-t">
-                    {cartLoading ? (
+                    {!isMounted || cartLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (
                       <Link href="/cart" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
@@ -199,7 +204,7 @@ export function Header() {
                     )}
                   </div>
                   <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
-                     {authLoading ? (
+                     {!isMounted || authLoading ? (
                         <div className="space-y-4">
                           <Skeleton className="h-8 w-3/4" />
                           <Skeleton className="h-8 w-3/4" />
@@ -215,7 +220,7 @@ export function Header() {
                             <>
                                 <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
                                 <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
-                                {wishlistLoading ? (
+                                {!isMounted || wishlistLoading ? (
                                   <Skeleton className="h-8 w-32" />
                                 ): (
                                   <Link href="/dashboard/user/wishlist" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
