@@ -24,6 +24,8 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
   const productDescription = formData.get('productDescription') as string;
   const productPrice = formData.get('productPrice') as string;
   const productCategory = formData.get('productCategory') as string;
+  const productColors = formData.get('productColors') as string;
+  const productSizes = formData.get('productSizes') as string;
   const isNew = formData.get('isNew') === 'true';
   const imageFiles = formData.getAll('images') as File[];
 
@@ -59,7 +61,9 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
       category: productCategory as Product['category'],
       isNew,
       images: imageUrls,
-      aiHint: productName.toLowerCase()
+      aiHint: productName.toLowerCase(),
+      colors: productColors ? productColors.split(',').map(s => s.trim()).filter(Boolean) : [],
+      sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
     };
     
     // In a real app, this is where you would save the newProduct object to a database (e.g., Firestore).

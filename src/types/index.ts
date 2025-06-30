@@ -7,6 +7,8 @@ export interface Product {
   images: string[];
   isNew: boolean;
   aiHint: string;
+  colors: string[];
+  sizes: string[];
 }
 
 export type LookCategory = 'Streetwear' | 'Smart Casual' | 'Weekend' | 'Summer';

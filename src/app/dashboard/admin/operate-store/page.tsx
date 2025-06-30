@@ -33,6 +33,8 @@ export default function OperateStorePage() {
     const [productDescription, setProductDescription] = useState('');
     const [productPrice, setProductPrice] = useState('');
     const [productCategory, setProductCategory] = useState<Product['category'] | ''>('');
+    const [productColors, setProductColors] = useState('');
+    const [productSizes, setProductSizes] = useState('');
     const [isNew, setIsNew] = useState(true);
     const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
 
@@ -98,6 +100,8 @@ export default function OperateStorePage() {
             setProductDescription('');
             setProductPrice('');
             setProductCategory('');
+            setProductColors('');
+            setProductSizes('');
             setIsNew(true);
             setProductImageFiles([]);
         }
@@ -147,6 +151,18 @@ export default function OperateStorePage() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="product-colors">Colors</Label>
+                                    <Input id="product-colors" name="productColors" value={productColors} onChange={e => setProductColors(e.target.value)} placeholder="e.g., Red, Blue, Green" />
+                                    <p className="text-xs text-muted-foreground">Comma-separated values.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="product-sizes">Sizes</Label>
+                                    <Input id="product-sizes" name="productSizes" value={productSizes} onChange={e => setProductSizes(e.target.value)} placeholder="e.g., S, M, L, XL" />
+                                     <p className="text-xs text-muted-foreground">Comma-separated values.</p>
                                 </div>
                             </div>
                             <div className="space-y-2">

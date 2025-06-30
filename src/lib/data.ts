@@ -10,7 +10,9 @@ export const products: Product[] = [
     category: 'Tshirts',
     images: ['https://placehold.co/600x800.png'],
     isNew: true,
-    aiHint: 'white shirt'
+    aiHint: 'white shirt',
+    colors: ['White', 'Black', 'Gray'],
+    sizes: ['S', 'M', 'L', 'XL']
   },
   {
     id: 2,
@@ -20,7 +22,9 @@ export const products: Product[] = [
     category: 'Jeans',
     images: ['https://placehold.co/600x800.png'],
     isNew: true,
-    aiHint: 'denim jeans'
+    aiHint: 'denim jeans',
+    colors: ['Dark Wash', 'Light Wash', 'Black'],
+    sizes: ['30', '32', '34', '36']
   },
   {
     id: 3,
@@ -30,7 +34,9 @@ export const products: Product[] = [
     category: 'Shoes',
     images: ['https://placehold.co/600x800.png'],
     isNew: true,
-    aiHint: 'leather shoes'
+    aiHint: 'leather shoes',
+    colors: ['Black', 'Brown'],
+    sizes: ['9', '10', '11', '12']
   },
   {
     id: 4,
@@ -40,7 +46,9 @@ export const products: Product[] = [
     category: 'Shirts',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'graphic hoodie'
+    aiHint: 'graphic hoodie',
+    colors: ['Black', 'Heather Gray', 'Navy'],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
   {
     id: 5,
@@ -50,7 +58,9 @@ export const products: Product[] = [
     category: 'Trousers',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'cargo pants'
+    aiHint: 'cargo pants',
+    colors: ['Khaki', 'Olive', 'Black'],
+    sizes: ['S', 'M', 'L']
   },
   {
     id: 6,
@@ -60,7 +70,9 @@ export const products: Product[] = [
     category: 'Shoes',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'white sneakers'
+    aiHint: 'white sneakers',
+    colors: ['White', 'Black', 'Cream'],
+    sizes: ['8', '9', '10', '11', '12', '13']
   },
   {
     id: 7,
@@ -70,7 +82,9 @@ export const products: Product[] = [
     category: 'Shirts',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'linen shirt'
+    aiHint: 'linen shirt',
+    colors: ['Beige', 'White', 'Light Blue'],
+    sizes: ['S', 'M', 'L', 'XL']
   },
   {
     id: 8,
@@ -80,7 +94,9 @@ export const products: Product[] = [
     category: 'Bags',
     images: ['https://placehold.co/600x600.png'],
     isNew: true,
-    aiHint: 'tote bag'
+    aiHint: 'tote bag',
+    colors: ['Natural', 'Black'],
+    sizes: ['One Size']
   }
 ];
 

@@ -15,26 +15,44 @@ export default function ProductsPage() {
   const { products } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedColor, setSelectedColor] = useState('All');
+  const [selectedSize, setSelectedSize] = useState('All');
   const [sortOption, setSortOption] = useState('default');
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
+  
+  const availableColors = useMemo(() => {
+    const allColors = products.flatMap(p => p.colors || []);
+    return ['All', ...Array.from(new Set(allColors))];
+  }, [products]);
+
+  const availableSizes = useMemo(() => {
+    const allSizes = products.flatMap(p => p.sizes || []);
+    return ['All', ...Array.from(new Set(allSizes))];
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
     let filtered = products
       .filter(product => {
         // Category filter
-        if (selectedCategory === 'All') {
-          return true;
-        }
+        if (selectedCategory === 'All') return true;
         return product.category === selectedCategory;
       })
       .filter(product => {
+        // Color filter
+        if (selectedColor === 'All') return true;
+        return product.colors?.includes(selectedColor);
+      })
+      .filter(product => {
+        // Size filter
+        if (selectedSize === 'All') return true;
+        return product.sizes?.includes(selectedSize);
+      })
+      .filter(product => {
         // Search query filter
-        if (!searchQuery) {
-          return true;
-        }
+        if (!searchQuery) return true;
         const lowercasedQuery = searchQuery.toLowerCase();
         return (
           product.name.toLowerCase().includes(lowercasedQuery) ||
@@ -57,7 +75,7 @@ export default function ProductsPage() {
     }
 
     return sorted;
-  }, [searchQuery, products, selectedCategory, sortOption]);
+  }, [searchQuery, products, selectedCategory, selectedColor, selectedSize, sortOption]);
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -68,8 +86,8 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <div className="mb-12 max-w-2xl mx-auto flex flex-col sm:flex-row items-center gap-4">
-        <div className="relative flex-grow w-full">
+      <div className="mb-12 flex flex-col gap-4 max-w-4xl mx-auto">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="text"
@@ -79,37 +97,58 @@ export default function ProductsPage() {
             className="pl-10"
           />
         </div>
-        <div className="sm:w-1/3 w-full">
-           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by category" />
+        <div className="flex flex-col sm:flex-row gap-4">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Categories</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+           <Select value={selectedColor} onValueChange={setSelectedColor}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All Colors" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All">All Categories</SelectItem>
-              {categories.map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              {availableColors.map(color => (
+                <SelectItem key={color} value={color}>{color === 'All' ? 'All Colors' : color}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex-shrink-0">
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-10 w-10">
-                        <ListFilter className="h-4 w-4" />
-                        <span className="sr-only">Filter</span>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
-                        <DropdownMenuRadioItem value="default">Default</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-            </DropdownMenu>
+
+           <Select value={selectedSize} onValueChange={setSelectedSize}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All Sizes" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSizes.map(size => (
+                <SelectItem key={size} value={size}>{size === 'All' ? 'All Sizes' : size}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto flex-shrink-0">
+                      <ListFilter className="mr-2 h-4 w-4" />
+                      Sort
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+                      <DropdownMenuRadioItem value="default">Default</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
