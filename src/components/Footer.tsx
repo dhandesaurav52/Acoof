@@ -16,10 +16,10 @@ export function Footer() {
               Style Redefined. Dress with confidence.
             </p>
             <div className="flex gap-4 mt-4">
-              <Link href="#" className="text-muted-foreground hover:text-primary">
+              <Link href="https://m.facebook.com/acoof.in/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
                 <Facebook className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary">
+              <Link href="https://www.instagram.com/acoof/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
                 <Instagram className="h-5 w-5" />
               </Link>
               <Link href="#" className="text-muted-foreground hover:text-primary">
