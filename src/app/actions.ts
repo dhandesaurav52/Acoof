@@ -74,15 +74,22 @@ export async function deleteProduct(productId: string, imageUrls: string[]): Pro
     await remove(productRef);
 
     // Step 2: Delete associated images from Firebase Storage.
-    // Filter out placeholder images and only attempt to delete files from Firebase Storage.
     const imageDeletionPromises = imageUrls
       .filter(url => url && url.includes('firebasestorage.googleapis.com'))
       .map(url => {
-        const imageRef = storageRef(storage, url);
-        return deleteObject(imageRef);
+        try {
+          // Manually parse the file path from the full HTTPS URL to be more robust.
+          const imagePath = new URL(url).pathname.split('/o/')[1];
+          const decodedPath = decodeURIComponent(imagePath);
+          const imageRef = storageRef(storage, decodedPath);
+          return deleteObject(imageRef);
+        } catch (e) {
+          console.error(`Failed to parse URL or create storage ref for: ${url}`, e);
+          // Return a resolved promise to not break Promise.all for other valid URLs
+          return Promise.resolve(); 
+        }
       });
 
-    // Use Promise.all to wait for all deletions. If one fails, it will throw and be caught.
     if (imageDeletionPromises.length > 0) {
       await Promise.all(imageDeletionPromises);
     }
@@ -93,11 +100,12 @@ export async function deleteProduct(productId: string, imageUrls: string[]): Pro
     
     let errorMessage = 'An unknown error occurred during product deletion.';
     
-    // Provide specific error messages based on the error code.
     if (error.code === 'database/permission-denied') {
-      errorMessage = "Database permission denied. Please ensure your Realtime Database rules allow writes for the admin user.";
+      errorMessage = "Database permission denied. Please check your Realtime Database rules.";
     } else if (error.code === 'storage/unauthorized') {
-      errorMessage = "Storage permission denied. The product data was deleted, but its images could not be removed. Please check your Firebase Storage security rules.";
+      errorMessage = "Storage permission denied. The product data may have been deleted, but its images could not be removed. Please check your Firebase Storage security rules.";
+    } else if (error.code === 'storage/object-not-found') {
+        errorMessage = "Storage object not found. The product data was deleted, but an image was not found at the specified URL. It might have been deleted already.";
     } else {
       errorMessage = error.message || errorMessage;
     }
