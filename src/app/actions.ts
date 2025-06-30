@@ -65,14 +65,11 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
     const productsRef = dbRef(database, 'products');
     const newProductRef = push(productsRef);
     
-    if (!newProductRef) {
+    if (!newProductRef || !newProductRef.key) {
         throw new Error("Could not create a reference for a new product.");
     }
 
     const newProductId = newProductRef.key;
-    if (!newProductId) {
-      throw new Error("Could not generate a new product ID.");
-    }
 
     const newProduct: Product = {
       id: newProductId,
@@ -91,13 +88,34 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
 
     return { success: true, product: newProduct };
 
-  } catch (error: any) {
-    console.error('Failed to add product:', error);
-    // You can add more specific error checks here if needed, e.g., for permission errors.
-    // if (error.code === 'storage/unauthorized' || error.code === 'permission-denied') {
-    //   return { error: "Permission denied. Please check your Firebase security rules." };
-    // }
-    return { error: error.message || 'An unknown error occurred during product creation.' };
+  } catch (error: unknown) {
+    console.error('An error occurred in addProduct:', error);
+    
+    let errorMessage = 'An unexpected error occurred during product creation.';
+    
+    if (error instanceof Error) {
+        errorMessage = error.message;
+        // Check for Firebase specific error codes
+        const firebaseError = error as any;
+        if (firebaseError.code) {
+             switch (firebaseError.code) {
+                case 'storage/unauthorized':
+                case 'permission-denied':
+                  errorMessage = "Permission denied. Please check your Firebase security rules for Storage and/or Database.";
+                  break;
+                case 'storage/object-not-found':
+                  errorMessage = "File not found during upload. Please try again.";
+                  break;
+                default:
+                  errorMessage = `An error occurred: ${firebaseError.message}`;
+                  break;
+            }
+        }
+    } else if (typeof error === 'string') {
+        errorMessage = error;
+    }
+    
+    return { error: errorMessage };
   }
 }
 
