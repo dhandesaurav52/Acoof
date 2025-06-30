@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential, sendPasswordResetEmail as firebaseSendPasswordResetEmail } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,6 @@ interface AuthContextType {
   logout: () => void;
   uploadProfilePicture: (file: File) => Promise<void>;
   updateUserProfile: (data: { name?: string; email?: string }) => Promise<void>;
-  sendPasswordResetEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -109,11 +108,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await currentUser.reload();
     setUser(auth.currentUser ? { ...auth.currentUser } as User : null);
   };
-  
-  const sendPasswordResetEmail = async (email: string) => {
-    if (!auth) throw NOT_CONFIGURED_ERROR;
-    await firebaseSendPasswordResetEmail(auth, email);
-  };
 
   const logout = async () => {
     if (!auth) return;
@@ -125,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile, sendPasswordResetEmail };
+  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
