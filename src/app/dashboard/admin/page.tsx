@@ -4,18 +4,21 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database } from 'lucide-react';
+import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { Order, OrderStatus } from '@/types';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import type { Order, OrderStatus, Product } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { seedDatabase } from '@/app/actions';
+import { seedDatabase, deleteProduct } from '@/app/actions';
+import { useProducts } from '@/hooks/use-products';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialOrders: Order[] = [
     { 
@@ -96,6 +99,12 @@ export default function AdminDashboardPage() {
     const [isViewOrderOpen, setIsViewOrderOpen] = useState(false);
     const [updatedStatus, setUpdatedStatus] = useState<OrderStatus | null>(null);
 
+    // New state for product deletion
+    const { products, loading: productsLoading } = useProducts();
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+
     useEffect(() => {
         if (loading) return;
 
@@ -122,6 +131,30 @@ export default function AdminDashboardPage() {
             });
         }
         setIsSeeding(false);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!productToDelete) return;
+        setIsDeleting(true);
+
+        const { success, error } = await deleteProduct(productToDelete.id, productToDelete.images);
+
+        if (error) {
+            toast({
+                variant: 'destructive',
+                title: 'Deletion Failed',
+                description: error,
+            });
+        } else {
+            toast({
+                title: 'Product Deleted',
+                description: success,
+            });
+        }
+        
+        setIsDeleting(false);
+        setProductToDelete(null);
+        setIsAlertOpen(false);
     };
     
     if (loading || !user || user.email !== ADMIN_EMAIL) {
@@ -252,6 +285,42 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
+                {/* Manage Products Card - NEW */}
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Manage Products</CardTitle>
+                        <CardDescription>View and delete existing products from your store.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-72">
+                            <div className="space-y-4 pr-4">
+                                {productsLoading ? (
+                                    <div className="flex items-center justify-center h-full">
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : products.length > 0 ? (
+                                    products.map(product => (
+                                        <div key={product.id} className="flex items-center justify-between p-3 rounded-md hover:bg-secondary">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium truncate">{product.name}</p>
+                                                <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
+                                            </div>
+                                            <Button variant="destructive" size="icon" className="flex-shrink-0 ml-4" onClick={() => { setProductToDelete(product); setIsAlertOpen(true); }}>
+                                                <Trash2 className="h-4 w-4" />
+                                                <span className="sr-only">Delete {product.name}</span>
+                                            </Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex items-center justify-center h-full">
+                                        <p className="text-muted-foreground text-center">No products found.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Database Tools</CardTitle>
@@ -365,6 +434,33 @@ export default function AdminDashboardPage() {
             </DialogContent>
         </Dialog>
     )}
+
+    {/* Delete Confirmation Dialog - NEW */}
+    <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the product
+                    <span className="font-bold"> "{productToDelete?.name}" </span>
+                    and all of its associated images from the servers.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setProductToDelete(null)} disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                    {isDeleting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Deleting...
+                        </>
+                    ) : (
+                        "Delete Product"
+                    )}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }

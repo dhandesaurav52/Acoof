@@ -2,8 +2,9 @@
 'use server';
 
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
-import { database } from '@/lib/firebase';
-import { ref as dbRef, set, push, get } from "firebase/database";
+import { database, storage } from '@/lib/firebase';
+import { ref as dbRef, set, push, get, remove } from "firebase/database";
+import { ref as storageRef, deleteObject } from 'firebase/storage';
 import type { Product } from '@/types';
 import { products as staticProducts } from '@/lib/data';
 
@@ -58,6 +59,51 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
     if (error.code === 'database/permission-denied') {
       errorMessage = "Permission denied. Please check your Firebase Realtime Database security rules.";
     }
+    return { error: errorMessage };
+  }
+}
+
+export async function deleteProduct(productId: string, imageUrls: string[]): Promise<{ success?: string; error?: string; }> {
+  if (!database || !storage) {
+    return { error: 'Firebase is not configured. Cannot delete product.' };
+  }
+
+  try {
+    // 1. Delete images from Firebase Storage
+    const deleteImagePromises = imageUrls.map(url => {
+      // Don't try to delete placeholder images, as they don't exist in our storage
+      if (url.includes('placehold.co')) {
+        return Promise.resolve();
+      }
+      const imageRef = storageRef(storage, url);
+      return deleteObject(imageRef);
+    });
+    
+    await Promise.all(deleteImagePromises);
+
+    // 2. Delete product data from Realtime Database
+    const productRef = dbRef(database, `products/${productId}`);
+    await remove(productRef);
+
+    return { success: 'Product successfully deleted.' };
+  } catch (error: any) {
+    console.error('Product deletion failed:', error);
+    let errorMessage = 'An unknown error occurred during product deletion.';
+    
+    if (error.code === 'storage/object-not-found') {
+        // This can happen if an image was already deleted or the URL was invalid.
+        // We can often ignore this and proceed with deleting the database entry.
+        try {
+            const productRef = dbRef(database, `products/${productId}`);
+            await remove(productRef);
+            return { success: 'Product data deleted. Note: Some images were not found in storage and may have been deleted previously.' };
+        } catch (dbError: any) {
+            errorMessage = `Failed to delete product data from the database. Original error: ${dbError.message}`;
+        }
+    } else if (error.code === 'storage/unauthorized' || error.code === 'database/permission-denied') {
+        errorMessage = "Permission denied. Please check your Firebase security rules to ensure you have deletion permissions.";
+    }
+    
     return { error: errorMessage };
   }
 }
