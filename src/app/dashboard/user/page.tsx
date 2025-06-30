@@ -7,18 +7,20 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Edit, Home, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function UserDashboardPage() {
-  const { user, loading, uploadProfilePicture } = useAuth();
+  const { user, loading, uploadProfilePicture, updateUserProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const [userProfile, setUserProfile] = useState({
     name: '',
@@ -60,8 +62,30 @@ export default function UserDashboardPage() {
     setEditedUser(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSaveChanges = () => {
-    setUserProfile(editedUser);
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+      await updateUserProfile({
+        name: editedUser.name,
+        email: editedUser.email,
+      });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved.",
+      });
+      setIsEditDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.code === 'auth/requires-recent-login' 
+          ? 'This action requires a recent sign-in. Please log out and log in again.'
+          : error.message,
+      });
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCurrentLocation = () => {
@@ -117,7 +141,7 @@ export default function UserDashboardPage() {
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h1 className="text-4xl font-bold tracking-tighter font-headline">My Profile</h1>
-            <Dialog onOpenChange={(open) => { if (open) setEditedUser(userProfile)}}>
+            <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if(open) setEditedUser(userProfile); setIsEditDialogOpen(open); }}>
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Edit className="mr-2 h-4 w-4" />
@@ -166,12 +190,11 @@ export default function UserDashboardPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <DialogClose asChild>
-                    <Button type="submit" onClick={handleSaveChanges}>Save changes</Button>
-                  </DialogClose>
+                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+                  <Button type="submit" onClick={handleSaveChanges} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save changes
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

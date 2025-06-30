@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,7 @@ interface AuthContextType {
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
   uploadProfilePicture: (file: File) => Promise<void>;
+  updateUserProfile: (data: { name: string; email: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,11 +63,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     if (auth.currentUser) {
       const displayName = `${firstName} ${lastName}`;
-      // This update will be picked up by the onAuthStateChanged listener.
       await updateProfile(auth.currentUser, { displayName });
+      // Manually update state to ensure UI reflects new user name immediately
+      setUser(JSON.parse(JSON.stringify(auth.currentUser)));
     }
     return userCredential;
   }
+
+  const updateUserProfile = async (data: { name: string; email: string; }) => {
+    const currentUser = auth?.currentUser;
+    if (!auth || !currentUser) {
+        throw new Error("Firebase not configured or user not logged in.");
+    }
+
+    const updates: Promise<void>[] = [];
+    if (data.name && data.name !== currentUser.displayName) {
+        updates.push(updateProfile(currentUser, { displayName: data.name }));
+    }
+    if (data.email && data.email !== currentUser.email) {
+        updates.push(updateEmail(currentUser, data.email));
+    }
+
+    if (updates.length > 0) {
+        await Promise.all(updates);
+        // Manually trigger a state update because onAuthStateChanged might not fire for profile updates.
+        if (auth.currentUser) {
+          setUser(JSON.parse(JSON.stringify(auth.currentUser)));
+        }
+    }
+  };
 
   const uploadProfilePicture = async (file: File) => {
     const currentUser = auth?.currentUser;
@@ -77,9 +102,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     await uploadBytes(fileRef, file);
     const photoURL = await getDownloadURL(fileRef);
-    // This update will be picked up by the onAuthStateChanged listener,
-    // which will then update the user state throughout the app.
+    
     await updateProfile(currentUser, { photoURL });
+    if (auth.currentUser) {
+      setUser(JSON.parse(JSON.stringify(auth.currentUser)));
+    }
   };
 
   const logout = async () => {
@@ -92,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture };
+  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
