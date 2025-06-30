@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -11,7 +11,7 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email:string, password:string) => Promise<any>;
-  signupWithEmail: (email:string, password:string) => Promise<any>;
+  signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
 }
 
@@ -56,9 +56,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return signInWithEmailAndPassword(auth, email, password);
   }
 
-  const signupWithEmail = async (email: string, password: string) => {
+  const signupWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
     if (!auth) throw NOT_CONFIGURED_ERROR;
-    return createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+      await updateProfile(userCredential.user, {
+        displayName: `${firstName} ${lastName}`,
+      });
+    }
+    return userCredential;
   }
 
   const logout = async () => {
