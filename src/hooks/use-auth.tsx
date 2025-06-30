@@ -33,11 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
-      }
+      setUser(user);
       setLoading(false);
     });
 
@@ -64,29 +60,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signupWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
     if (!auth) throw NOT_CONFIGURED_ERROR;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    if (userCredential.user && auth.currentUser) {
-      await updateProfile(auth.currentUser, {
-        displayName: `${firstName} ${lastName}`,
-      });
-      // This will trigger a state update in listeners
-      setUser(auth.currentUser);
+    const user = userCredential.user;
+    if (user) {
+      const displayName = `${firstName} ${lastName}`;
+      await updateProfile(user, { displayName });
+      // Manually update the user state to reflect the new display name immediately
+      setUser({ ...user, displayName });
     }
     return userCredential;
   }
 
   const uploadProfilePicture = async (file: File) => {
-    if (!auth || !storage || !user) {
+    const currentUser = auth?.currentUser;
+    if (!auth || !storage || !currentUser) {
         throw new Error("Firebase not configured or user not logged in.");
     }
-    const fileRef = ref(storage, `profile-pictures/${user.uid}`);
+    const fileRef = ref(storage, `profile-pictures/${currentUser.uid}`);
     try {
       await uploadBytes(fileRef, file);
       const photoURL = await getDownloadURL(fileRef);
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { photoURL });
-        // This will trigger a state update in listeners
-        setUser(auth.currentUser);
-      }
+      await updateProfile(currentUser, { photoURL });
+      // Manually update the user state to reflect the new profile picture immediately
+      setUser({ ...currentUser, photoURL });
     } catch (error) {
       console.error("Error uploading profile picture", error);
       throw error;
