@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, type ChangeEvent } from 'react';
@@ -11,6 +12,10 @@ import type { Product } from '@/types';
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Product['category'] | null>(null);
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
 
   const filteredProducts = useMemo(() => {
     let filtered: Product[] = [...products];
@@ -34,10 +39,6 @@ export default function ProductsPage() {
       setSearchQuery('');
       setSelectedCategory(null);
   }
-
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
 
   return (
     <div className="container mx-auto py-12 px-4">
