@@ -79,6 +79,7 @@ export default function OperateStorePage() {
         setIsSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
+        formData.append('isNew', String(isNew));
         
         const result = await addProductAction(formData);
 
