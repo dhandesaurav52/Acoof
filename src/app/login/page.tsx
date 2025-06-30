@@ -14,18 +14,32 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
 const ADMIN_EMAIL = "admin@example.com";
+const ADMIN_PASSWORD = "admin@12345";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
-  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, loginWithGoogle, signupWithEmail } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // One-time auto-signup for the admin user for convenience
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        try {
+          // Try to sign up the admin user. If they already exist, this will fail.
+          await signupWithEmail(email, password, "Admin", "User");
+        } catch (error: any) {
+          // We can ignore the "email-already-in-use" error and proceed to login.
+          if (error.code !== 'auth/email-already-in-use') {
+            throw error; // For other signup errors, we should stop.
+          }
+        }
+      }
+      
       const userCredential = await loginWithEmail(email, password);
       if (userCredential.user.email === ADMIN_EMAIL) {
         router.push('/dashboard/admin');
