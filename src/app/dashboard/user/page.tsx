@@ -8,14 +8,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Home, Mail, Phone, User } from "lucide-react";
+import { Edit, Home, Mail, Phone, User, MapPin } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function UserDashboardPage() {
+  const { toast } = useToast();
+
   const [user, setUser] = useState({
     name: 'Sofia Davis',
     email: 'sofia.davis@example.com',
     phone: '+1 (555) 123-4567',
-    address: '123 Dream Lane, Styleville, ST 12345',
+    address: '123 Dream Lane',
+    city: 'Styleville',
+    state: 'CA',
     avatar: 'https://placehold.co/100x100.png',
     initials: 'SD'
   });
@@ -29,6 +34,19 @@ export default function UserDashboardPage() {
 
   const handleSaveChanges = () => {
     setUser(editedUser);
+  };
+
+  const handleCurrentLocation = () => {
+    // Mocking getting user's location
+    setEditedUser(prev => ({
+        ...prev,
+        city: 'San Francisco',
+        state: 'CA'
+    }));
+    toast({
+        title: "Location Updated",
+        description: "City and State have been set to your current location."
+    });
   };
 
   return (
@@ -75,6 +93,24 @@ export default function UserDashboardPage() {
                     </Label>
                     <Input id="address" value={editedUser.address} onChange={handleInputChange} className="col-span-3" />
                   </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="city" className="text-right">
+                      City
+                    </Label>
+                    <Input id="city" value={editedUser.city} onChange={handleInputChange} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="state" className="text-right">
+                      State
+                    </Label>
+                    <Input id="state" value={editedUser.state} onChange={handleInputChange} className="col-span-3" />
+                  </div>
+                  <div className="col-span-4 flex justify-end">
+                    <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm">
+                        <MapPin className="mr-2 h-4 w-4" />
+                        Use current location
+                    </Button>
+                  </div>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
@@ -118,7 +154,7 @@ export default function UserDashboardPage() {
               <div className="flex items-center gap-4">
                 <Home className="h-5 w-5 text-muted-foreground" />
                 <span className="w-32 text-muted-foreground">Address</span>
-                <span className="text-foreground font-medium">{user.address}</span>
+                <span className="text-foreground font-medium">{`${user.address}, ${user.city}, ${user.state}`}</span>
               </div>
           </CardContent>
         </Card>
