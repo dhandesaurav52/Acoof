@@ -37,30 +37,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }, [toast]);
 
     const removeFromCart = useCallback((productId: number) => {
-        setCart(prevCart => {
-            const product = prevCart.find(p => p.id === productId);
-            if (product) {
-                 toast({ title: "Removed from Cart", description: `${product.name} has been removed from your cart.` });
-            }
-            return prevCart.filter(item => item.id !== productId);
-        });
-    }, [toast]);
+        const product = cart.find(p => p.id === productId);
+        if (product) {
+            setCart(prevCart => prevCart.filter(item => item.id !== productId));
+            toast({ title: "Removed from Cart", description: `${product.name} has been removed from your cart.` });
+        }
+    }, [cart, toast]);
 
     const updateQuantity = useCallback((productId: number, quantity: number) => {
-        setCart(prevCart => {
-            if (quantity <= 0) {
-                // Remove item if quantity is 0 or less
-                const product = prevCart.find(p => p.id === productId);
-                if (product) {
-                    toast({ title: "Removed from Cart", description: `${product.name} has been removed from your cart.` });
-                }
-                return prevCart.filter(item => item.id !== productId);
+        if (quantity <= 0) {
+            const product = cart.find(p => p.id === productId);
+            if (product) {
+                toast({ title: "Removed from Cart", description: `${product.name} has been removed from your cart.` });
             }
-            return prevCart.map(item =>
-                item.id === productId ? { ...item, quantity } : item
+            setCart(prevCart => prevCart.filter(item => item.id !== productId));
+        } else {
+            setCart(prevCart =>
+                prevCart.map(item =>
+                    item.id === productId ? { ...item, quantity } : item
+                )
             );
-        });
-    }, [toast]);
+        }
+    }, [cart, toast]);
 
     const clearCart = useCallback(() => {
         setCart([]);
