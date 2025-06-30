@@ -69,7 +69,7 @@ export function Header() {
           <Link href="/dashboard/user">Your profile</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/user">Your orders</Link>
+          <Link href="/dashboard/user/orders">Your orders</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard/admin">Admin</Link>
@@ -142,7 +142,7 @@ export function Header() {
                      ) : user ? (
                        <>
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
-                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
+                        <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
                         <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin</Link>
                         <Link href="/dashboard/settings" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
                         <button onClick={handleLogout} className="text-lg text-left">Logout</button>
