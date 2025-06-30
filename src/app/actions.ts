@@ -22,16 +22,17 @@ export async function getAiSuggestions(browsingHistory: string) {
 }
 
 export async function addProduct(formData: FormData): Promise<{ success?: boolean; error?: string; product?: Product }> {
-  const productName = formData.get('productName') as string;
-  const productDescription = formData.get('productDescription') as string;
-  const productPrice = formData.get('productPrice') as string;
-  const productCategory = formData.get('productCategory') as string;
-  const productColors = formData.get('productColors') as string;
-  const productSizes = formData.get('productSizes') as string;
-  const isNew = formData.get('isNew') === 'true';
-
-  if (!productName || !productDescription || !productPrice || !productCategory) {
-    return { error: 'Please fill out all required fields.' };
+  // Rigorous validation at the start
+  const productName = formData.get('productName');
+  const productDescription = formData.get('productDescription');
+  const productPrice = formData.get('productPrice');
+  const productCategory = formData.get('productCategory');
+  
+  if (typeof productName !== 'string' || !productName ||
+      typeof productDescription !== 'string' || !productDescription ||
+      typeof productPrice !== 'string' || !productPrice ||
+      typeof productCategory !== 'string' || !productCategory) {
+    return { error: 'Required fields are missing or have an invalid type.' };
   }
 
   const price = parseFloat(productPrice);
@@ -45,17 +46,16 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
 
   try {
     let imageUrls: string[] = [];
-    
     const imageFileEntries = formData.getAll('images');
     const validImageFiles = imageFileEntries.filter(
-        (entry): entry is File => entry instanceof File && entry.size > 0
+      (entry): entry is File => entry instanceof File && entry.size > 0
     );
 
     if (validImageFiles.length > 0) {
       const uploadPromises = validImageFiles.map(async (file) => {
-        const fileStorageRef = storageRef(storage, `products/${Date.now()}-${file.name}`);
-        await uploadBytes(fileStorageRef, file);
-        return getDownloadURL(fileStorageRef);
+        const fileRef = storageRef(storage, `products/${Date.now()}-${file.name}`);
+        await uploadBytes(fileRef, file);
+        return await getDownloadURL(fileRef);
       });
       imageUrls = await Promise.all(uploadPromises);
     } else {
@@ -65,11 +65,13 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
     const productsRef = dbRef(database, 'products');
     const newProductRef = push(productsRef);
     
-    if (!newProductRef || !newProductRef.key) {
-        throw new Error("Could not create a reference for a new product.");
+    if (!newProductRef.key) {
+      throw new Error("Could not create a reference for a new product in the database.");
     }
-
     const newProductId = newProductRef.key;
+    
+    const productColorsRaw = formData.get('productColors');
+    const productSizesRaw = formData.get('productSizes');
 
     const newProduct: Product = {
       id: newProductId,
@@ -77,11 +79,11 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
       description: productDescription,
       price: price,
       category: productCategory as Product['category'],
-      isNew,
+      isNew: formData.get('isNew') === 'true',
       images: imageUrls,
       aiHint: productName.toLowerCase(),
-      colors: productColors ? productColors.split(',').map(s => s.trim()).filter(Boolean) : [],
-      sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
+      colors: typeof productColorsRaw === 'string' && productColorsRaw ? productColorsRaw.split(',').map(s => s.trim()).filter(Boolean) : [],
+      sizes: typeof productSizesRaw === 'string' && productSizesRaw ? productSizesRaw.split(',').map(s => s.trim()).filter(Boolean) : [],
     };
     
     await set(newProductRef, newProduct);
@@ -92,22 +94,20 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
     console.error('An error occurred in addProduct:', error);
     
     let errorMessage = 'An unexpected error occurred during product creation.';
-    
     if (error instanceof Error) {
         errorMessage = error.message;
-        // Check for Firebase specific error codes
         const firebaseError = error as any;
         if (firebaseError.code) {
              switch (firebaseError.code) {
                 case 'storage/unauthorized':
-                case 'permission-denied':
-                  errorMessage = "Permission denied. Please check your Firebase security rules for Storage and/or Database.";
+                case 'storage/permission-denied':
+                  errorMessage = "Permission denied for Firebase Storage. Please check your security rules.";
                   break;
-                case 'storage/object-not-found':
-                  errorMessage = "File not found during upload. Please try again.";
-                  break;
+                case 'database/permission-denied':
+                   errorMessage = "Permission denied for Firebase Database. Please check your security rules.";
+                   break;
                 default:
-                  errorMessage = `An error occurred: ${firebaseError.message}`;
+                  errorMessage = `A Firebase error occurred: ${firebaseError.code} - ${firebaseError.message}`;
                   break;
             }
         }
@@ -134,18 +134,24 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
 
     const productsToSeed: { [key: string]: Product } = {};
     staticProducts.forEach(product => {
-      const newProductRef = push(productsRef); // Generate a unique key
+      const newProductRef = push(productsRef);
       const newId = newProductRef.key;
       if (newId) {
         productsToSeed[newId] = { ...product, id: newId };
       }
     });
     
-    await set(productsRef, productsToSeed);
+    if(Object.keys(productsToSeed).length > 0) {
+      await set(productsRef, productsToSeed);
+    }
 
     return { success: `Successfully seeded ${staticProducts.length} products.` };
   } catch (error: any) {
     console.error('Database seeding failed:', error);
-    return { error: 'An unknown error occurred during database seeding.' };
+    let errorMessage = 'An unknown error occurred during database seeding.';
+    if (error.code === 'database/permission-denied') {
+      errorMessage = "Permission denied. Please check your Firebase Realtime Database security rules.";
+    }
+    return { error: errorMessage };
   }
 }
