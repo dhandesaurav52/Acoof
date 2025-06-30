@@ -20,7 +20,7 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const navLinks = [
+const defaultNavLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
   { href: "/lookbook", label: "Lookbook" },
@@ -32,6 +32,11 @@ export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, loading, logout } = useAuth();
+
+  const navLinks = [
+      ...defaultNavLinks,
+      ...(user?.email === ADMIN_EMAIL ? [{ href: "/dashboard/admin/operate-store", label: "Operate Store" }] : [])
+  ];
 
   const handleLogout = () => {
     logout();
