@@ -60,7 +60,13 @@ export function Header() {
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/user">Dashboard</Link>
+          <Link href="/dashboard/user">Your profile</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user">Your orders</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user">Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem>Logout</DropdownMenuItem>
@@ -116,7 +122,9 @@ export function Header() {
                   <div className="flex flex-col gap-4 mt-8 pt-4 border-t">
                      {isLoggedIn ? (
                        <>
-                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
+                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
+                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
                         <button onClick={() => {setIsLoggedIn(false); setIsMenuOpen(false);}} className="text-lg text-left">Logout</button>
                        </>
                      ) : (
