@@ -4,8 +4,9 @@
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
 import { storage, database } from '@/lib/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { ref as dbRef, set, push } from "firebase/database";
+import { ref as dbRef, set, push, get } from "firebase/database";
 import type { Product } from '@/types';
+import { products as staticProducts } from '@/lib/data';
 
 export async function getAiSuggestions(browsingHistory: string) {
   try {
@@ -89,5 +90,34 @@ export async function addProduct(formData: FormData): Promise<{ success?: boolea
   } catch (error: any) {
     console.error('Failed to add product:', error);
     return { error: error.message || 'An unknown error occurred during product creation.' };
+  }
+}
+
+export async function seedDatabase(): Promise<{ success?: string; error?: string; }> {
+  if (!database) {
+    return { error: 'Firebase is not configured. Cannot seed database.' };
+  }
+
+  const productsRef = dbRef(database, 'products');
+  
+  try {
+    const snapshot = await get(productsRef);
+    if (snapshot.exists()) {
+      return { error: 'Database already contains products. Seeding aborted.' };
+    }
+
+    const productsToSeed: { [key: string]: Product } = {};
+    staticProducts.forEach(product => {
+      const newProductRef = push(productsRef); // Generate a unique key
+      const newId = newProductRef.key!;
+      productsToSeed[newId] = { ...product, id: newId };
+    });
+    
+    await set(productsRef, productsToSeed);
+
+    return { success: `Successfully seeded ${staticProducts.length} products.` };
+  } catch (error: any) {
+    console.error('Database seeding failed:', error);
+    return { error: 'An unknown error occurred during database seeding.' };
   }
 }

@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin } from 'lucide-react';
+import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,8 @@ import type { Order, OrderStatus } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { seedDatabase } from '@/app/actions';
 
 const initialOrders: Order[] = [
     { 
@@ -87,13 +89,15 @@ const ADMIN_EMAIL = "admin@example.com";
 export default function AdminDashboardPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
+    const [isSeeding, setIsSeeding] = useState(false);
     const [orders, setOrders] = useState<Order[]>(initialOrders);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isViewOrderOpen, setIsViewOrderOpen] = useState(false);
     const [updatedStatus, setUpdatedStatus] = useState<OrderStatus | null>(null);
 
     useEffect(() => {
-        if (loading) return; // Wait until loading is finished
+        if (loading) return;
 
         if (!user) {
             router.push('/login');
@@ -101,6 +105,24 @@ export default function AdminDashboardPage() {
             router.push('/dashboard/user');
         }
     }, [user, loading, router]);
+
+    const handleSeedDatabase = async () => {
+        setIsSeeding(true);
+        const result = await seedDatabase();
+        if (result.error) {
+            toast({
+                variant: 'destructive',
+                title: 'Database Seeding Failed',
+                description: result.error,
+            });
+        } else {
+            toast({
+                title: 'Database Seeding Successful',
+                description: result.success,
+            });
+        }
+        setIsSeeding(false);
+    };
     
     if (loading || !user || user.email !== ADMIN_EMAIL) {
         return (
@@ -182,52 +204,72 @@ export default function AdminDashboardPage() {
                 </Card>
             </div>
             
-            {/* Recent Orders Table */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Recent Orders</CardTitle>
-                    <CardDescription>A list of the most recent orders.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Order ID</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Total</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {orders.map((order) => (
-                        <TableRow key={order.id}>
-                            <TableCell className="font-medium">{order.id}</TableCell>
-                            <TableCell>{order.user}</TableCell>
-                            <TableCell>{order.date}</TableCell>
-                            <TableCell>${order.total.toFixed(2)}</TableCell>
-                            <TableCell>
-                            <Badge 
-                                variant={
-                                    order.status === 'Pending' ? 'destructive' :
-                                    order.status === 'Shipped' ? 'default' :
-                                    order.status === 'Delivered' ? 'secondary' :
-                                    'outline'
-                                }
-                            >
-                                {order.status}
-                            </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="link" size="sm" onClick={() => handleViewOrder(order)}>View Order</Button>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Recent Orders Table */}
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Recent Orders</CardTitle>
+                        <CardDescription>A list of the most recent orders.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Order ID</TableHead>
+                                <TableHead>Customer</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Total</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {orders.map((order) => (
+                            <TableRow key={order.id}>
+                                <TableCell className="font-medium">{order.id}</TableCell>
+                                <TableCell>{order.user}</TableCell>
+                                <TableCell>{order.date}</TableCell>
+                                <TableCell>${order.total.toFixed(2)}</TableCell>
+                                <TableCell>
+                                <Badge 
+                                    variant={
+                                        order.status === 'Pending' ? 'destructive' :
+                                        order.status === 'Shipped' ? 'default' :
+                                        order.status === 'Delivered' ? 'secondary' :
+                                        'outline'
+                                    }
+                                >
+                                    {order.status}
+                                </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="link" size="sm" onClick={() => handleViewOrder(order)}>View Order</Button>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Database Tools</CardTitle>
+                        <CardDescription>One-time actions to manage store data.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col items-start gap-4">
+                            <Button onClick={handleSeedDatabase} disabled={isSeeding}>
+                                {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                                Seed Initial Products
+                            </Button>
+                            <p className="text-xs text-muted-foreground">
+                                Use this to populate your database with the initial 8 products. This action will only work if your products collection is empty.
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
 
         </div>
     </div>
