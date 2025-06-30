@@ -22,7 +22,7 @@ export default function Home() {
       <section className="relative h-[90vh] min-h-[600px] flex items-center">
         <div className="absolute inset-0">
             <Image 
-                src="https://placehold.co/1920x1080.png" 
+                src="https://images.pexels.com/photos/6626999/pexels-photo-6626999.jpeg" 
                 alt="Hero background" 
                 fill
                 className="object-cover object-center"
