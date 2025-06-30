@@ -80,16 +80,6 @@ export const products: Product[] = [
     image: 'https://placehold.co/600x600.png',
     isNew: true,
     aiHint: 'tote bag'
-  },
-  {
-    id: 9,
-    name: 'Aviator Sunglasses',
-    description: 'Timeless aviator sunglasses with UV protection.',
-    price: 45.0,
-    category: 'Accessories',
-    image: 'https://placehold.co/600x400.png',
-    isNew: false,
-    aiHint: 'sunglasses fashion'
   }
 ];
 
@@ -119,9 +109,9 @@ export const looks: Look[] = [
         id: 4,
         name: 'Summer Vibe',
         image: 'https://placehold.co/800x1000.png',
-        products: [1, 8, 9],
+        products: [1, 8],
         aiHint: 'summer style'
     }
 ];
 
-export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Accessories', 'Bags', 'Belts', 'Socks', 'Wallets'];
+export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Bags', 'Belts', 'Socks', 'Wallets'];
