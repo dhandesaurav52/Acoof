@@ -1,18 +1,34 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/types";
 import { Button } from "./ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Heart } from "lucide-react";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isFavorited = isInWishlist(product.id);
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation(); // Prevent card click
+    if (isFavorited) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
+
   return (
-    <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-secondary border-secondary">
+    <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 bg-secondary border-secondary group">
       <CardHeader className="p-0">
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-lg">
           <Image
@@ -24,8 +40,17 @@ export function ProductCard({ product }: ProductCardProps) {
             data-ai-hint={product.aiHint}
           />
           {product.isNew && (
-            <Badge className="absolute right-3 top-3" variant="default">NEW</Badge>
+            <Badge className="absolute left-3 top-3" variant="default">NEW</Badge>
           )}
+           <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute right-2 top-2 h-8 w-8 rounded-full bg-background/50 text-foreground hover:bg-background/75"
+            onClick={handleFavoriteClick}
+            aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
+           >
+              <Heart className={cn("h-5 w-5", isFavorited && "fill-primary text-primary")} />
+           </Button>
            <Link href={`/products#${product.id}`} className="absolute inset-0" aria-label={product.name} />
         </div>
       </CardHeader>

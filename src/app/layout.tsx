@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/hooks/use-auth';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ProductsProvider } from '@/hooks/use-products';
+import { WishlistProvider } from '@/hooks/use-wishlist';
 
 export default function RootLayout({
   children,
@@ -33,10 +34,12 @@ export default function RootLayout({
         >
           <AuthProvider>
             <ProductsProvider>
-              <Header />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-              <Toaster />
+              <WishlistProvider>
+                <Header />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+                <Toaster />
+              </WishlistProvider>
             </ProductsProvider>
           </AuthProvider>
         </ThemeProvider>

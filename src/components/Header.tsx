@@ -89,6 +89,9 @@ export function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/user/orders">Your orders</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/user/wishlist">Wishlist</Link>
+                </DropdownMenuItem>
             </>
         )}
         <DropdownMenuItem asChild>
@@ -170,6 +173,7 @@ export function Header() {
                             <>
                                 <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
                                 <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
+                                <Link href="/dashboard/user/wishlist" className="text-lg" onClick={() => setIsMenuOpen(false)}>Wishlist</Link>
                             </>
                         )}
                         <Link href="/dashboard/notifications" className="text-lg" onClick={() => setIsMenuOpen(false)}>Notifications</Link>
