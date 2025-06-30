@@ -1,3 +1,4 @@
+
 export interface Product {
   id: number;
   name: string;
@@ -10,6 +11,8 @@ export interface Product {
   colors: string[];
   sizes: string[];
 }
+
+export type CartItem = Product & { quantity: number };
 
 export type LookCategory = 'Streetwear' | 'Smart Casual' | 'Weekend' | 'Summer';
 

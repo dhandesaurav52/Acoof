@@ -9,6 +9,7 @@ import { AuthProvider } from '@/hooks/use-auth';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ProductsProvider } from '@/hooks/use-products';
 import { WishlistProvider } from '@/hooks/use-wishlist';
+import { CartProvider } from '@/hooks/use-cart';
 
 export default function RootLayout({
   children,
@@ -35,10 +36,12 @@ export default function RootLayout({
           <AuthProvider>
             <ProductsProvider>
               <WishlistProvider>
-                <Header />
-                <main className="flex-grow">{children}</main>
-                <Footer />
-                <Toaster />
+                <CartProvider>
+                  <Header />
+                  <main className="flex-grow">{children}</main>
+                  <Footer />
+                  <Toaster />
+                </CartProvider>
               </WishlistProvider>
             </ProductsProvider>
           </AuthProvider>

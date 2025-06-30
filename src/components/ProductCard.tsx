@@ -7,6 +7,7 @@ import type { Product } from "@/types";
 import { Button } from "./ui/button";
 import { ShoppingCart, Heart } from "lucide-react";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
@@ -15,6 +16,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addToCart } = useCart();
   const isFavorited = isInWishlist(product.id);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -25,6 +27,12 @@ export function ProductCard({ product }: ProductCardProps) {
     } else {
       addToWishlist(product);
     }
+  };
+
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
   };
 
   return (
@@ -64,7 +72,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <p className="text-lg font-semibold text-primary">${product.price.toFixed(2)}</p>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" onClick={handleAddToCartClick}>
           <ShoppingCart className="h-4 w-4" />
           <span className="sr-only">Add to Cart</span>
         </Button>

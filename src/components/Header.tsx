@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useCart } from "@/hooks/use-cart";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const defaultNavLinks = [
@@ -34,6 +35,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, loading, logout } = useAuth();
   const { wishlist } = useWishlist();
+  const { cartCount } = useCart();
 
   const navLinks = [
       ...defaultNavLinks,
@@ -121,9 +123,16 @@ export function Header() {
 
         <div className="flex flex-1 items-center justify-end gap-2">
            <div className="hidden md:flex items-center gap-2">
-             <Button variant="ghost" size="icon">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="sr-only">Shopping Cart</span>
+             <Button variant="ghost" size="icon" asChild>
+                <Link href="/cart" className="relative">
+                    <ShoppingCart className="h-5 w-5" />
+                    {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                            {cartCount}
+                        </span>
+                    )}
+                    <span className="sr-only">Shopping Cart</span>
+                </Link>
              </Button>
              {loading ? (
                <div className="flex items-center gap-2">
@@ -171,7 +180,13 @@ export function Header() {
                     <Logo className="h-10 w-auto" />
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
-                  <div className="flex flex-col gap-4 mt-8 pt-4 border-t">
+                   <div className="mt-8 pt-4 border-t">
+                      <Link href="/cart" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                          <ShoppingCart className="h-5 w-5" />
+                          <span>Cart ({cartCount})</span>
+                      </Link>
+                  </div>
+                  <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
                      {loading ? (
                         <div className="space-y-4">
                           <Skeleton className="h-8 w-3/4" />
