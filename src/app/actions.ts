@@ -64,12 +64,14 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
 }
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
+    console.log('--- Attempting to create Razorpay Order on the server ---');
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
     if (!keyId || !keySecret) {
-        console.error("Razorpay API keys not found in .env file.");
-        return { error: "Payment gateway is not configured on the server. Please contact support." };
+        const errorMessage = "Payment gateway is not configured on the server. One or more Razorpay API keys are missing from the .env file. Please check that `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are both set.";
+        console.error('createRazorpayOrder Error:', errorMessage);
+        return { error: errorMessage };
     }
 
     const amountInPaise = Math.round(amount * 100);
@@ -90,19 +92,25 @@ export async function createRazorpayOrder(amount: number, receiptId?: string): P
             currency: 'INR',
             receipt,
         };
-
+        
+        console.log('Razorpay Order Options:', options);
         const order = await razorpay.orders.create(options);
+        console.log('--- Razorpay Order Created Successfully ---');
         return {
             id: order.id,
             amount: order.amount,
             currency: order.currency,
         };
     } catch (error: any) {
-        console.error('Razorpay order creation failed:', error);
+        // This is the most important log. It will show the exact error from Razorpay.
+        console.error('\n\n--- RAZORPAY ORDER CREATION FAILED ---');
+        console.error('Full Error Object:', JSON.stringify(error, null, 2));
+        console.error('--- END OF RAZORPAY ERROR ---\n\n');
+
         if (error.statusCode === 401) {
             return { error: "Authentication with Razorpay failed. This is almost always due to an incorrect 'RAZORPAY_KEY_ID' or 'RAZORPAY_KEY_SECRET'. Please meticulously check them for typos, extra spaces, and ensure you are using the correct keys for your account's mode (Test vs. Live)." };
         }
-        return { error: 'Failed to create payment order. The payment gateway might be experiencing issues.' };
+        return { error: `Failed to create payment order. The payment gateway responded with: ${error.error?.description || 'An unknown error'}` };
     }
 }
 
