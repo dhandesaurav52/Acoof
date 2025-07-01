@@ -7,7 +7,7 @@ import { ref as dbRef, set, push, get } from "firebase/database";
 import type { Product, Order } from '@/types';
 import { products as staticProducts } from '@/lib/data';
 import Razorpay from 'razorpay';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHmac } from 'crypto';
 
 export async function getAiSuggestions(browsingHistory: string) {
   try {
@@ -112,9 +112,7 @@ export async function verifyRazorpayPayment(data: {
   const { orderId, paymentId, signature } = data;
   const body = orderId + "|" + paymentId;
   
-  const crypto = require('crypto');
-  const expectedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+  const expectedSignature = createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(body.toString())
     .digest('hex');
 

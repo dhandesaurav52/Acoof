@@ -113,9 +113,9 @@ export default function CartPage() {
                 setIsProcessing(false);
             },
             prefill: {
-                name: user.displayName,
-                email: user.email,
-                contact: user.phone,
+                name: user.displayName || '',
+                email: user.email || '',
+                contact: user.phone || '',
             },
             theme: {
                 color: '#FF9800',

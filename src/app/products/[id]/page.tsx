@@ -140,9 +140,9 @@ export default function ProductDetailPage() {
                 setIsProcessing(false);
             },
             prefill: {
-                name: user.displayName,
-                email: user.email,
-                contact: user.phone,
+                name: user.displayName || '',
+                email: user.email || '',
+                contact: user.phone || '',
             },
             theme: {
                 color: '#FF9800',
