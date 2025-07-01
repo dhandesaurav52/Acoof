@@ -77,17 +77,34 @@ export default function AdminDashboardPage() {
         return { error: 'Firebase is not configured. Cannot delete product.' };
       }
 
+      // First, try to remove the database entry. If this fails, we shouldn't proceed.
+      try {
+        const productRef = dbRef(database, `products/${productId}`);
+        await remove(productRef);
+      } catch (error: any) {
+        console.error('Database deletion failed:', error);
+        if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
+          return { error: "Database permission denied. Please check your Realtime Database security rules." };
+        }
+        return { error: `An unexpected error occurred while deleting product data: ${error.message}` };
+      }
+
+      // If database deletion was successful, proceed to delete images.
       const imageDeletionPromises = imageUrls
         .filter(url => url && url.includes('firebasestorage.googleapis.com'))
         .map(url => {
           try {
+            // It's safer to create the ref from the URL directly
             const imageRef = storageRef(storage, url);
             return deleteObject(imageRef).catch(err => {
+                // If the image doesn't exist, we can safely ignore the error.
                 if (err.code === 'storage/object-not-found') {
                     console.warn(`Image not found, skipping deletion: ${url}`);
                     return null;
                 }
-                throw err;
+                // For other errors, we should be aware of them.
+                console.error(`Failed to delete image ${url}:`, err);
+                throw err; // Re-throw to be caught by Promise.allSettled
             });
           } catch (e) {
             console.error(`Invalid storage URL, skipping deletion: ${url}`, e);
@@ -103,26 +120,17 @@ export default function AdminDashboardPage() {
 
           if (failedDeletions.length > 0) {
               const firstError = (failedDeletions[0] as PromiseRejectedResult).reason;
-              let errorMessage = "Failed to remove one or more images.";
+              let errorMessage = "Product data was deleted, but failed to remove one or more images.";
               if (firstError?.code === 'storage/unauthorized') {
-                  errorMessage = "Storage permission was denied for image removal. Please check your Firebase Storage security rules.";
+                  errorMessage = "Product data was deleted, but Storage permission was denied for image removal. Check your Storage rules.";
               }
-              return { error: errorMessage };
+              // We return a 'success' message here because the primary action (DB deletion) succeeded.
+              // The toast will still be 'destructive' to alert the admin.
+              toast({ variant: 'destructive', title: 'Partial Deletion', description: errorMessage });
           }
       }
 
-      try {
-        const productRef = dbRef(database, `products/${productId}`);
-        await remove(productRef);
-      } catch (error: any) {
-        console.error('Database deletion failed:', error);
-        if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
-          return { error: "Database permission was denied for product data. Please check your Realtime Database security rules." };
-        }
-        return { error: `An unexpected error occurred while deleting product data: ${error.message}` };
-      }
-
-      return { success: 'Product and associated images were successfully deleted.' };
+      return { success: 'Product was successfully deleted.' };
     }
 
     const handleConfirmDelete = async () => {
@@ -193,7 +201,7 @@ export default function AdminDashboardPage() {
                         <BarChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$0.00</div>
+                        <div className="text-2xl font-bold">₹0.00</div>
                         <p className="text-xs text-muted-foreground">No revenue data yet</p>
                     </CardContent>
                 </Card>
@@ -257,7 +265,7 @@ export default function AdminDashboardPage() {
                                     <TableCell className="font-medium">{order.id}</TableCell>
                                     <TableCell>{order.user}</TableCell>
                                     <TableCell>{order.date}</TableCell>
-                                    <TableCell>${order.total.toFixed(2)}</TableCell>
+                                    <TableCell>₹{order.total.toFixed(2)}</TableCell>
                                     <TableCell>
                                     <Badge 
                                         variant={
@@ -305,7 +313,7 @@ export default function AdminDashboardPage() {
                                         <div key={product.id} className="flex items-center justify-between p-3 rounded-md hover:bg-secondary">
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium truncate">{product.name}</p>
-                                                <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
+                                                <p className="text-sm text-muted-foreground">₹{product.price.toFixed(2)}</p>
                                             </div>
                                             <Button variant="destructive" size="icon" className="flex-shrink-0 ml-4" onClick={() => { setProductToDelete(product); setIsAlertOpen(true); }}>
                                                 <Trash2 className="h-4 w-4" />
@@ -399,7 +407,7 @@ export default function AdminDashboardPage() {
                                 <Separator />
                                 <div className="flex justify-between font-bold text-lg">
                                     <span className="text-primary">Total Amount</span>
-                                    <span className="text-primary">${selectedOrder.total.toFixed(2)}</span>
+                                    <span className="text-primary">₹{selectedOrder.total.toFixed(2)}</span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -421,8 +429,8 @@ export default function AdminDashboardPage() {
                                     <TableRow key={item.productId}>
                                         <TableCell className="font-medium">{item.productName}</TableCell>
                                         <TableCell className="text-center">{item.quantity}</TableCell>
-                                        <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-medium">${(item.quantity * item.price).toFixed(2)}</TableCell>
+                                        <TableCell className="text-right">₹{item.price.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right font-medium">₹{(item.quantity * item.price).toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

@@ -71,7 +71,7 @@ export default function CartPage() {
                                         <div className="flex-grow flex flex-col justify-between py-1">
                                             <div>
                                                 <div className="font-medium leading-tight">{item.name}</div>
-                                                <div className="text-sm text-muted-foreground">${(item.price * item.quantity).toFixed(2)}</div>
+                                                <div className="text-sm text-muted-foreground">₹{(item.price * item.quantity).toFixed(2)}</div>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <QuantityControl itemId={item.id} quantity={item.quantity} />
@@ -118,7 +118,7 @@ export default function CartPage() {
                                                     <TableCell className="text-center">
                                                         <QuantityControl itemId={item.id} quantity={item.quantity} />
                                                     </TableCell>
-                                                    <TableCell className="text-right font-medium">${(item.price * item.quantity).toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right font-medium">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
                                                     <TableCell>
                                                         <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)}>
                                                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -141,7 +141,7 @@ export default function CartPage() {
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between">
                                     <span>Subtotal ({cartCount} items)</span>
-                                    <span>${cartTotal.toFixed(2)}</span>
+                                    <span>₹{cartTotal.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Shipping</span>
@@ -150,7 +150,7 @@ export default function CartPage() {
                                 <Separator />
                                 <div className="flex justify-between font-bold text-lg">
                                     <span>Total</span>
-                                    <span>${cartTotal.toFixed(2)}</span>
+                                    <span>₹{cartTotal.toFixed(2)}</span>
                                 </div>
                             </CardContent>
                             <CardFooter className="flex-col gap-2">

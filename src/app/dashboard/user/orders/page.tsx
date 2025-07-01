@@ -107,7 +107,7 @@ export default function UserOrdersPage() {
                                                     <div className="font-bold">{order.id}</div>
                                                     <div className="text-xs text-muted-foreground">{order.date}</div>
                                                 </div>
-                                                <div className="hidden sm:block text-right sm:text-left">${order.total.toFixed(2)}</div>
+                                                <div className="hidden sm:block text-right sm:text-left">₹{order.total.toFixed(2)}</div>
                                                 <div className="col-span-2 sm:col-span-1 flex justify-end sm:justify-start">
                                                    <Badge 
                                                         variant={
@@ -145,8 +145,8 @@ export default function UserOrdersPage() {
                                                         <TableRow key={item.productId}>
                                                             <TableCell className="font-medium">{item.productName}</TableCell>
                                                             <TableCell className="text-center">{item.quantity}</TableCell>
-                                                            <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                                                            <TableCell className="text-right font-medium">${(item.quantity * item.price).toFixed(2)}</TableCell>
+                                                            <TableCell className="text-right">₹{item.price.toFixed(2)}</TableCell>
+                                                            <TableCell className="text-right font-medium">₹{(item.quantity * item.price).toFixed(2)}</TableCell>
                                                         </TableRow>
                                                     ))}
                                                 </TableBody>

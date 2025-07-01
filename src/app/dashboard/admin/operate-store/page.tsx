@@ -264,8 +264,8 @@ export default function OperateStorePage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label htmlFor="product-price">Price ($)</Label>
-                                    <Input id="product-price" name="productPrice" type="number" value={productPrice} onChange={e => setProductPrice(e.target.value)} placeholder="e.g., 25.00" required step="0.01" />
+                                    <Label htmlFor="product-price">Price (₹)</Label>
+                                    <Input id="product-price" name="productPrice" type="number" value={productPrice} onChange={e => setProductPrice(e.target.value)} placeholder="e.g., 1999.00" required step="0.01" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="product-category">Category</Label>
