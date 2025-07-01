@@ -160,7 +160,7 @@ export const looks: Look[] = [
     {
         id: 8,
         name: 'Beach Day',
-        image: 'https://images.pexels.com/photos/1674666/pexels-photo-1674666.jpeg',
+        image: 'https://images.pexels.com/photos/769772/pexels-photo-769772.jpeg',
         products: ['7', '8'],
         aiHint: 'beach fashion',
         category: 'Summer'
@@ -176,7 +176,7 @@ export const looks: Look[] = [
     {
         id: 10,
         name: 'Skater Vibe',
-        image: 'https://images.pexels.com/photos/2010877/pexels-photo-2010877.jpeg',
+        image: 'https://images.pexels.com/photos/4067933/pexels-photo-4067933.jpeg',
         products: ['1', '5', '6'],
         aiHint: 'skater fashion',
         category: 'Streetwear'
@@ -192,7 +192,7 @@ export const looks: Look[] = [
     {
         id: 12,
         name: 'Evening Out',
-        image: 'https://images.pexels.com/photos/5686476/pexels-photo-5686476.jpeg',
+        image: 'https://images.pexels.com/photos/3762800/pexels-photo-3762800.jpeg',
         products: ['7', '2', '3'],
         aiHint: 'night out fashion',
         category: 'Smart Casual'
@@ -200,7 +200,7 @@ export const looks: Look[] = [
     {
         id: 13,
         name: 'Coffee Run',
-        image: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg',
+        image: 'https://images.pexels.com/photos/3772510/pexels-photo-3772510.jpeg',
         products: ['4', '2', '6'],
         aiHint: 'man drinking coffee',
         category: 'Weekend'
@@ -208,7 +208,7 @@ export const looks: Look[] = [
     {
         id: 14,
         name: 'Park Stroll',
-        image: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg',
+        image: 'https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg',
         products: ['1', '5', '6'],
         aiHint: 'man walking park',
         category: 'Weekend'
@@ -216,7 +216,7 @@ export const looks: Look[] = [
     {
         id: 15,
         name: 'Vacation Mode',
-        image: 'https://images.pexels.com/photos/3764567/pexels-photo-3764567.jpeg',
+        image: 'https://images.pexels.com/photos/1484806/pexels-photo-1484806.jpeg',
         products: ['7', '8'],
         aiHint: 'vacation outfit',
         category: 'Summer'
@@ -224,7 +224,7 @@ export const looks: Look[] = [
     {
         id: 16,
         name: 'City Heat',
-        image: 'https://images.pexels.com/photos/1758144/pexels-photo-1758144.jpeg',
+        image: 'https://images.pexels.com/photos/1040881/pexels-photo-1040881.jpeg',
         products: ['1', '8'],
         aiHint: 'summer city fashion',
         category: 'Summer'
