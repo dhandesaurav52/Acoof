@@ -84,11 +84,12 @@ export function Footer() {
                       <DialogHeader>
                         <DialogTitle>Contact Information</DialogTitle>
                         <DialogDescription>
-                          You can reach us at the number below.
+                          You can reach us via phone or email below.
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="flex items-center justify-center pt-4">
-                        <p className="text-xl font-mono font-semibold text-primary tracking-widest">+917447885505</p>
+                      <div className="flex flex-col items-center gap-2 pt-4">
+                        <p className="text-lg font-mono font-semibold text-primary tracking-widest">+917447885505</p>
+                        <p className="text-lg text-primary">acoofindia@gmail.com</p>
                       </div>
                     </DialogContent>
                   </Dialog>
