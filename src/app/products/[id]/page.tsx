@@ -82,6 +82,12 @@ export default function ProductDetailPage() {
             return;
         }
 
+        if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+            toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment gateway is not configured. Public key is missing.' });
+            console.error('ERROR: NEXT_PUBLIC_RAZORPAY_KEY_ID is not set in your .env file.');
+            return;
+        }
+
         setIsProcessing(true);
 
         const orderResponse = await createRazorpayOrder(product.price, `receipt_product_${product.id}`);
