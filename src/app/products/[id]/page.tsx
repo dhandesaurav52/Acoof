@@ -76,6 +76,12 @@ export default function ProductDetailPage() {
 
     const handleBuyNow = async () => {
         if (!product) return;
+        
+        if (product.price < 1) {
+            toast({ variant: 'destructive', title: 'Invalid Amount', description: 'This product cannot be purchased as its price is less than ₹1.00.' });
+            return;
+        }
+
         if (!user) {
             toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
             router.push('/login');
@@ -93,7 +99,7 @@ export default function ProductDetailPage() {
         const orderResponse = await createRazorpayOrder(product.price, `receipt_product_${product.id}`);
 
         if ('error' in orderResponse) {
-            toast({ variant: 'destructive', title: 'Payment Error', description: orderResponse.error });
+            toast({ variant: 'destructive', title: 'Payment Initialization Failed', description: orderResponse.error });
             setIsProcessing(false);
             return;
         }

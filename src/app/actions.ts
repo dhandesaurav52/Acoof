@@ -69,12 +69,16 @@ export async function createRazorpayOrder(amount: number, receiptId?: string): P
         return { error: 'Payment gateway is not configured on the server. Please check your API keys and contact support.' };
     }
 
+    const amountInPaise = Math.round(amount * 100);
+    if (amountInPaise < 100) { // Razorpay requires amount to be at least 1 INR (100 paise)
+        return { error: 'The total amount must be at least ₹1.00 to proceed with payment.' };
+    }
+
     const razorpay = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
 
-    const amountInPaise = Math.round(amount * 100);
     const receipt = receiptId || `receipt_${randomBytes(6).toString('hex')}`;
     
     const options = {
@@ -94,7 +98,7 @@ export async function createRazorpayOrder(amount: number, receiptId?: string): P
         console.error('Razorpay order creation failed:', error);
         let clientMessage = 'Failed to create payment order. The payment gateway might be down.';
         if (error.statusCode === 401) {
-            clientMessage = 'Authentication with payment gateway failed. Please check the server-side API keys in your .env file.'
+            clientMessage = "Authentication with Razorpay failed. This is likely due to incorrect 'RAZORPAY_KEY_ID' or 'RAZORPAY_KEY_SECRET' in your .env file. Please double-check them.";
         }
         return { error: clientMessage };
     }

@@ -54,8 +54,8 @@ export default function CartPage() {
             return;
         }
 
-        if (cartTotal <= 0) {
-            toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Cannot checkout with a total of zero or less.' });
+        if (cartTotal < 1) {
+            toast({ variant: 'destructive', title: 'Invalid Amount', description: 'The total amount must be at least ₹1.00 to proceed.' });
             return;
         }
 
@@ -70,7 +70,7 @@ export default function CartPage() {
         const orderResponse = await createRazorpayOrder(cartTotal);
 
         if ('error' in orderResponse) {
-            toast({ variant: 'destructive', title: 'Payment Error', description: orderResponse.error });
+            toast({ variant: 'destructive', title: 'Payment Initialization Failed', description: orderResponse.error });
             setIsProcessing(false);
             return;
         }
