@@ -13,7 +13,7 @@ export default function Home() {
   const { products } = useProducts();
   
   const featuredStyles = [
-    { name: 'HipHop', image: 'https://images.pexels.com/photos/1689731/pexels-photo-1689731.jpeg', aiHint: 'hiphop fashion' },
+    { name: 'HipHop', image: 'https://images.pexels.com/photos/7957440/pexels-photo-7957440.jpeg', aiHint: 'hiphop fashion' },
     { name: 'Casual', image: 'https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg', aiHint: 'casual fashion' },
     { name: 'Party Wear', image: 'https://images.pexels.com/photos/532220/pexels-photo-532220.jpeg', aiHint: 'party fashion' },
   ];
