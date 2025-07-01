@@ -211,9 +211,9 @@ export default function AdminDashboardPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Order ID</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead className="w-[120px]">Order ID</TableHead>
+                                <TableHead className="hidden md:table-cell">Customer</TableHead>
+                                <TableHead className="hidden md:table-cell">Date</TableHead>
                                 <TableHead>Total</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -225,9 +225,9 @@ export default function AdminDashboardPage() {
                             ) : orders.length > 0 ? (
                                 orders.map((order) => (
                                 <TableRow key={order.id}>
-                                    <TableCell className="font-medium truncate max-w-24">{order.id}</TableCell>
-                                    <TableCell>{order.user}</TableCell>
-                                    <TableCell>{order.date}</TableCell>
+                                    <TableCell className="font-medium truncate">{order.id}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{order.user}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{order.date}</TableCell>
                                     <TableCell>₹{order.total.toFixed(2)}</TableCell>
                                     <TableCell>
                                     <Badge 
@@ -437,3 +437,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
