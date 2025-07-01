@@ -74,9 +74,12 @@ export async function createRazorpayOrder(amount: number, receiptId?: string): P
         return { error: 'The total amount must be at least ₹1.00 to proceed with payment.' };
     }
 
+    const keyId = process.env.RAZORPAY_KEY_ID.trim();
+    const keySecret = process.env.RAZORPAY_KEY_SECRET.trim();
+
     const razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
+        key_id: keyId,
+        key_secret: keySecret,
     });
 
     const receipt = receiptId || `receipt_${randomBytes(6).toString('hex')}`;
@@ -98,7 +101,7 @@ export async function createRazorpayOrder(amount: number, receiptId?: string): P
         console.error('Razorpay order creation failed:', error);
         let clientMessage = 'Failed to create payment order. The payment gateway might be down.';
         if (error.statusCode === 401) {
-            clientMessage = "Authentication with Razorpay failed. This is likely due to incorrect 'RAZORPAY_KEY_ID' or 'RAZORPAY_KEY_SECRET' in your .env file. Please double-check them.";
+            clientMessage = "Authentication with Razorpay failed. This is likely due to an incorrect 'RAZORPAY_KEY_ID' or 'RAZORPAY_KEY_SECRET' in your .env file. Please double-check them for any extra spaces or characters.";
         }
         return { error: clientMessage };
     }
@@ -111,13 +114,15 @@ export async function verifyRazorpayPayment(data: {
 }): Promise<{ success: boolean; error?: string }> {
   if (!process.env.RAZORPAY_KEY_SECRET) {
       console.error("Razorpay secret key not found in .env file");
-      return { success: false, error: 'Payment verification is not configured.' };
+      return { success: false, error: 'Payment verification is not configured. The secret key is missing on the server.' };
   }
   
   const { orderId, paymentId, signature } = data;
   const body = orderId + "|" + paymentId;
   
-  const expectedSignature = createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+  const keySecret = process.env.RAZORPAY_KEY_SECRET.trim();
+
+  const expectedSignature = createHmac('sha256', keySecret)
     .update(body.toString())
     .digest('hex');
 
@@ -125,7 +130,7 @@ export async function verifyRazorpayPayment(data: {
     return { success: true };
   }
   
-  return { success: false, error: "Payment verification failed." };
+  return { success: false, error: "Payment verification failed. This can be caused by an incorrect 'RAZORPAY_KEY_SECRET' in your .env file. Please ensure it is correct and has no extra spaces." };
 }
 
 export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
