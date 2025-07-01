@@ -88,7 +88,6 @@ export default function UserDashboardPage() {
         title: "Update Failed",
         description: error.message,
       });
-      console.error(error);
     } finally {
       setIsSaving(false);
     }
@@ -149,7 +148,7 @@ export default function UserDashboardPage() {
               description: 'Your address has been populated.',
             });
           } else {
-             let errorMessage = `Geocoding failed: ${data.status}`;
+              let errorMessage = `Geocoding failed: ${data.status}`;
               if (data.error_message) {
                   errorMessage = `Geocoding API error: "${data.error_message}". Please check your API key and Google Cloud project settings (e.g., billing, enabled APIs).`;
               }
