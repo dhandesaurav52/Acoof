@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -27,8 +26,7 @@ export default function UserDashboardPage() {
     name: '',
     email: '',
     phone: '',
-    latitude: null as number | null,
-    longitude: null as number | null,
+    address: 'Not set',
     avatar: '',
     initials: ''
   });
@@ -45,8 +43,7 @@ export default function UserDashboardPage() {
             name: user.displayName || 'Anonymous User',
             email: user.email || 'No email provided',
             phone: user.phoneNumber || '+1 (555) 123-4567',
-            latitude: null, // Default location
-            longitude: null, // Default location
+            address: '123 Main St, Anytown, USA', // Default location
             avatar: user.photoURL || `https://placehold.co/100x100.png`,
             initials: initials
         };
@@ -58,11 +55,7 @@ export default function UserDashboardPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    if (id === 'latitude' || id === 'longitude') {
-      setEditedUser(prev => ({ ...prev, [id]: value === '' ? null : parseFloat(value) }));
-    } else {
-      setEditedUser(prev => ({ ...prev, [id]: value }));
-    }
+    setEditedUser(prev => ({ ...prev, [id]: value }));
   };
 
   const handleSaveChanges = async () => {
@@ -77,8 +70,7 @@ export default function UserDashboardPage() {
         name: editedUser.name,
         email: editedUser.email,
         phone: editedUser.phone,
-        latitude: editedUser.latitude,
-        longitude: editedUser.longitude,
+        address: editedUser.address,
       }));
       toast({
         title: "Profile Updated",
@@ -98,6 +90,17 @@ export default function UserDashboardPage() {
   };
 
   const handleCurrentLocation = () => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    if (!apiKey) {
+        toast({
+            variant: 'destructive',
+            title: 'Configuration Error',
+            description: 'The Google Maps API key is missing. Please add it to your .env file.',
+        });
+        return;
+    }
+      
     if (!navigator.geolocation) {
       toast({
         variant: 'destructive',
@@ -114,18 +117,45 @@ export default function UserDashboardPage() {
     });
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        setEditedUser(prev => ({
-          ...prev,
-          latitude,
-          longitude,
-        }));
-        toast({
-          title: 'Location Updated',
-          description: 'Your coordinates have been populated.',
-        });
-        setIsFetchingLocation(false);
+        
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+          );
+          const data = await response.json();
+
+          if (data.status === 'OK' && data.results[0]) {
+            const address = data.results[0].formatted_address;
+            setEditedUser(prev => ({
+              ...prev,
+              address: address,
+            }));
+            toast({
+              title: 'Location Updated',
+              description: 'Your address has been populated.',
+            });
+          } else {
+             let errorMessage = `Geocoding failed: ${data.status}`;
+              if (data.error_message) {
+                  errorMessage = `Geocoding API error: "${data.error_message}". Please check your API key and Google Cloud project settings (e.g., billing, enabled APIs).`;
+              }
+              toast({
+                variant: 'destructive',
+                title: 'Could Not Fetch Address',
+                description: errorMessage,
+              });
+          }
+        } catch (error: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Network Error',
+            description: 'Could not connect to the Geocoding service. Please check your internet connection.',
+          });
+        } finally {
+            setIsFetchingLocation(false);
+        }
       },
       (error) => {
         let message = 'An unknown error occurred.';
@@ -248,15 +278,9 @@ export default function UserDashboardPage() {
                           <Label htmlFor="phone">Phone</Label>
                           <Input id="phone" value={editedUser.phone} onChange={handleInputChange} />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                          <Label htmlFor="latitude">Latitude</Label>
-                          <Input id="latitude" type="number" value={editedUser.latitude ?? ''} onChange={handleInputChange} />
-                          </div>
-                          <div className="space-y-2">
-                          <Label htmlFor="longitude">Longitude</Label>
-                          <Input id="longitude" type="number" value={editedUser.longitude ?? ''} onChange={handleInputChange} />
-                          </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="address">Address</Label>
+                          <Input id="address" value={editedUser.address} onChange={handleInputChange} />
                       </div>
                       <div className="flex justify-end">
                           <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary" disabled={isFetchingLocation}>
@@ -302,11 +326,9 @@ export default function UserDashboardPage() {
               </div>
               <div className="flex items-start gap-4">
                   <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
-                  <span className="w-32 text-muted-foreground">Location</span>
+                  <span className="w-32 text-muted-foreground">Address</span>
                   <span className="text-foreground font-medium">
-                    {userProfile.latitude && userProfile.longitude
-                      ? `Lat: ${userProfile.latitude.toFixed(4)}, Lng: ${userProfile.longitude.toFixed(4)}`
-                      : 'Not set'}
+                    {userProfile.address}
                   </span>
               </div>
           </CardContent>
