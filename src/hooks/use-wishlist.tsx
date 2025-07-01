@@ -41,14 +41,15 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     }, [wishlist, loading]);
 
     const addToWishlist = useCallback((product: Product) => {
-        setWishlist(prevWishlist => {
-            if (!prevWishlist.some(item => item.id === product.id)) {
-                toast({ title: "Added to Wishlist", description: `${product.name} has been added to your wishlist.` });
-                return [...prevWishlist, product];
-            }
-            return prevWishlist;
-        });
-    }, [toast]);
+        // Check if the item is already in the wishlist before doing anything.
+        if (wishlist.some(item => item.id === product.id)) {
+            return;
+        }
+
+        // If it's not there, update the state and then show the toast.
+        setWishlist(prevWishlist => [...prevWishlist, product]);
+        toast({ title: "Added to Wishlist", description: `${product.name} has been added to your wishlist.` });
+    }, [wishlist, toast]);
 
     const removeFromWishlist = useCallback((productId: string) => {
         const product = wishlist.find(p => p.id === productId);
