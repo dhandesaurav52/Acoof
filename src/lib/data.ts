@@ -104,9 +104,9 @@ export const looks: Look[] = [
     {
         id: 1,
         name: 'Casual Weekend',
-        image: 'https://images.pexels.com/photos/3775588/pexels-photo-3775588.jpeg',
+        image: 'https://images.pexels.com/photos/2413023/pexels-photo-2413023.jpeg',
         products: ['1', '2', '6'],
-        aiHint: 'man standing',
+        aiHint: 'casual style',
         category: 'Weekend',
     },
     {
