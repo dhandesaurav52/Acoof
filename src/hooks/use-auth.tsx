@@ -104,41 +104,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Firebase not configured or user not logged in.");
     }
 
-    const authUpdates: Promise<void>[] = [];
-    if (data.displayName && data.displayName !== currentUser.displayName) {
-        authUpdates.push(updateProfile(currentUser, { displayName: data.displayName }));
-    }
-    if (data.email && data.email !== currentUser.email) {
-        authUpdates.push(updateEmail(currentUser, data.email));
-    }
+    try {
+        const authUpdates: Promise<void>[] = [];
+        if (data.displayName && data.displayName !== currentUser.displayName) {
+            authUpdates.push(updateProfile(currentUser, { displayName: data.displayName }));
+        }
+        if (data.email && data.email !== currentUser.email) {
+            authUpdates.push(updateEmail(currentUser, data.email));
+        }
 
-    if (authUpdates.length > 0) {
-        await Promise.all(authUpdates);
+        if (authUpdates.length > 0) {
+            await Promise.all(authUpdates);
+        }
+        
+        const userDbRef = dbRef(database, `users/${currentUser.uid}`);
+        const snapshot = await get(userDbRef);
+        const currentDbData = snapshot.exists() ? snapshot.val() : {};
+
+        const dbData = {
+            ...currentDbData,
+            phone: data.phone,
+            address: data.address,
+            city: data.city,
+            state: data.state,
+            pincode: data.pincode,
+        };
+        
+        const cleanDbData = Object.fromEntries(Object.entries(dbData).filter(([, v]) => v != null && v !== ''));
+
+        if (Object.keys(cleanDbData).length > 0) {
+            await set(userDbRef, cleanDbData);
+        }
+
+        await currentUser.reload();
+        const finalSnapshot = await get(userDbRef);
+        const dbProfile = finalSnapshot.exists() ? finalSnapshot.val() : {};
+        setUser({ ...auth.currentUser, ...dbProfile } as AppUser);
+    } catch (error: any) {
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+             throw new Error("Permission Denied: Please check your Firebase Realtime Database security rules to allow users to read/write their own profile data.");
+        }
+        if (error.code === 'auth/requires-recent-login') {
+            throw new Error("This action is sensitive and requires recent authentication. Please log out and log back in to update your email.");
+        }
+        throw error;
     }
-    
-    const userDbRef = dbRef(database, `users/${currentUser.uid}`);
-    const snapshot = await get(userDbRef);
-    const currentDbData = snapshot.exists() ? snapshot.val() : {};
-
-    const dbData = {
-        ...currentDbData,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        pincode: data.pincode,
-    };
-    
-    const cleanDbData = Object.fromEntries(Object.entries(dbData).filter(([, v]) => v != null && v !== ''));
-
-    if (Object.keys(cleanDbData).length > 0) {
-        await set(userDbRef, cleanDbData);
-    }
-
-    await currentUser.reload();
-    const finalSnapshot = await get(userDbRef);
-    const dbProfile = finalSnapshot.exists() ? finalSnapshot.val() : {};
-    setUser({ ...auth.currentUser, ...dbProfile } as AppUser);
   };
 
   const uploadProfilePicture = async (file: File) => {
