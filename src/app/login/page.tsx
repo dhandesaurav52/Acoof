@@ -66,7 +66,6 @@ export default function LoginPage() {
             title: "Login Failed",
             description: errorMessage,
         });
-        console.error('Login failed:', error);
     }
   };
 
@@ -84,7 +83,6 @@ export default function LoginPage() {
             title: "Google Login Failed",
             description: error.message,
         });
-        console.error('Google login failed:', error);
     }
   }
 

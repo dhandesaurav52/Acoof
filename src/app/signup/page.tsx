@@ -59,7 +59,6 @@ export default function SignupPage() {
         title: "Signup Failed",
         description: errorMessage,
       });
-      console.error('Signup failed:', error);
     }
   };
 
@@ -72,7 +71,6 @@ export default function SignupPage() {
             title: "Google Signup Failed",
             description: error.message,
         });
-        console.error('Google signup failed:', error);
     }
   }
 
