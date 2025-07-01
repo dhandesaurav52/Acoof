@@ -137,10 +137,14 @@ export default function UserDashboardPage() {
           const data = await response.json();
 
           if (data.status !== 'OK') {
+            let description = data.error_message || `An error occurred while fetching the address. Status: ${data.status}`;
+            if (data.status === 'REQUEST_DENIED') {
+                description = `Request denied. This can happen if the API key is invalid, billing is not enabled, or the Geocoding API is not enabled on your Google Cloud project. Please double-check your settings.`;
+            }
             toast({
               variant: 'destructive',
               title: 'Could Not Fetch Address',
-              description: data.error_message || `An error occurred while fetching the address. Status: ${data.status}`,
+              description: description,
             });
             return;
           }
