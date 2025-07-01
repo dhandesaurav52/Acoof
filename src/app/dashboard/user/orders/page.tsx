@@ -25,7 +25,10 @@ const userOrders: Order[] = [
             { productId: '7', productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
             { productId: '5', productName: 'Cargo Trousers', quantity: 1, price: 80.00 },
             { productId: '6', productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
-        ]
+        ],
+        orderId: 'order_mock_007',
+        paymentId: 'pay_mock_007',
+        paymentSignature: 'sig_mock_007'
     },
     { 
         id: 'ORD005', 
@@ -37,7 +40,10 @@ const userOrders: Order[] = [
         shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
         items: [
             { productId: '6', productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
-        ]
+        ],
+        orderId: 'order_mock_005',
+        paymentId: 'pay_mock_005',
+        paymentSignature: 'sig_mock_005'
     },
     { 
         id: 'ORD002', 
@@ -49,7 +55,10 @@ const userOrders: Order[] = [
         shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
         items: [
             { productId: '1', productName: 'Classic White Tee', quantity: 4, price: 25.00 },
-        ]
+        ],
+        orderId: 'order_mock_002',
+        paymentId: 'pay_mock_002',
+        paymentSignature: 'sig_mock_002'
     },
 ];
 

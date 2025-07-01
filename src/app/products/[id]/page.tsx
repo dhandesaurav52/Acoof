@@ -18,6 +18,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { createRazorpayOrder, verifyRazorpayPayment, saveOrder } from '@/app/actions';
+import type { Order, OrderItem } from '@/types';
 
 export default function ProductDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -30,6 +32,7 @@ export default function ProductDetailPage() {
 
     const [selectedColor, setSelectedColor] = useState<string | undefined>();
     const [selectedSize, setSelectedSize] = useState<string | undefined>();
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const product = products.find(p => p.id === id);
     
@@ -71,12 +74,89 @@ export default function ProductDetailPage() {
         }
     };
 
-    const handleBuyNow = () => {
+    const handleBuyNow = async () => {
         if (!product) return;
-        // Placeholder for Buy Now logic
-        alert('Buying now!');
-        addToCart(product);
-        // In a real app, you would redirect to a checkout page or open a payment modal.
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
+            router.push('/login');
+            return;
+        }
+
+        setIsProcessing(true);
+
+        const orderResponse = await createRazorpayOrder(product.price, `receipt_product_${product.id}`);
+
+        if ('error' in orderResponse) {
+            toast({ variant: 'destructive', title: 'Payment Error', description: orderResponse.error });
+            setIsProcessing(false);
+            return;
+        }
+
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            amount: orderResponse.amount,
+            currency: orderResponse.currency,
+            name: 'Urban Attire Lookbook',
+            description: `Payment for ${product.name}`,
+            order_id: orderResponse.id,
+            handler: async function (response: any) {
+                const verificationResult = await verifyRazorpayPayment({
+                    orderId: response.razorpay_order_id,
+                    paymentId: response.razorpay_payment_id,
+                    signature: response.razorpay_signature,
+                });
+
+                if (verificationResult.success) {
+                    const orderItem: OrderItem = {
+                        productId: product.id,
+                        productName: product.name,
+                        quantity: 1,
+                        price: product.price,
+                    };
+                    
+                    const orderData: Omit<Order, 'id'> = {
+                        user: user.displayName || 'Anonymous',
+                        userEmail: user.email || 'N/A',
+                        date: new Date().toISOString().split('T')[0],
+                        total: product.price,
+                        status: 'Pending',
+                        shippingAddress: user.address || 'Not provided',
+                        items: [orderItem],
+                        orderId: response.razorpay_order_id,
+                        paymentId: response.razorpay_payment_id,
+                        paymentSignature: response.razorpay_signature,
+                    };
+                    
+                    const saveResult = await saveOrder(orderData);
+                    if (saveResult.success) {
+                        toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
+                        router.push('/dashboard/user/orders');
+                    } else {
+                        toast({ variant: 'destructive', title: 'Order Error', description: saveResult.error });
+                    }
+                } else {
+                    toast({ variant: 'destructive', title: 'Payment Failed', description: verificationResult.error || 'Unknown error during verification.' });
+                }
+                setIsProcessing(false);
+            },
+            prefill: {
+                name: user.displayName,
+                email: user.email,
+                contact: user.phone,
+            },
+            theme: {
+                color: '#FF9800',
+            },
+            modal: {
+                ondismiss: function() {
+                    setIsProcessing(false);
+                    toast({ variant: 'destructive', title: 'Payment Cancelled', description: 'The payment process was not completed.' });
+                }
+            }
+        };
+
+        const paymentObject = new (window as any).Razorpay(options);
+        paymentObject.open();
     };
 
     return (
@@ -191,13 +271,17 @@ export default function ProductDetailPage() {
 
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Button size="lg" variant="outline" className="w-full" onClick={() => addToCart(product)}>
+                        <Button size="lg" variant="outline" className="w-full" onClick={() => addToCart(product)} disabled={isProcessing}>
                             <ShoppingCart className="mr-2 h-5 w-5" />
                             Add to Cart
                         </Button>
-                        <Button size="lg" className="w-full" onClick={handleBuyNow}>
-                            <Zap className="mr-2 h-5 w-5" />
-                            Buy Now
+                        <Button size="lg" className="w-full" onClick={handleBuyNow} disabled={isProcessing}>
+                            {isProcessing ? (
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            ) : (
+                                <Zap className="mr-2 h-5 w-5" />
+                            )}
+                            {isProcessing ? 'Processing...' : 'Buy Now'}
                         </Button>
                     </div>
 

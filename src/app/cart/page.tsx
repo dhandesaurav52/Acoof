@@ -8,11 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, ShoppingBag, Plus, Minus } from 'lucide-react';
+import { Trash2, ShoppingBag, Plus, Minus, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { createRazorpayOrder, verifyRazorpayPayment, saveOrder } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import type { Order, OrderItem } from '@/types';
 
 export default function CartPage() {
     const { cart, removeFromCart, updateQuantity, cartTotal, cartCount, clearCart } = useCart();
+    const { user } = useAuth();
+    const router = useRouter();
+    const { toast } = useToast();
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const QuantityControl = ({ itemId, quantity }: { itemId: string, quantity: number }) => (
         <div className="flex items-center justify-center gap-2">
@@ -32,12 +42,94 @@ export default function CartPage() {
         </div>
     );
     
-    const handleCheckout = () => {
-        if (cart.length > 0) {
-            // Placeholder for checkout logic
-            alert('Proceeding to checkout!');
-            // In a real app, you would redirect to a checkout page or open a payment modal.
+    const handleCheckout = async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to proceed with checkout.' });
+            router.push('/login');
+            return;
         }
+
+        if (cart.length === 0) {
+            toast({ variant: 'destructive', title: 'Empty Cart', description: 'Your cart is empty.' });
+            return;
+        }
+
+        setIsProcessing(true);
+
+        const orderResponse = await createRazorpayOrder(cartTotal);
+
+        if ('error' in orderResponse) {
+            toast({ variant: 'destructive', title: 'Payment Error', description: orderResponse.error });
+            setIsProcessing(false);
+            return;
+        }
+
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            amount: orderResponse.amount,
+            currency: orderResponse.currency,
+            name: 'Urban Attire Lookbook',
+            description: 'Order Payment',
+            order_id: orderResponse.id,
+            handler: async function (response: any) {
+                const verificationResult = await verifyRazorpayPayment({
+                    orderId: response.razorpay_order_id,
+                    paymentId: response.razorpay_payment_id,
+                    signature: response.razorpay_signature,
+                });
+
+                if (verificationResult.success) {
+                    const orderItems: OrderItem[] = cart.map(item => ({
+                        productId: item.id,
+                        productName: item.name,
+                        quantity: item.quantity,
+                        price: item.price,
+                    }));
+                    
+                    const orderData: Omit<Order, 'id'> = {
+                        user: user.displayName || 'Anonymous',
+                        userEmail: user.email || 'N/A',
+                        date: new Date().toISOString().split('T')[0],
+                        total: cartTotal,
+                        status: 'Pending',
+                        shippingAddress: user.address || 'Not provided',
+                        items: orderItems,
+                        orderId: response.razorpay_order_id,
+                        paymentId: response.razorpay_payment_id,
+                        paymentSignature: response.razorpay_signature,
+                    };
+                    
+                    const saveResult = await saveOrder(orderData);
+                    if (saveResult.success) {
+                        toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
+                        clearCart();
+                        router.push('/dashboard/user/orders');
+                    } else {
+                        toast({ variant: 'destructive', title: 'Order Error', description: saveResult.error });
+                    }
+                } else {
+                    toast({ variant: 'destructive', title: 'Payment Failed', description: verificationResult.error || 'Unknown error during verification.' });
+                }
+                setIsProcessing(false);
+            },
+            prefill: {
+                name: user.displayName,
+                email: user.email,
+                contact: user.phone,
+            },
+            theme: {
+                color: '#FF9800',
+            },
+            modal: {
+                ondismiss: function() {
+                    setIsProcessing(false);
+                    toast({ variant: 'destructive', title: 'Payment Cancelled', description: 'The payment process was not completed.' });
+                }
+            }
+        };
+
+        const paymentObject = new (window as any).Razorpay(options);
+        paymentObject.open();
     };
 
     return (
@@ -162,8 +254,11 @@ export default function CartPage() {
                                 </div>
                             </CardContent>
                             <CardFooter className="flex-col gap-2">
-                                <Button className="w-full" onClick={handleCheckout}>Proceed to Checkout</Button>
-                                <Button variant="outline" className="w-full" onClick={clearCart}>Clear Cart</Button>
+                                <Button className="w-full" onClick={handleCheckout} disabled={isProcessing}>
+                                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    {isProcessing ? 'Processing...' : 'Proceed to Checkout'}
+                                </Button>
+                                <Button variant="outline" className="w-full" onClick={clearCart} disabled={isProcessing}>Clear Cart</Button>
                             </CardFooter>
                         </Card>
                     </div>
