@@ -163,7 +163,6 @@ export default function UserDashboardPage() {
               description: 'Your address fields have been populated.',
             });
           } else {
-            console.error('Geocoding API error:', data.error_message || data.status);
             toast({
               variant: 'destructive',
               title: 'Could Not Fetch Address',
@@ -171,7 +170,6 @@ export default function UserDashboardPage() {
             });
           }
         } catch (error: any) {
-          console.error('Geocoding fetch error:', error);
           toast({
             variant: 'destructive',
             title: 'Could Not Fetch Address',
