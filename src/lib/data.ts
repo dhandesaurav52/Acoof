@@ -128,7 +128,7 @@ export const looks: Look[] = [
     {
         id: 4,
         name: 'Summer Vibe',
-        image: 'https://images.pexels.com/photos/2955375/pexels-photo-2955375.jpeg',
+        image: 'https://images.pexels.com/photos/1674666/pexels-photo-1674666.jpeg',
         products: ['1', '8'],
         aiHint: 'summer style',
         category: 'Summer',
@@ -144,7 +144,7 @@ export const looks: Look[] = [
     {
         id: 6,
         name: 'Office Ready',
-        image: 'https://images.pexels.com/photos/2897883/pexels-photo-2897883.jpeg',
+        image: 'https://images.pexels.com/photos/937481/pexels-photo-937481.jpeg',
         products: ['7', '5', '3'],
         aiHint: 'business casual',
         category: 'Smart Casual'
@@ -160,7 +160,7 @@ export const looks: Look[] = [
     {
         id: 8,
         name: 'Beach Day',
-        image: 'https://images.pexels.com/photos/1674666/pexels-photo-1674666.jpeg',
+        image: 'https://images.pexels.com/photos/2955375/pexels-photo-2955375.jpeg',
         products: ['7', '8'],
         aiHint: 'beach fashion',
         category: 'Summer'
@@ -168,9 +168,9 @@ export const looks: Look[] = [
     {
         id: 9,
         name: 'Downtown Cool',
-        image: 'https://images.pexels.com/photos/842811/pexels-photo-842811.jpeg',
+        image: 'https://images.pexels.com/photos/5157207/pexels-photo-5157207.jpeg',
         products: ['4', '2', '6'],
-        aiHint: 'downtown style',
+        aiHint: 'man skateboard',
         category: 'Streetwear'
     },
     {
@@ -184,7 +184,7 @@ export const looks: Look[] = [
     {
         id: 11,
         name: 'Modern Professional',
-        image: 'https://images.pexels.com/photos/937481/pexels-photo-937481.jpeg',
+        image: 'https://images.pexels.com/photos/2897883/pexels-photo-2897883.jpeg',
         products: ['7', '5', '3'],
         aiHint: 'professional attire',
         category: 'Smart Casual'
