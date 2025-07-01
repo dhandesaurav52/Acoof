@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Edit, Home, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { APIProvider } from "@vis.gl/react-google-maps";
+import { LocationMap } from "@/components/LocationMap";
 
 export default function UserDashboardPage() {
   const { user, loading, uploadProfilePicture, updateUserProfile } = useAuth();
@@ -22,6 +24,11 @@ export default function UserDashboardPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  // This is a hardcoded position for "Styleville, CA" which is used in the mock data.
+  // A real application would use a geocoding service to convert the address to coordinates.
+  const mapPosition = { lat: 34.0522, lng: -118.2437 };
   
   const [userProfile, setUserProfile] = useState({
     name: '',
@@ -136,123 +143,144 @@ export default function UserDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="relative group">
-                  <Avatar className="h-24 w-24 border">
-                  <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-                  <AvatarFallback>{userProfile.initials}</AvatarFallback>
-                  </Avatar>
-                  <button
-                  onClick={handleAvatarClick}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-75 disabled:cursor-not-allowed"
-                  disabled={isUploading}
-                  aria-label="Change profile picture"
-                  >
-                  {isUploading ? (
-                      <Loader2 className="h-8 w-8 text-white animate-spin" />
-                  ) : (
-                      <Camera className="h-8 w-8 text-white" />
-                  )}
-                  </button>
-                  <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept="image/png, image/jpeg"
-                  disabled={isUploading}
-                  />
-              </div>
-              <div className="flex-grow">
-                  <CardTitle className="text-3xl">{userProfile.name}</CardTitle>
-                  <CardDescription>View and manage your personal information.</CardDescription>
-              </div>
-              <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if(open) setEditedUser(userProfile); setIsEditDialogOpen(open); }}>
-                  <DialogTrigger asChild>
-                      <Button variant="outline" className="flex-shrink-0">
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Profile
-                      </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                      <DialogTitle>Edit profile</DialogTitle>
-                      <DialogDescription>
-                          Make changes to your profile here. Click save when you're done.
-                      </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="name">Name</Label>
-                          <Input id="name" value={editedUser.name} onChange={handleInputChange} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input id="email" type="email" value={editedUser.email} onChange={handleInputChange} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input id="phone" value={editedUser.phone} onChange={handleInputChange} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="address">Address</Label>
-                          <Input id="address" value={editedUser.address} onChange={handleInputChange} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                          <Label htmlFor="city">City</Label>
-                          <Input id="city" value={editedUser.city} onChange={handleInputChange} />
-                          </div>
-                          <div className="space-y-2">
-                          <Label htmlFor="state">State</Label>
-                          <Input id="state" value={editedUser.state} onChange={handleInputChange} />
-                          </div>
-                      </div>
-                      <div className="flex justify-end">
-                          <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary">
-                              <MapPin className="mr-2 h-4 w-4" />
-                              Use current location
-                          </Button>
-                      </div>
-                      </div>
-                      <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSaving}>Cancel</Button>
-                      <Button type="submit" onClick={handleSaveChanges} disabled={isSaving}>
-                          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Save changes
-                      </Button>
-                      </DialogFooter>
-                  </DialogContent>
-              </Dialog>
-          </CardHeader>
-          <CardContent className="space-y-6 border-t pt-6 mt-6">
-              <div className="flex items-center gap-4">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Name</span>
-                  <span className="text-foreground font-medium">{userProfile.name}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Email</span>
-                  <span className="text-foreground font-medium">{userProfile.email}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Phone Number</span>
-                  <span className="text-foreground font-medium">{userProfile.phone}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Home className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Address</span>
-                  <span className="text-foreground font-medium">{`${userProfile.address}, ${userProfile.city}, ${userProfile.state}`}</span>
-              </div>
-          </CardContent>
-        </Card>
+    <APIProvider apiKey={apiKey!}>
+      <div className="container mx-auto py-12 px-4">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="relative group">
+                    <Avatar className="h-24 w-24 border">
+                    <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
+                    <AvatarFallback>{userProfile.initials}</AvatarFallback>
+                    </Avatar>
+                    <button
+                    onClick={handleAvatarClick}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-75 disabled:cursor-not-allowed"
+                    disabled={isUploading}
+                    aria-label="Change profile picture"
+                    >
+                    {isUploading ? (
+                        <Loader2 className="h-8 w-8 text-white animate-spin" />
+                    ) : (
+                        <Camera className="h-8 w-8 text-white" />
+                    )}
+                    </button>
+                    <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/png, image/jpeg"
+                    disabled={isUploading}
+                    />
+                </div>
+                <div className="flex-grow">
+                    <CardTitle className="text-3xl">{userProfile.name}</CardTitle>
+                    <CardDescription>View and manage your personal information.</CardDescription>
+                </div>
+                <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if(open) setEditedUser(userProfile); setIsEditDialogOpen(open); }}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" className="flex-shrink-0">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Profile
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                        <DialogTitle>Edit profile</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your profile here. Click save when you're done.
+                        </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input id="name" value={editedUser.name} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" value={editedUser.email} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="phone">Phone</Label>
+                            <Input id="phone" value={editedUser.phone} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="address">Address</Label>
+                            <Input id="address" value={editedUser.address} onChange={handleInputChange} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                            <Label htmlFor="city">City</Label>
+                            <Input id="city" value={editedUser.city} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                            <Label htmlFor="state">State</Label>
+                            <Input id="state" value={editedUser.state} onChange={handleInputChange} />
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary">
+                                <MapPin className="mr-2 h-4 w-4" />
+                                Use current location
+                            </Button>
+                        </div>
+                        </div>
+                        <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+                        <Button type="submit" onClick={handleSaveChanges} disabled={isSaving}>
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save changes
+                        </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </CardHeader>
+            <CardContent className="space-y-6 border-t pt-6 mt-6">
+                <div className="flex items-center gap-4">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <span className="w-32 text-muted-foreground">Name</span>
+                    <span className="text-foreground font-medium">{userProfile.name}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <Mail className="h-5 w-5 text-muted-foreground" />
+                    <span className="w-32 text-muted-foreground">Email</span>
+                    <span className="text-foreground font-medium">{userProfile.email}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <Phone className="h-5 w-5 text-muted-foreground" />
+                    <span className="w-32 text-muted-foreground">Phone Number</span>
+                    <span className="text-foreground font-medium">{userProfile.phone}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <Home className="h-5 w-5 text-muted-foreground" />
+                    <span className="w-32 text-muted-foreground">Address</span>
+                    <span className="text-foreground font-medium">{`${userProfile.address}, ${userProfile.city}, ${userProfile.state}`}</span>
+                </div>
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Location</CardTitle>
+              <CardDescription>This is your primary address on file.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {apiKey ? (
+                <LocationMap position={mapPosition} />
+              ) : (
+                <div className="text-center py-10 bg-secondary rounded-md">
+                  <MapPin className="mx-auto h-10 w-10 text-muted-foreground" />
+                  <p className="mt-4 font-semibold">Google Maps not configured</p>
+                  <p className="text-sm text-muted-foreground">
+                    Please add your Google Maps API Key to the .env file to see the map.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </APIProvider>
   );
 }
