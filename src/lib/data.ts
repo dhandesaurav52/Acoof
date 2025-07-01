@@ -160,7 +160,7 @@ export const looks: Look[] = [
     {
         id: 8,
         name: 'Beach Day',
-        image: 'https://images.pexels.com/photos/2955375/pexels-photo-2955375.jpeg',
+        image: 'https://images.pexels.com/photos/12169183/pexels-photo-12169183.jpeg',
         products: ['7', '8'],
         aiHint: 'beach fashion',
         category: 'Summer'
