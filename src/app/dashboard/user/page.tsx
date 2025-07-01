@@ -10,9 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Home, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
+import { Edit, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
 export default function UserDashboardPage() {
   const { user, loading, uploadProfilePicture, updateUserProfile } = useAuth();
@@ -28,9 +27,8 @@ export default function UserDashboardPage() {
     name: '',
     email: '',
     phone: '',
-    address: '123 Dream Lane',
-    city: 'Styleville',
-    state: 'CA',
+    latitude: null as number | null,
+    longitude: null as number | null,
     avatar: '',
     initials: ''
   });
@@ -47,9 +45,8 @@ export default function UserDashboardPage() {
             name: user.displayName || 'Anonymous User',
             email: user.email || 'No email provided',
             phone: user.phoneNumber || '+1 (555) 123-4567',
-            address: '123 Dream Lane',
-            city: 'Styleville',
-            state: 'CA',
+            latitude: null, // Default location
+            longitude: null, // Default location
             avatar: user.photoURL || `https://placehold.co/100x100.png`,
             initials: initials
         };
@@ -61,7 +58,11 @@ export default function UserDashboardPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setEditedUser(prev => ({ ...prev, [id]: value }));
+    if (id === 'latitude' || id === 'longitude') {
+      setEditedUser(prev => ({ ...prev, [id]: value === '' ? null : parseFloat(value) }));
+    } else {
+      setEditedUser(prev => ({ ...prev, [id]: value }));
+    }
   };
 
   const handleSaveChanges = async () => {
@@ -71,16 +72,13 @@ export default function UserDashboardPage() {
         name: editedUser.name,
         email: editedUser.email,
       });
-      // This is a local update, as address fields are not in the Firebase auth user object.
-      // We update the main profile display with the edited values.
       setUserProfile(prev => ({
         ...prev,
         name: editedUser.name,
         email: editedUser.email,
         phone: editedUser.phone,
-        address: editedUser.address,
-        city: editedUser.city,
-        state: editedUser.state,
+        latitude: editedUser.latitude,
+        longitude: editedUser.longitude,
       }));
       toast({
         title: "Profile Updated",
@@ -100,17 +98,6 @@ export default function UserDashboardPage() {
   };
 
   const handleCurrentLocation = () => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-    if (!apiKey) {
-      toast({
-        variant: 'destructive',
-        title: 'API Key Missing',
-        description: 'Google Maps API key is not configured. Please add it to your .env file.',
-      });
-      return;
-    }
-
     if (!navigator.geolocation) {
       toast({
         variant: 'destructive',
@@ -127,71 +114,18 @@ export default function UserDashboardPage() {
     });
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords;
-        
-        try {
-          const response = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
-          );
-          const data = await response.json();
-
-          if (data.status !== 'OK') {
-            let description = data.error_message || `An error occurred while fetching the address. Status: ${data.status}`;
-            if (data.status === 'REQUEST_DENIED') {
-                description = `Request denied. This can happen if the API key is invalid, billing is not enabled, or the Geocoding API is not enabled on your Google Cloud project. Please double-check your settings.`;
-            }
-            toast({
-              variant: 'destructive',
-              title: 'Could Not Fetch Address',
-              description: description,
-            });
-            return;
-          }
-
-          const addressComponents = data.results[0]?.address_components;
-
-          if (!addressComponents) {
-            toast({
-              variant: 'destructive',
-              title: 'Could Not Fetch Address',
-              description: 'Geocoding was successful, but no address data was found for your location.',
-            });
-            return;
-          }
-
-          const getComponent = (type: string, useShortName = false) => {
-              const component = addressComponents.find((c: any) => c.types.includes(type));
-              return component ? (useShortName ? component.short_name : component.long_name) : '';
-          };
-
-          const streetNumber = getComponent('street_number');
-          const route = getComponent('route');
-          const city = getComponent('locality') || getComponent('postal_town');
-          const state = getComponent('administrative_area_level_1', true);
-          
-          const fullAddress = [streetNumber, route].filter(Boolean).join(' ');
-
-          setEditedUser(prev => ({
-            ...prev,
-            address: fullAddress || prev.address,
-            city: city || prev.city,
-            state: state || prev.state,
-          }));
-          
-          toast({
-            title: 'Location Updated',
-            description: 'Your address fields have been populated.',
-          });
-        } catch (error: any) {
-          toast({
-            variant: 'destructive',
-            title: 'Could Not Fetch Address',
-            description: 'Failed to connect to location services. Please check your network.',
-          });
-        } finally {
-          setIsFetchingLocation(false);
-        }
+        setEditedUser(prev => ({
+          ...prev,
+          latitude,
+          longitude,
+        }));
+        toast({
+          title: 'Location Updated',
+          description: 'Your coordinates have been populated.',
+        });
+        setIsFetchingLocation(false);
       },
       (error) => {
         let message = 'An unknown error occurred.';
@@ -314,18 +248,14 @@ export default function UserDashboardPage() {
                           <Label htmlFor="phone">Phone</Label>
                           <Input id="phone" value={editedUser.phone} onChange={handleInputChange} />
                       </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="address">Address</Label>
-                          <Input id="address" value={editedUser.address} onChange={handleInputChange} />
-                      </div>
                       <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                          <Label htmlFor="city">City</Label>
-                          <Input id="city" value={editedUser.city} onChange={handleInputChange} />
+                          <Label htmlFor="latitude">Latitude</Label>
+                          <Input id="latitude" type="number" value={editedUser.latitude ?? ''} onChange={handleInputChange} />
                           </div>
                           <div className="space-y-2">
-                          <Label htmlFor="state">State</Label>
-                          <Input id="state" value={editedUser.state} onChange={handleInputChange} />
+                          <Label htmlFor="longitude">Longitude</Label>
+                          <Input id="longitude" type="number" value={editedUser.longitude ?? ''} onChange={handleInputChange} />
                           </div>
                       </div>
                       <div className="flex justify-end">
@@ -370,10 +300,14 @@ export default function UserDashboardPage() {
                   <span className="w-32 text-muted-foreground">Phone Number</span>
                   <span className="text-foreground font-medium">{userProfile.phone}</span>
               </div>
-              <div className="flex items-center gap-4">
-                  <Home className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Address</span>
-                  <span className="text-foreground font-medium">{`${userProfile.address}, ${userProfile.city}, ${userProfile.state}`}</span>
+              <div className="flex items-start gap-4">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
+                  <span className="w-32 text-muted-foreground">Location</span>
+                  <span className="text-foreground font-medium">
+                    {userProfile.latitude && userProfile.longitude
+                      ? `Lat: ${userProfile.latitude.toFixed(4)}, Lng: ${userProfile.longitude.toFixed(4)}`
+                      : 'Not set'}
+                  </span>
               </div>
           </CardContent>
         </Card>
