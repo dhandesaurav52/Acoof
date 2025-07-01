@@ -233,4 +233,4 @@ export const looks: Look[] = [
 export const lookCategories: LookCategory[] = ['Streetwear', 'Smart Casual', 'Weekend', 'Summer'];
 
 
-export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Bags', 'Belts', 'Socks', 'Wallets'];
+export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Bags', 'Belts', 'Socks', 'Wallets', 'Sweater', 'Sweatshirt', 'Jackets', 'Track pants'];
