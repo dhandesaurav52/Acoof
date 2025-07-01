@@ -58,9 +58,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else {
               setUser(user);
             }
-        } catch (error) {
-            console.error("Failed to fetch user profile from DB", error);
-            setUser(user); // fallback to auth user
+        } catch (error: any) {
+            if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                console.warn("Permission Denied: Could not fetch user profile from Realtime Database. Please check your security rules to allow users to read their own data (e.g., `'.read': 'auth.uid === $uid'`).");
+            } else {
+                console.error("Failed to fetch user profile from DB", error);
+            }
+            setUser(user); // Fallback to auth user data
         }
       } else {
         setUser(null);
