@@ -3,19 +3,28 @@
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, storage } from '@/lib/firebase';
+import { ref as storageDbRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, storage, database } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { ref as dbRef, set, get } from "firebase/database";
+
+export type AppUser = User & {
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+};
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   loginWithGoogle: () => Promise<UserCredential | undefined>;
   loginWithEmail: (email:string, password:string) => Promise<any>;
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
   uploadProfilePicture: (file: File) => Promise<void>;
-  updateUserProfile: (data: { name?: string; email?: string }) => Promise<void>;
+  updateUserProfile: (data: Partial<AppUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,7 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const NOT_CONFIGURED_ERROR = new Error("Firebase is not configured. Please add your Firebase credentials to the .env file.");
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -33,8 +42,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        if (!database) {
+            setUser(user);
+            setLoading(false);
+            return;
+        }
+        const userDbRef = dbRef(database, `users/${user.uid}`);
+        try {
+            const snapshot = await get(userDbRef);
+            if (snapshot.exists()) {
+              const dbProfile = snapshot.val();
+              setUser({ ...user, ...dbProfile });
+            } else {
+              setUser(user);
+            }
+        } catch (error) {
+            console.error("Failed to fetch user profile from DB", error);
+            setUser(user); // fallback to auth user
+        }
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
@@ -49,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return result;
     } catch (error) {
       console.error("Error signing in with Google", error);
-      throw error; // Re-throw the error to be caught by the UI
+      throw error;
     }
   };
 
@@ -64,34 +94,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (userCredential.user) {
       const displayName = `${firstName} ${lastName}`;
       await updateProfile(userCredential.user, { displayName });
-      // The onAuthStateChanged listener will handle the user state update.
     }
     return userCredential;
   }
 
-  const updateUserProfile = async (data: { name?: string; email?: string }) => {
+  const updateUserProfile = async (data: Partial<AppUser>) => {
     const currentUser = auth?.currentUser;
-    if (!auth || !currentUser) {
+    if (!auth || !currentUser || !database) {
         throw new Error("Firebase not configured or user not logged in.");
     }
 
-    const updates: Promise<void>[] = [];
-    if (data.name && data.name !== currentUser.displayName) {
-        updates.push(updateProfile(currentUser, { displayName: data.name }));
+    const authUpdates: Promise<void>[] = [];
+    if (data.displayName && data.displayName !== currentUser.displayName) {
+        authUpdates.push(updateProfile(currentUser, { displayName: data.displayName }));
     }
     if (data.email && data.email !== currentUser.email) {
-        updates.push(updateEmail(currentUser, data.email));
+        authUpdates.push(updateEmail(currentUser, data.email));
     }
 
-    if (updates.length > 0) {
-        await Promise.all(updates);
-        // After updates, the auth.currentUser object has the new values.
-        // The `user` object in our state is stale. We need to trigger a re-render.
-        // onAuthStateChanged does not fire for profile updates, so we manually refresh.
-        await currentUser.reload();
-        // Create a new object to ensure React detects the change.
-        setUser(auth.currentUser ? { ...auth.currentUser } as User : null);
+    if (authUpdates.length > 0) {
+        await Promise.all(authUpdates);
     }
+    
+    const userDbRef = dbRef(database, `users/${currentUser.uid}`);
+    const snapshot = await get(userDbRef);
+    const currentDbData = snapshot.exists() ? snapshot.val() : {};
+
+    const dbData = {
+        ...currentDbData,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode,
+    };
+    
+    const cleanDbData = Object.fromEntries(Object.entries(dbData).filter(([, v]) => v != null && v !== ''));
+
+    if (Object.keys(cleanDbData).length > 0) {
+        await set(userDbRef, cleanDbData);
+    }
+
+    await currentUser.reload();
+    const finalSnapshot = await get(userDbRef);
+    const dbProfile = finalSnapshot.exists() ? finalSnapshot.val() : {};
+    setUser({ ...auth.currentUser, ...dbProfile } as AppUser);
   };
 
   const uploadProfilePicture = async (file: File) => {
@@ -101,22 +148,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      const fileRef = ref(storage, `profile-pictures/${currentUser.uid}`);
+      const fileRef = storageDbRef(storage, `profile-pictures/${currentUser.uid}`);
       await uploadBytes(fileRef, file);
       const photoURL = await getDownloadURL(fileRef);
       
       await updateProfile(currentUser, { photoURL });
       await currentUser.reload();
-      setUser(auth.currentUser ? { ...auth.currentUser } as User : null);
+      setUser(auth.currentUser ? { ...auth.currentUser } as AppUser : null);
     } catch (error: any) {
-      // Check for specific Firebase Storage errors
       if (error.code === 'storage/unauthorized') {
           throw new Error("You don't have permission to upload this file. Please check your Firebase Storage security rules.");
       }
       if (error.code === 'storage/object-not-found') {
             throw new Error("File not found. The upload may have been interrupted.");
       }
-      // Re-throw other errors
       throw error;
     }
   };

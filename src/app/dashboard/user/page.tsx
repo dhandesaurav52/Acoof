@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -9,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
+import { Edit, Mail, Phone, User, MapPin, Loader2, Camera, Building, Map, Mailbox } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function UserDashboardPage() {
@@ -26,7 +27,10 @@ export default function UserDashboardPage() {
     name: '',
     email: '',
     phone: '',
-    address: 'Not set',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
     avatar: '',
     initials: ''
   });
@@ -42,8 +46,11 @@ export default function UserDashboardPage() {
         const profileData = {
             name: user.displayName || 'Anonymous User',
             email: user.email || 'No email provided',
-            phone: user.phoneNumber || '+1 (555) 123-4567',
-            address: '123 Main St, Anytown, USA', // Default location
+            phone: user.phone || '',
+            address: user.address || '',
+            city: user.city || '',
+            state: user.state || '',
+            pincode: user.pincode || '',
             avatar: user.photoURL || `https://placehold.co/100x100.png`,
             initials: initials
         };
@@ -62,16 +69,14 @@ export default function UserDashboardPage() {
     setIsSaving(true);
     try {
       await updateUserProfile({
-        name: editedUser.name,
-        email: editedUser.email,
-      });
-      setUserProfile(prev => ({
-        ...prev,
-        name: editedUser.name,
+        displayName: editedUser.name,
         email: editedUser.email,
         phone: editedUser.phone,
         address: editedUser.address,
-      }));
+        city: editedUser.city,
+        state: editedUser.state,
+        pincode: editedUser.pincode,
+      });
       toast({
         title: "Profile Updated",
         description: "Your profile information has been saved.",
@@ -128,10 +133,17 @@ export default function UserDashboardPage() {
 
           if (data.status === 'OK' && data.results[0]) {
             const address = data.results[0].formatted_address;
+            const addressComponents = data.results[0].address_components;
+            const getAddressComponent = (type: string) => addressComponents.find((c: any) => c.types.includes(type))?.long_name || '';
+
             setEditedUser(prev => ({
               ...prev,
               address: address,
+              city: getAddressComponent('locality'),
+              state: getAddressComponent('administrative_area_level_1'),
+              pincode: getAddressComponent('postal_code'),
             }));
+
             toast({
               title: 'Location Updated',
               description: 'Your address has been populated.',
@@ -266,37 +278,51 @@ export default function UserDashboardPage() {
                       </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="name">Name</Label>
-                          <Input id="name" value={editedUser.name} onChange={handleInputChange} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input id="email" type="email" value={editedUser.email} onChange={handleInputChange} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input id="phone" value={editedUser.phone} onChange={handleInputChange} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="address">Address</Label>
-                          <Input id="address" value={editedUser.address} onChange={handleInputChange} />
-                      </div>
-                      <div className="flex justify-end">
-                          <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary" disabled={isFetchingLocation}>
-                              {isFetchingLocation ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Fetching...
-                                </>
-                              ) : (
-                                <>
-                                  <MapPin className="mr-2 h-4 w-4" />
-                                  Use current location
-                                </>
-                              )}
-                          </Button>
-                      </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input id="name" value={editedUser.name} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" value={editedUser.email} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="phone">Phone</Label>
+                            <Input id="phone" value={editedUser.phone} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="address">Address</Label>
+                            <Input id="address" value={editedUser.address} onChange={handleInputChange} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="city">City</Label>
+                                <Input id="city" value={editedUser.city} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="state">State</Label>
+                                <Input id="state" value={editedUser.state} onChange={handleInputChange} />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pincode">Pincode</Label>
+                            <Input id="pincode" value={editedUser.pincode} onChange={handleInputChange} />
+                        </div>
+                        <div className="flex justify-end">
+                            <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary" disabled={isFetchingLocation}>
+                                {isFetchingLocation ? (
+                                    <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Fetching...
+                                    </>
+                                ) : (
+                                    <>
+                                    <MapPin className="mr-2 h-4 w-4" />
+                                    Use current location
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                       </div>
                       <DialogFooter>
                       <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSaving}>Cancel</Button>
@@ -327,9 +353,24 @@ export default function UserDashboardPage() {
               <div className="flex items-start gap-4">
                   <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
                   <span className="w-32 text-muted-foreground">Address</span>
-                  <span className="text-foreground font-medium">
+                  <span className="text-foreground font-medium flex-1">
                     {userProfile.address}
                   </span>
+              </div>
+              <div className="flex items-center gap-4">
+                  <Building className="h-5 w-5 text-muted-foreground" />
+                  <span className="w-32 text-muted-foreground">City</span>
+                  <span className="text-foreground font-medium">{userProfile.city}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                  <Map className="h-5 w-5 text-muted-foreground" />
+                  <span className="w-32 text-muted-foreground">State</span>
+                  <span className="text-foreground font-medium">{userProfile.state}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                  <Mailbox className="h-5 w-5 text-muted-foreground" />
+                  <span className="w-32 text-muted-foreground">Pincode</span>
+                  <span className="text-foreground font-medium">{userProfile.pincode}</span>
               </div>
           </CardContent>
         </Card>
