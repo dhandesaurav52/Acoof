@@ -12,6 +12,7 @@ import { Logo } from "@/components/Logo"
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { AuthBackground } from "@/components/AuthBackground";
 
 const ADMIN_EMAIL = "admin@example.com";
 const ADMIN_PASSWORD = "admin@12345";
@@ -91,8 +92,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-auth-background py-12">
-      <Card className="mx-auto max-w-sm w-full bg-card/80 backdrop-blur-sm">
+    <div className="relative flex items-center justify-center min-h-screen bg-auth-background py-12 overflow-hidden">
+      <AuthBackground />
+      <Card className="relative z-10 mx-auto max-w-sm w-full bg-card/80 backdrop-blur-sm">
         <CardHeader className="space-y-4 text-center">
             <Logo className="w-32 h-auto mx-auto" />
             <CardTitle className="text-2xl font-headline">Login</CardTitle>
