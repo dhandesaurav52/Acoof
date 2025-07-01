@@ -100,6 +100,17 @@ export default function UserDashboardPage() {
   };
 
   const handleCurrentLocation = () => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    if (!apiKey) {
+      toast({
+        variant: 'destructive',
+        title: 'API Key Missing',
+        description: 'Google Maps API key is not configured. Please add it to your .env file.',
+      });
+      return;
+    }
+
     if (!navigator.geolocation) {
       toast({
         variant: 'destructive',
@@ -118,57 +129,56 @@ export default function UserDashboardPage() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-        if (!apiKey) {
-          toast({
-            variant: 'destructive',
-            title: 'API Key Missing',
-            description: 'Google Maps API key is not configured.',
-          });
-          setIsFetchingLocation(false);
-          return;
-        }
-
+        
         try {
           const response = await fetch(
             `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
           );
           const data = await response.json();
 
-          if (data.status === 'OK' && data.results[0]) {
-            const addressComponents = data.results[0].address_components;
-            
-            const getComponent = (type: string, useShortName = false) => {
-                const component = addressComponents.find((c: any) => c.types.includes(type));
-                return component ? (useShortName ? component.short_name : component.long_name) : '';
-            };
-
-            const streetNumber = getComponent('street_number');
-            const route = getComponent('route');
-            const city = getComponent('locality') || getComponent('postal_town');
-            const state = getComponent('administrative_area_level_1', true);
-            
-            const fullAddress = [streetNumber, route].filter(Boolean).join(' ');
-
-            setEditedUser(prev => ({
-              ...prev,
-              address: fullAddress || prev.address,
-              city: city || prev.city,
-              state: state || prev.state,
-            }));
-            
-            toast({
-              title: 'Location Updated',
-              description: 'Your address fields have been populated.',
-            });
-          } else {
+          if (data.status !== 'OK') {
             toast({
               variant: 'destructive',
               title: 'Could Not Fetch Address',
-              description: data.error_message || 'An error occurred while fetching the address.',
+              description: data.error_message || `An error occurred while fetching the address. Status: ${data.status}`,
             });
+            return;
           }
+
+          const addressComponents = data.results[0]?.address_components;
+
+          if (!addressComponents) {
+            toast({
+              variant: 'destructive',
+              title: 'Could Not Fetch Address',
+              description: 'Geocoding was successful, but no address data was found for your location.',
+            });
+            return;
+          }
+
+          const getComponent = (type: string, useShortName = false) => {
+              const component = addressComponents.find((c: any) => c.types.includes(type));
+              return component ? (useShortName ? component.short_name : component.long_name) : '';
+          };
+
+          const streetNumber = getComponent('street_number');
+          const route = getComponent('route');
+          const city = getComponent('locality') || getComponent('postal_town');
+          const state = getComponent('administrative_area_level_1', true);
+          
+          const fullAddress = [streetNumber, route].filter(Boolean).join(' ');
+
+          setEditedUser(prev => ({
+            ...prev,
+            address: fullAddress || prev.address,
+            city: city || prev.city,
+            state: state || prev.state,
+          }));
+          
+          toast({
+            title: 'Location Updated',
+            description: 'Your address fields have been populated.',
+          });
         } catch (error: any) {
           toast({
             variant: 'destructive',
