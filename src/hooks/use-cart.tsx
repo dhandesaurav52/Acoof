@@ -4,6 +4,7 @@
 import { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import type { Product, CartItem } from '@/types';
 import { useToast } from './use-toast';
+import { useAuth } from './use-auth';
 
 interface CartContextType {
     cart: CartItem[];
@@ -22,38 +23,78 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const { user, loading: authLoading } = useAuth();
 
+    const getCartKey = useCallback((user: any) => {
+        return user ? `acoof-cart-${user.uid}` : 'acoof-cart-guest';
+    }, []);
+
+    // Effect to load cart from localStorage on initial load and when user changes
     useEffect(() => {
+        if (authLoading) {
+            return; // Wait for auth state to be resolved
+        }
+
+        const currentCartKey = getCartKey(user);
+        
         try {
-            const savedCart = localStorage.getItem('acoof-cart');
-            if (savedCart) {
-                setCart(JSON.parse(savedCart));
+            // Handle user login: merge guest cart with user cart
+            if (user) {
+                const guestCartKey = 'acoof-cart-guest';
+                const guestCartRaw = localStorage.getItem(guestCartKey);
+                const guestCart: CartItem[] = guestCartRaw ? JSON.parse(guestCartRaw) : [];
+
+                const userCartRaw = localStorage.getItem(currentCartKey);
+                const userCart: CartItem[] = userCartRaw ? JSON.parse(userCartRaw) : [];
+                
+                if (guestCart.length > 0) {
+                    const mergedCart = [...userCart];
+                    guestCart.forEach(guestItem => {
+                        const existingItemIndex = mergedCart.findIndex(userItem => userItem.id === guestItem.id);
+                        if (existingItemIndex > -1) {
+                            mergedCart[existingItemIndex].quantity += guestItem.quantity;
+                        } else {
+                            mergedCart.push(guestItem);
+                        }
+                    });
+                    setCart(mergedCart);
+                    localStorage.setItem(currentCartKey, JSON.stringify(mergedCart));
+                    localStorage.removeItem(guestCartKey); // Clear guest cart after merge
+                    toast({ title: "Cart Merged", description: "Your guest cart items have been added to your account." });
+                } else {
+                    setCart(userCart);
+                }
+            } else {
+                // Handle logout or guest user
+                const savedCartRaw = localStorage.getItem(currentCartKey);
+                const savedCart = savedCartRaw ? JSON.parse(savedCartRaw) : [];
+                setCart(savedCart);
             }
         } catch (error) {
-            console.error("Failed to parse cart from localStorage", error);
-            localStorage.removeItem('acoof-cart');
+            console.error("Failed to process cart from localStorage", error);
+            // In case of error, start with an empty cart
+            setCart([]);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user, authLoading, getCartKey, toast]);
 
+    // Effect to save cart to localStorage whenever it changes
     useEffect(() => {
-        if (!loading) {
-            localStorage.setItem('acoof-cart', JSON.stringify(cart));
+        if (!loading && !authLoading) {
+            const currentCartKey = getCartKey(user);
+            localStorage.setItem(currentCartKey, JSON.stringify(cart));
         }
-    }, [cart, loading]);
-
+    }, [cart, user, loading, authLoading, getCartKey]);
 
     const addToCart = useCallback((product: Product) => {
         setCart(prevCart => {
             const existingItem = prevCart.find(item => item.id === product.id);
             if (existingItem) {
-                // Increase quantity if item already exists
                 return prevCart.map(item =>
                     item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
                 );
             }
-            // Add new item to cart
             return [...prevCart, { ...product, quantity: 1 }];
         });
         toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` });
@@ -94,7 +135,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, loading }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, loading: loading || authLoading }}>
             {children}
         </CartContext.Provider>
     );
