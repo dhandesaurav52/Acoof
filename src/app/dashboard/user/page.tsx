@@ -22,6 +22,7 @@ export default function UserDashboardPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   
   const [userProfile, setUserProfile] = useState({
     name: '',
@@ -70,6 +71,17 @@ export default function UserDashboardPage() {
         name: editedUser.name,
         email: editedUser.email,
       });
+      // This is a local update, as address fields are not in the Firebase auth user object.
+      // We update the main profile display with the edited values.
+      setUserProfile(prev => ({
+        ...prev,
+        name: editedUser.name,
+        email: editedUser.email,
+        phone: editedUser.phone,
+        address: editedUser.address,
+        city: editedUser.city,
+        state: editedUser.state,
+      }));
       toast({
         title: "Profile Updated",
         description: "Your profile information has been saved.",
@@ -88,15 +100,103 @@ export default function UserDashboardPage() {
   };
 
   const handleCurrentLocation = () => {
-    setEditedUser(prev => ({
-        ...prev,
-        city: 'San Francisco',
-        state: 'CA'
-    }));
+    if (!navigator.geolocation) {
+      toast({
+        variant: 'destructive',
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support this feature.',
+      });
+      return;
+    }
+
+    setIsFetchingLocation(true);
     toast({
-        title: "Location Updated",
-        description: "City and State have been set to your current location."
+      title: 'Fetching Location',
+      description: 'Please grant permission to access your location.',
     });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+        if (!apiKey) {
+          toast({
+            variant: 'destructive',
+            title: 'API Key Missing',
+            description: 'Google Maps API key is not configured.',
+          });
+          setIsFetchingLocation(false);
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+          );
+          const data = await response.json();
+
+          if (data.status === 'OK' && data.results[0]) {
+            const addressComponents = data.results[0].address_components;
+            
+            const getComponent = (type: string, useShortName = false) => {
+                const component = addressComponents.find((c: any) => c.types.includes(type));
+                return component ? (useShortName ? component.short_name : component.long_name) : '';
+            };
+
+            const streetNumber = getComponent('street_number');
+            const route = getComponent('route');
+            const city = getComponent('locality') || getComponent('postal_town');
+            const state = getComponent('administrative_area_level_1', true);
+            
+            const fullAddress = [streetNumber, route].filter(Boolean).join(' ');
+
+            setEditedUser(prev => ({
+              ...prev,
+              address: fullAddress || prev.address,
+              city: city || prev.city,
+              state: state || prev.state,
+            }));
+            
+            toast({
+              title: 'Location Updated',
+              description: 'Your address fields have been populated.',
+            });
+          } else {
+            throw new Error(data.error_message || `Geocoding failed: ${data.status}`);
+          }
+        } catch (error: any) {
+          console.error('Geocoding error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Could Not Fetch Address',
+            description: 'Failed to convert coordinates to an address.',
+          });
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (error) => {
+        let message = 'An unknown error occurred.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = 'You denied the request for Geolocation.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            message = 'The request to get user location timed out.';
+            break;
+        }
+        toast({
+          variant: 'destructive',
+          title: 'Geolocation Error',
+          description: message,
+        });
+        setIsFetchingLocation(false);
+      }
+    );
   };
 
   const handleAvatarClick = () => {
@@ -212,9 +312,18 @@ export default function UserDashboardPage() {
                           </div>
                       </div>
                       <div className="flex justify-end">
-                          <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary">
-                              <MapPin className="mr-2 h-4 w-4" />
-                              Use current location
+                          <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary" disabled={isFetchingLocation}>
+                              {isFetchingLocation ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Fetching...
+                                </>
+                              ) : (
+                                <>
+                                  <MapPin className="mr-2 h-4 w-4" />
+                                  Use current location
+                                </>
+                              )}
                           </Button>
                       </div>
                       </div>
