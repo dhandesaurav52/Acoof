@@ -59,12 +59,13 @@ export function ProductCard({ product }: ProductCardProps) {
            >
               <Heart className={cn("h-5 w-5", isFavorited && "fill-primary text-primary")} />
            </Button>
-           <Link href={`/products#${product.id}`} className="absolute inset-0" aria-label={product.name} />
+           <Link href={`/products/${product.id}`} className="absolute inset-0" aria-label={product.name} />
         </div>
       </CardHeader>
       <CardContent className="flex-grow p-4">
         <CardTitle className="text-base font-medium leading-tight">
-          <Link href={`/products#${product.id}`} className="focus:outline-none">
+          <Link href={`/products/${product.id}`} className="focus:outline-none">
+            <span className="absolute inset-0"></span>
             {product.name}
           </Link>
         </CardTitle>
