@@ -14,7 +14,7 @@ export default function Home() {
   
   const featuredStyles = [
     { name: 'HipHop', image: 'https://images.pexels.com/photos/7957440/pexels-photo-7957440.jpeg', aiHint: 'hiphop fashion' },
-    { name: 'Casual', image: 'https://images.pexels.com/photos/3768132/pexels-photo-3768132.jpeg', aiHint: 'casual fashion' },
+    { name: 'Casual', image: 'https://images.pexels.com/photos/32796238/pexels-photo-32796238.jpeg', aiHint: 'casual fashion' },
     { name: 'Party Wear', image: 'https://images.pexels.com/photos/532220/pexels-photo-532220.jpeg', aiHint: 'party fashion' },
   ];
   
