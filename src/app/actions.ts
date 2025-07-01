@@ -2,9 +2,10 @@
 'use server';
 
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
-import { database } from '@/lib/firebase';
-import { ref as dbRef, set, push, get } from "firebase/database";
-import type { Product, Order } from '@/types';
+import { database, storage } from '@/lib/firebase';
+import { ref as dbRef, set, push, get, remove, query, orderByChild, equalTo, update } from "firebase/database";
+import { ref as storageRef, deleteObject } from 'firebase/storage';
+import type { Product, Order, OrderStatus } from '@/types';
 import { products as staticProducts } from '@/lib/data';
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
@@ -45,10 +46,8 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
     });
     
     if(Object.keys(productsToSeed).length > 0) {
-      // Use set on the parent ref to write all products at once
       await set(productsRef, productsToSeed);
     } else if (staticProducts.length > 0) {
-        // This case handles if all push() calls failed, which is highly unlikely
         return { error: 'Failed to generate IDs for seeding.' };
     }
 
@@ -63,8 +62,6 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
     return { error: errorMessage };
   }
 }
-
-// --- Razorpay Payment Integration ---
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -144,5 +141,117 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
     } catch (error: any) {
         console.error('Failed to save order:', error);
         return { success: false, error: 'An error occurred while saving the order.' };
+    }
+}
+
+export async function deleteProduct(productId: string, imageUrls: string[]): Promise<{ success?: string; error?: string; }> {
+  if (!database || !storage) {
+    return { error: 'Firebase is not configured. Cannot delete product.' };
+  }
+
+  try {
+    const productRef = dbRef(database, `products/${productId}`);
+    await remove(productRef);
+  } catch (error: any) {
+    console.error('Database deletion failed:', error);
+    if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
+      return { error: "Database permission denied. Please check your Realtime Database security rules." };
+    }
+    return { error: `An unexpected error occurred while deleting product data: ${error.message}` };
+  }
+
+  const imageDeletionPromises = imageUrls
+    .filter(url => url && url.includes('firebasestorage.googleapis.com'))
+    .map(url => {
+      try {
+        const imageRef = storageRef(storage, url);
+        return deleteObject(imageRef).catch(err => {
+            if (err.code === 'storage/object-not-found') {
+                console.warn(`Image not found, skipping deletion: ${url}`);
+                return null;
+            }
+            console.error(`Failed to delete image ${url}:`, err);
+            throw err;
+        });
+      } catch (e) {
+        console.error(`Invalid storage URL, skipping deletion: ${url}`, e);
+        return null;
+      }
+    });
+  
+  const validPromises = imageDeletionPromises.filter((p): p is Promise<void> => p !== null);
+
+  if (validPromises.length > 0) {
+      const results = await Promise.allSettled(validPromises);
+      const failedDeletions = results.filter(result => result.status === 'rejected');
+
+      if (failedDeletions.length > 0) {
+          const firstError = (failedDeletions[0] as PromiseRejectedResult).reason;
+          let errorMessage = "Product data was deleted, but failed to remove one or more images.";
+          if (firstError?.code === 'storage/unauthorized') {
+              errorMessage = "Product data was deleted, but Storage permission was denied for image removal. Check your Storage rules.";
+          }
+          return { success: 'Product was successfully deleted, but some images may remain.', error: errorMessage };
+      }
+  }
+
+  return { success: 'Product and its images were successfully deleted.' };
+}
+
+export async function getOrders(): Promise<{ orders?: Order[]; error?: string; }> {
+    if (!database) {
+        return { error: 'Firebase is not configured. Cannot fetch orders.' };
+    }
+    const ordersRef = dbRef(database, 'orders');
+    try {
+        const snapshot = await get(ordersRef);
+        if (snapshot.exists()) {
+            const ordersData = snapshot.val();
+            const ordersList: Order[] = Object.keys(ordersData)
+                .map(key => ({ id: key, ...ordersData[key] }))
+                .reverse();
+            return { orders: ordersList };
+        }
+        return { orders: [] };
+    } catch (error: any) {
+        console.error('Failed to fetch orders:', error);
+        return { error: 'An error occurred while fetching orders.' };
+    }
+}
+
+export async function getUserOrders(userEmail: string): Promise<{ orders?: Order[]; error?: string; }> {
+    if (!database) {
+        return { error: 'Firebase is not configured. Cannot fetch orders.' };
+    }
+    const ordersRef = dbRef(database, 'orders');
+    const userOrdersQuery = query(ordersRef, orderByChild('userEmail'), equalTo(userEmail));
+    
+    try {
+        const snapshot = await get(userOrdersQuery);
+        if (snapshot.exists()) {
+            const ordersData = snapshot.val();
+            const ordersList: Order[] = Object.keys(ordersData)
+                .map(key => ({ id: key, ...ordersData[key] }))
+                .reverse();
+            return { orders: ordersList };
+        }
+        return { orders: [] };
+    } catch (error: any) {
+        console.error('Failed to fetch user orders:', error);
+        return { error: 'An error occurred while fetching your orders.' };
+    }
+}
+
+export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<{ success?: boolean; error?: string; }> {
+    if (!database) {
+        return { error: 'Firebase is not configured. Cannot update order.' };
+    }
+    const orderRef = dbRef(database, `orders/${orderId}`);
+    try {
+        await update(orderRef, { status });
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to update order status:', error);
+        return { error: 'An error occurred while updating the order status.' };
     }
 }

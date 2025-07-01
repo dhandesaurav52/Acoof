@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -16,14 +16,9 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { seedDatabase } from '@/app/actions';
+import { seedDatabase, deleteProduct, getOrders, updateOrderStatus } from '@/app/actions';
 import { useProducts } from '@/hooks/use-products';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-// --- Imports for Deletion Logic ---
-import { database, storage } from '@/lib/firebase';
-import { ref as dbRef, remove } from "firebase/database";
-import { ref as storageRef, deleteObject } from 'firebase/storage';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -32,12 +27,14 @@ export default function AdminDashboardPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isSeeding, setIsSeeding] = useState(false);
+    
     const [orders, setOrders] = useState<Order[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isViewOrderOpen, setIsViewOrderOpen] = useState(false);
     const [updatedStatus, setUpdatedStatus] = useState<OrderStatus | null>(null);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-    // New state for product deletion
     const { products, loading: productsLoading } = useProducts();
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -45,7 +42,6 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         if (loading) return;
-
         if (!user) {
             router.push('/login');
         } else if (user.email !== ADMIN_EMAIL) {
@@ -53,85 +49,48 @@ export default function AdminDashboardPage() {
         }
     }, [user, loading, router]);
 
+    useEffect(() => {
+        async function fetchOrders() {
+            if (user?.email !== ADMIN_EMAIL) return;
+            setOrdersLoading(true);
+            const result = await getOrders();
+            if (result.orders) {
+                setOrders(result.orders);
+            } else if (result.error) {
+                toast({ variant: 'destructive', title: 'Failed to fetch orders', description: result.error });
+            }
+            setOrdersLoading(false);
+        }
+        if(user) {
+            fetchOrders();
+        }
+    }, [user, toast]);
+
+    const stats = useMemo(() => {
+        const totalRevenue = orders.reduce((acc, order) => {
+            if(order.status === 'Delivered'){
+                return acc + order.total;
+            }
+            return acc;
+        }, 0);
+        const uniqueCustomers = new Set(orders.map(order => order.userEmail)).size;
+        return {
+            totalRevenue,
+            uniqueCustomers,
+            totalOrders: orders.length,
+        };
+    }, [orders]);
+
     const handleSeedDatabase = async () => {
         setIsSeeding(true);
         const result = await seedDatabase();
         if (result.error) {
-            toast({
-                variant: 'destructive',
-                title: 'Database Seeding Failed',
-                description: result.error,
-            });
+            toast({ variant: 'destructive', title: 'Database Seeding Failed', description: result.error });
         } else {
-            toast({
-                title: 'Database Seeding Successful',
-                description: result.success,
-            });
+            toast({ title: 'Database Seeding Successful', description: result.success });
         }
         setIsSeeding(false);
     };
-
-    // --- Product Deletion Logic (Moved from actions.ts) ---
-    async function deleteProduct(productId: string, imageUrls: string[]): Promise<{ success?: string; error?: string; }> {
-      if (!database || !storage) {
-        return { error: 'Firebase is not configured. Cannot delete product.' };
-      }
-
-      // First, try to remove the database entry. If this fails, we shouldn't proceed.
-      try {
-        const productRef = dbRef(database, `products/${productId}`);
-        await remove(productRef);
-      } catch (error: any) {
-        console.error('Database deletion failed:', error);
-        if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
-          return { error: "Database permission denied. Please check your Realtime Database security rules." };
-        }
-        return { error: `An unexpected error occurred while deleting product data: ${error.message}` };
-      }
-
-      // If database deletion was successful, proceed to delete images.
-      const imageDeletionPromises = imageUrls
-        .filter(url => url && url.includes('firebasestorage.googleapis.com'))
-        .map(url => {
-          try {
-            // It's safer to create the ref from the URL directly
-            const imageRef = storageRef(storage, url);
-            return deleteObject(imageRef).catch(err => {
-                // If the image doesn't exist, we can safely ignore the error.
-                if (err.code === 'storage/object-not-found') {
-                    console.warn(`Image not found, skipping deletion: ${url}`);
-                    return null;
-                }
-                // For other errors, we should be aware of them.
-                console.error(`Failed to delete image ${url}:`, err);
-                throw err; // Re-throw to be caught by Promise.allSettled
-            });
-          } catch (e) {
-            console.error(`Invalid storage URL, skipping deletion: ${url}`, e);
-            return null;
-          }
-        });
-      
-      const validPromises = imageDeletionPromises.filter((p): p is Promise<void> => p !== null);
-
-      if (validPromises.length > 0) {
-          const results = await Promise.allSettled(validPromises);
-          const failedDeletions = results.filter(result => result.status === 'rejected');
-
-          if (failedDeletions.length > 0) {
-              const firstError = (failedDeletions[0] as PromiseRejectedResult).reason;
-              let errorMessage = "Product data was deleted, but failed to remove one or more images.";
-              if (firstError?.code === 'storage/unauthorized') {
-                  errorMessage = "Product data was deleted, but Storage permission was denied for image removal. Check your Storage rules.";
-              }
-              // We return a 'success' message here because the primary action (DB deletion) succeeded.
-              // The toast will still be 'destructive' to alert the admin.
-              toast({ variant: 'destructive', title: 'Partial Deletion', description: errorMessage });
-          }
-      }
-
-      return { success: 'Product was successfully deleted.' };
-    }
 
     const handleConfirmDelete = async () => {
         if (!productToDelete) return;
@@ -140,16 +99,10 @@ export default function AdminDashboardPage() {
         const { success, error } = await deleteProduct(productToDelete.id, productToDelete.images);
 
         if (error) {
-            toast({
-                variant: 'destructive',
-                title: 'Deletion Failed',
-                description: error,
-            });
-        } else {
-            toast({
-                title: 'Product Deleted',
-                description: success,
-            });
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: error });
+        }
+        if (success) {
+            toast({ title: 'Product Deleted', description: success });
         }
         
         setIsDeleting(false);
@@ -171,14 +124,24 @@ export default function AdminDashboardPage() {
         setIsViewOrderOpen(true);
     }
 
-    const handleUpdateOrderStatus = () => {
+    const handleUpdateOrderStatus = async () => {
         if (!selectedOrder || !updatedStatus) return;
+        setIsUpdatingStatus(true);
+        
+        const result = await updateOrderStatus(selectedOrder.id, updatedStatus);
 
-        setOrders(prevOrders =>
-            prevOrders.map(order =>
-                order.id === selectedOrder.id ? { ...order, status: updatedStatus } : order
-            )
-        );
+        if(result.success) {
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order.id === selectedOrder.id ? { ...order, status: updatedStatus } : order
+                )
+            );
+            toast({ title: "Status Updated", description: `Order ${selectedOrder.id.substring(0, 7)}... status changed to ${updatedStatus}.` });
+        } else {
+            toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
+        }
+
+        setIsUpdatingStatus(false);
         setIsViewOrderOpen(false);
     };
 
@@ -193,7 +156,6 @@ export default function AdminDashboardPage() {
                 </p>
             </div>
 
-            {/* Stat Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -201,18 +163,18 @@ export default function AdminDashboardPage() {
                         <BarChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">₹0.00</div>
-                        <p className="text-xs text-muted-foreground">No revenue data yet</p>
+                        <div className="text-2xl font-bold">₹{stats.totalRevenue.toFixed(2)}</div>
+                        <p className="text-xs text-muted-foreground">Based on delivered orders</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+                        <CardTitle className="text-sm font-medium">Unique Customers</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">0</div>
-                        <p className="text-xs text-muted-foreground">No new customers yet</p>
+                        <div className="text-2xl font-bold">{stats.uniqueCustomers}</div>
+                        <p className="text-xs text-muted-foreground">Customers who have ordered</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -221,8 +183,8 @@ export default function AdminDashboardPage() {
                         <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{orders.length}</div>
-                        <p className="text-xs text-muted-foreground">No orders yet</p>
+                        <div className="text-2xl font-bold">{ordersLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.totalOrders}</div>
+                        <p className="text-xs text-muted-foreground">Total orders placed</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -240,7 +202,6 @@ export default function AdminDashboardPage() {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Recent Orders Table */}
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Recent Orders</CardTitle>
@@ -259,10 +220,12 @@ export default function AdminDashboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {orders.length > 0 ? (
+                            {ordersLoading ? (
+                                <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
+                            ) : orders.length > 0 ? (
                                 orders.map((order) => (
                                 <TableRow key={order.id}>
-                                    <TableCell className="font-medium">{order.id}</TableCell>
+                                    <TableCell className="font-medium truncate max-w-24">{order.id}</TableCell>
                                     <TableCell>{order.user}</TableCell>
                                     <TableCell>{order.date}</TableCell>
                                     <TableCell>₹{order.total.toFixed(2)}</TableCell>
@@ -295,7 +258,6 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Manage Products Card - NEW */}
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Manage Products</CardTitle>
@@ -349,7 +311,6 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
             </div>
-
         </div>
     </div>
     
@@ -438,14 +399,16 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsViewOrderOpen(false)}>Cancel</Button>
-                    <Button onClick={handleUpdateOrderStatus}>Update Status</Button>
+                    <Button variant="outline" onClick={() => setIsViewOrderOpen(false)} disabled={isUpdatingStatus}>Cancel</Button>
+                    <Button onClick={handleUpdateOrderStatus} disabled={isUpdatingStatus}>
+                        {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Update Status
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     )}
 
-    {/* Delete Confirmation Dialog - NEW */}
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
             <AlertDialogHeader>
@@ -458,7 +421,7 @@ export default function AdminDashboardPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setProductToDelete(null)} disabled={isDeleting}>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} className={cn(buttonVariants({ variant: "destructive" }))}>
                     {isDeleting ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

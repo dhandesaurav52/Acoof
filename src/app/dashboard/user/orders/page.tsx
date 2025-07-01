@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, FileText, Package, Truck, CheckCircle, XCircle } from 'lucide-react';
@@ -10,69 +10,45 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { Order } from '@/types';
-
-// Mock data for a specific user's orders
-const userOrders: Order[] = [
-    { 
-        id: 'ORD007', 
-        user: 'Olivia Smith', 
-        userEmail: 'olivia@example.com',
-        date: '2023-10-22', 
-        total: 220.00, 
-        status: 'Delivered',
-        shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
-        items: [
-            { productId: '7', productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
-            { productId: '5', productName: 'Cargo Trousers', quantity: 1, price: 80.00 },
-            { productId: '6', productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
-        ],
-        orderId: 'order_mock_007',
-        paymentId: 'pay_mock_007',
-        paymentSignature: 'sig_mock_007'
-    },
-    { 
-        id: 'ORD005', 
-        user: 'Olivia Smith', 
-        userEmail: 'olivia@example.com',
-        date: '2023-10-15', 
-        total: 90.00, 
-        status: 'Shipped',
-        shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
-        items: [
-            { productId: '6', productName: 'Minimalist Sneakers', quantity: 1, price: 90.00 },
-        ],
-        orderId: 'order_mock_005',
-        paymentId: 'pay_mock_005',
-        paymentSignature: 'sig_mock_005'
-    },
-    { 
-        id: 'ORD002', 
-        user: 'Olivia Smith', 
-        userEmail: 'olivia@example.com',
-        date: '2023-09-30', 
-        total: 100.00, 
-        status: 'Cancelled',
-        shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
-        items: [
-            { productId: '1', productName: 'Classic White Tee', quantity: 4, price: 25.00 },
-        ],
-        orderId: 'order_mock_002',
-        paymentId: 'pay_mock_002',
-        paymentSignature: 'sig_mock_002'
-    },
-];
+import { getUserOrders } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 export default function UserOrdersPage() {
-    const { user, loading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!loading && !user) {
+        if (!authLoading && !user) {
             router.push('/login');
         }
-    }, [user, loading, router]);
+    }, [user, authLoading, router]);
     
-    if (loading || !user) {
+    useEffect(() => {
+        async function fetchUserOrders() {
+            if (!user?.email) return;
+            setLoading(true);
+            const { orders: fetchedOrders, error } = await getUserOrders(user.email);
+            if (fetchedOrders) {
+                setOrders(fetchedOrders);
+            } else if (error) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Failed to fetch orders',
+                    description: error,
+                });
+            }
+            setLoading(false);
+        }
+
+        if (user) {
+            fetchUserOrders();
+        }
+    }, [user, toast]);
+    
+    if (authLoading || loading || !user) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -102,9 +78,9 @@ export default function UserOrdersPage() {
 
             <Card>
                 <CardContent className="p-0">
-                    {userOrders.length > 0 ? (
+                    {orders.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full">
-                            {userOrders.map((order) => (
+                            {orders.map((order) => (
                                 <AccordionItem value={order.id} key={order.id}>
                                     <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 transition-colors text-left">
                                         <div className="flex items-center gap-4 w-full">
@@ -113,7 +89,7 @@ export default function UserOrdersPage() {
                                             </div>
                                             <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
                                                 <div>
-                                                    <div className="font-bold">{order.id}</div>
+                                                    <div className="font-bold truncate max-w-24 sm:max-w-full">{order.id}</div>
                                                     <div className="text-xs text-muted-foreground">{order.date}</div>
                                                 </div>
                                                 <div className="hidden sm:block text-right sm:text-left">₹{order.total.toFixed(2)}</div>
