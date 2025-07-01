@@ -56,7 +56,7 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
   } catch (error: any) {
     console.error('Database seeding failed:', error);
     let errorMessage = 'An unknown error occurred during database seeding.';
-    if (error.code === 'database/permission-denied') {
+    if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
       errorMessage = "Permission denied. Please check your Firebase Realtime Database security rules.";
     }
     return { error: errorMessage };
@@ -140,6 +140,9 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
         return { success: true, orderId: newId };
     } catch (error: any) {
         console.error('Failed to save order:', error);
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            return { success: false, error: "Permission denied. Please check your Firebase Realtime Database security rules to allow users to create orders." };
+        }
         return { success: false, error: 'An error occurred while saving the order.' };
     }
 }
@@ -215,6 +218,9 @@ export async function getOrders(): Promise<{ orders?: Order[]; error?: string; }
         return { orders: [] };
     } catch (error: any) {
         console.error('Failed to fetch orders:', error);
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            return { error: "Permission denied. Please check your Firebase Realtime Database security rules to allow admins to read all orders." };
+        }
         return { error: 'An error occurred while fetching orders.' };
     }
 }
@@ -238,6 +244,9 @@ export async function getUserOrders(userEmail: string): Promise<{ orders?: Order
         return { orders: [] };
     } catch (error: any) {
         console.error('Failed to fetch user orders:', error);
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            return { error: "Permission denied. Please check your Firebase Realtime Database security rules to allow users to read their own orders." };
+        }
         return { error: 'An error occurred while fetching your orders.' };
     }
 }
@@ -252,6 +261,9 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
         return { success: true };
     } catch (error: any) {
         console.error('Failed to update order status:', error);
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            return { error: "Permission denied. Please check your Firebase Realtime Database security rules to allow admins to update orders." };
+        }
         return { error: 'An error occurred while updating the order status.' };
     }
 }
