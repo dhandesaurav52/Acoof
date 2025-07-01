@@ -54,6 +54,11 @@ export default function CartPage() {
             return;
         }
 
+        if (cartTotal <= 0) {
+            toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Cannot checkout with a total of zero or less.' });
+            return;
+        }
+
         if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
             toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment gateway is not configured. Public key is missing.' });
             console.error('ERROR: NEXT_PUBLIC_RAZORPAY_KEY_ID is not set in your .env file.');

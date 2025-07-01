@@ -65,8 +65,8 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-        console.error("Razorpay API keys not found in .env file");
-        return { error: 'Payment gateway is not configured. Please contact support.' };
+        console.error("Razorpay API keys not found in .env file. Please check your .env or .env.local file.");
+        return { error: 'Payment gateway is not configured on the server. Please check your API keys and contact support.' };
     }
 
     const razorpay = new Razorpay({
@@ -90,9 +90,13 @@ export async function createRazorpayOrder(amount: number, receiptId?: string): P
             amount: order.amount,
             currency: order.currency,
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Razorpay order creation failed:', error);
-        return { error: 'Failed to create payment order.' };
+        let clientMessage = 'Failed to create payment order. The payment gateway might be down.';
+        if (error.statusCode === 401) {
+            clientMessage = 'Authentication with payment gateway failed. Please check the server-side API keys in your .env file.'
+        }
+        return { error: clientMessage };
     }
 }
 
