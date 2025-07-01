@@ -19,6 +19,7 @@ import type { Product } from '@/types';
 import { database, storage, auth } from '@/lib/firebase';
 import { ref as dbRef, set, push, child } from "firebase/database";
 import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
+import { Badge } from '@/components/ui/badge';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -34,8 +35,10 @@ export default function OperateStorePage() {
     const [productDescription, setProductDescription] = useState('');
     const [productPrice, setProductPrice] = useState('');
     const [productCategory, setProductCategory] = useState<Product['category'] | ''>('');
-    const [productColors, setProductColors] = useState('');
-    const [productSizes, setProductSizes] = useState('');
+    const [productColors, setProductColors] = useState<string[]>([]);
+    const [productSizes, setProductSizes] = useState<string[]>([]);
+    const [currentColor, setCurrentColor] = useState('');
+    const [currentSize, setCurrentSize] = useState('');
     const [isNew, setIsNew] = useState(true);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -49,6 +52,44 @@ export default function OperateStorePage() {
         }
     }, [user, loading, router]);
     
+    const handleAddColor = () => {
+        const trimmedColor = currentColor.trim();
+        if (trimmedColor && !productColors.includes(trimmedColor)) {
+            setProductColors([...productColors, trimmedColor]);
+        }
+        setCurrentColor('');
+    };
+
+    const handleColorInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddColor();
+        }
+    };
+    
+    const handleRemoveColor = (colorToRemove: string) => {
+        setProductColors(productColors.filter(color => color !== colorToRemove));
+    };
+
+    const handleAddSize = () => {
+        const trimmedSize = currentSize.trim().toUpperCase();
+        if (trimmedSize && !productSizes.includes(trimmedSize)) {
+            setProductSizes([...productSizes, trimmedSize]);
+        }
+        setCurrentSize('');
+    };
+
+    const handleSizeInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddSize();
+        }
+    };
+
+    const handleRemoveSize = (sizeToRemove: string) => {
+        setProductSizes(productSizes.filter(size => size !== sizeToRemove));
+    };
+
     const addProduct = async (productData: Omit<Product, 'id'>) => {
         if (!auth?.currentUser) {
             toast({
@@ -193,8 +234,10 @@ export default function OperateStorePage() {
         setProductDescription('');
         setProductPrice('');
         setProductCategory('');
-        setProductColors('');
-        setProductSizes('');
+        setProductColors([]);
+        setProductSizes([]);
+        setCurrentColor('');
+        setCurrentSize('');
         setIsNew(true);
         setImagePreviews([]);
     };
@@ -230,8 +273,8 @@ export default function OperateStorePage() {
             isNew: isNew,
             images: imagePreviews.length > 0 ? imagePreviews : ['https://placehold.co/600x800.png'],
             aiHint: productName.toLowerCase(),
-            colors: productColors ? productColors.split(',').map(s => s.trim()).filter(Boolean) : [],
-            sizes: productSizes ? productSizes.split(',').map(s => s.trim()).filter(Boolean) : [],
+            colors: productColors,
+            sizes: productSizes,
         };
         
         await addProduct(newProductData);
@@ -284,13 +327,55 @@ export default function OperateStorePage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="product-colors">Colors</Label>
-                                    <Input id="product-colors" name="productColors" value={productColors} onChange={e => setProductColors(e.target.value)} placeholder="e.g., Red, Blue, Green" />
-                                    <p className="text-xs text-muted-foreground">Comma-separated values.</p>
+                                    <div className="flex gap-2">
+                                        <Input 
+                                            id="product-colors" 
+                                            value={currentColor} 
+                                            onChange={(e) => setCurrentColor(e.target.value)}
+                                            onKeyDown={handleColorInputKeyDown}
+                                            placeholder="e.g., Red"
+                                        />
+                                        <Button type="button" variant="outline" onClick={handleAddColor}>Add</Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Type a color and click Add or press Enter.</p>
+                                    {productColors.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 pt-2">
+                                            {productColors.map((color) => (
+                                                <Badge key={color} variant="secondary" className="flex items-center gap-1 pl-2 pr-1">
+                                                    {color}
+                                                    <button type="button" aria-label={`Remove ${color}`} onClick={() => handleRemoveColor(color)} className="ml-1 rounded-full p-0.5 hover:bg-destructive/20">
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="product-sizes">Sizes</Label>
-                                    <Input id="product-sizes" name="productSizes" value={productSizes} onChange={e => setProductSizes(e.target.value)} placeholder="e.g., S, M, L, XL" />
-                                     <p className="text-xs text-muted-foreground">Comma-separated values.</p>
+                                    <div className="flex gap-2">
+                                        <Input 
+                                            id="product-sizes" 
+                                            value={currentSize} 
+                                            onChange={(e) => setCurrentSize(e.target.value)}
+                                            onKeyDown={handleSizeInputKeyDown}
+                                            placeholder="e.g., S, M, L..."
+                                        />
+                                        <Button type="button" variant="outline" onClick={handleAddSize}>Add</Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Type a size and click Add or press Enter.</p>
+                                    {productSizes.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 pt-2">
+                                            {productSizes.map((size) => (
+                                                <Badge key={size} variant="secondary" className="flex items-center gap-1 pl-2 pr-1">
+                                                    {size}
+                                                    <button type="button" aria-label={`Remove ${size}`} onClick={() => handleRemoveSize(size)} className="ml-1 rounded-full p-0.5 hover:bg-destructive/20">
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="space-y-2">
