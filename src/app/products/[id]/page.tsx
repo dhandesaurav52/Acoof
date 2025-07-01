@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useProducts } from '@/hooks/use-products';
 import { useCart } from '@/hooks/use-cart';
@@ -9,7 +9,7 @@ import { useWishlist } from '@/hooks/use-wishlist';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Loader2, Heart, ShoppingCart, Star, CheckCircle } from 'lucide-react';
+import { Loader2, Heart, ShoppingCart, Star, CheckCircle, Zap } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 
 export default function ProductDetailPage() {
     const { id } = useParams<{ id: string }>();
+    const router = useRouter();
     const { products, loading: productsLoading } = useProducts();
     const { addToCart } = useCart();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -66,6 +67,11 @@ export default function ProductDetailPage() {
         }
     };
 
+    const handleBuyNow = () => {
+        addToCart(product);
+        router.push('/cart');
+    };
+
     return (
         <div className="container mx-auto py-12 px-4">
             <div className="grid md:grid-cols-2 gap-12 items-start">
@@ -102,8 +108,21 @@ export default function ProductDetailPage() {
                 {/* Product Details */}
                 <div className="space-y-6">
                     <div>
-                        <Badge variant="secondary">{product.category}</Badge>
-                        <h1 className="text-4xl font-bold tracking-tighter mt-2 font-headline">{product.name}</h1>
+                        <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                                <Badge variant="secondary">{product.category}</Badge>
+                                <h1 className="text-4xl font-bold tracking-tighter mt-2 font-headline">{product.name}</h1>
+                            </div>
+                             <Button
+                                size="icon"
+                                variant="ghost"
+                                className="rounded-full flex-shrink-0 ml-4"
+                                onClick={handleFavoriteClick}
+                                aria-label={isFavorited ? "Remove from Wishlist" : "Add to Wishlist"}
+                            >
+                                <Heart className={cn("h-6 w-6", isFavorited && "fill-primary text-primary")} />
+                            </Button>
+                        </div>
                         <p className="text-3xl font-semibold text-primary mt-4">₹{product.price.toFixed(2)}</p>
                         <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                             <div className="flex items-center gap-0.5">
@@ -165,13 +184,13 @@ export default function ProductDetailPage() {
 
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Button size="lg" className="w-full" onClick={() => addToCart(product)}>
+                        <Button size="lg" variant="outline" className="w-full" onClick={() => addToCart(product)}>
                             <ShoppingCart className="mr-2 h-5 w-5" />
                             Add to Cart
                         </Button>
-                        <Button size="lg" variant="outline" className="w-full" onClick={handleFavoriteClick}>
-                            <Heart className={cn("mr-2 h-5 w-5", isFavorited && "fill-primary text-primary")} />
-                            {isFavorited ? 'In Wishlist' : 'Add to Wishlist'}
+                        <Button size="lg" className="w-full" onClick={handleBuyNow}>
+                            <Zap className="mr-2 h-5 w-5" />
+                            Buy Now
                         </Button>
                     </div>
 
