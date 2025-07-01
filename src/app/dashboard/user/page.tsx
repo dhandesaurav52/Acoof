@@ -163,14 +163,19 @@ export default function UserDashboardPage() {
               description: 'Your address fields have been populated.',
             });
           } else {
-            throw new Error(data.error_message || `Geocoding failed: ${data.status}`);
+            console.error('Geocoding API error:', data.error_message || data.status);
+            toast({
+              variant: 'destructive',
+              title: 'Could Not Fetch Address',
+              description: data.error_message || 'An error occurred while fetching the address.',
+            });
           }
         } catch (error: any) {
-          console.error('Geocoding error:', error);
+          console.error('Geocoding fetch error:', error);
           toast({
             variant: 'destructive',
             title: 'Could Not Fetch Address',
-            description: 'Failed to convert coordinates to an address.',
+            description: 'Failed to connect to location services. Please check your network.',
           });
         } finally {
           setIsFetchingLocation(false);
