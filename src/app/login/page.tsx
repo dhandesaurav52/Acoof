@@ -37,8 +37,15 @@ export default function LoginPage() {
                 // If signup failed because the email is already in use, it means the admin account exists.
                 // So, we try to log in instead.
                 if (error.code === 'auth/email-already-in-use') {
-                    await loginWithEmail(email, password);
-                    router.push('/dashboard/admin');
+                    try {
+                        const userCredential = await loginWithEmail(email, password);
+                        if (userCredential?.user) {
+                            router.push('/dashboard/admin');
+                        }
+                    } catch(loginError) {
+                        // If login also fails, re-throw to be handled by the outer catch
+                        throw loginError;
+                    }
                 } else {
                     // If signup failed for another reason (e.g., weak password, network error),
                     // we show the error by re-throwing it to the outer catch block.
@@ -48,15 +55,17 @@ export default function LoginPage() {
         } else {
             // Standard login for regular users.
             const userCredential = await loginWithEmail(email, password);
-            if (userCredential.user.email === ADMIN_EMAIL) {
-                router.push('/dashboard/admin');
-            } else {
-                router.push('/dashboard/user');
+            if (userCredential?.user) {
+                if (userCredential.user.email === ADMIN_EMAIL) {
+                    router.push('/dashboard/admin');
+                } else {
+                    router.push('/dashboard/user');
+                }
             }
         }
     } catch (error: any) {
         let errorMessage = "An unknown error occurred.";
-        if (error.code === 'auth/invalid-credential') {
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
             errorMessage = "Invalid email or password. Please try again.";
         } else {
             errorMessage = error.message;
@@ -72,10 +81,12 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
         const userCredential = await loginWithGoogle();
-        if (userCredential?.user.email === ADMIN_EMAIL) {
-            router.push('/dashboard/admin');
-        } else {
-            router.push('/dashboard/user');
+        if (userCredential?.user) {
+            if (userCredential.user.email === ADMIN_EMAIL) {
+                router.push('/dashboard/admin');
+            } else {
+                router.push('/dashboard/user');
+            }
         }
     } catch (error: any) {
         toast({
