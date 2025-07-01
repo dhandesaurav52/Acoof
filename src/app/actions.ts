@@ -66,12 +66,17 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
 
 // --- Razorpay Payment Integration ---
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID!,
-    key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
-
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+        console.error("Razorpay API keys not found in .env file");
+        return { error: 'Payment gateway is not configured. Please contact support.' };
+    }
+
+    const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
     const amountInPaise = Math.round(amount * 100);
     const receipt = receiptId || `receipt_${randomBytes(6).toString('hex')}`;
     
@@ -99,12 +104,17 @@ export async function verifyRazorpayPayment(data: {
   paymentId: string;
   signature: string;
 }): Promise<{ success: boolean; error?: string }> {
+  if (!process.env.RAZORPAY_KEY_SECRET) {
+      console.error("Razorpay secret key not found in .env file");
+      return { success: false, error: 'Payment verification is not configured.' };
+  }
+  
   const { orderId, paymentId, signature } = data;
   const body = orderId + "|" + paymentId;
   
   const crypto = require('crypto');
   const expectedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(body.toString())
     .digest('hex');
 
