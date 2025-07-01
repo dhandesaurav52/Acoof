@@ -25,74 +25,6 @@ import { database, storage } from '@/lib/firebase';
 import { ref as dbRef, remove } from "firebase/database";
 import { ref as storageRef, deleteObject } from 'firebase/storage';
 
-
-const initialOrders: Order[] = [
-    { 
-        id: 'ORD012', 
-        user: 'Liam Johnson', 
-        userEmail: 'liam@example.com',
-        date: '2023-10-27', 
-        total: 325.00, 
-        status: 'Pending',
-        shippingAddress: '123 Maple St, Springfield, IL 62704',
-        items: [
-            { productId: '1', productName: 'Classic White Tee', quantity: 2, price: 25.00 },
-            { productId: '4', productName: 'Urban Graphic Hoodie', quantity: 1, price: 65.00 },
-            { productId: '2', productName: 'Slim-Fit Denim Jeans', quantity: 1, price: 75.00 },
-            { productId: '3', productName: 'Leather Derby Shoes', quantity: 1, price: 120.00 },
-        ]
-    },
-    { 
-        id: 'ORD011', 
-        user: 'Olivia Smith', 
-        userEmail: 'olivia@example.com',
-        date: '2023-10-26', 
-        total: 150.00, 
-        status: 'Shipped',
-        shippingAddress: '456 Oak Ave, Metropolis, NY 10001',
-        items: [
-            { productId: '2', productName: 'Slim-Fit Denim Jeans', quantity: 2, price: 75.00 },
-        ]
-    },
-    { 
-        id: 'ORD010', 
-        user: 'Noah Williams', 
-        userEmail: 'noah@example.com',
-        date: '2023-10-25', 
-        total: 350.00, 
-        status: 'Delivered',
-        shippingAddress: '789 Pine Ln, Gotham, NJ 07001',
-        items: [
-            { productId: '7', productName: 'Linen Button-Up Shirt', quantity: 2, price: 55.00 },
-            { productId: '5', productName: 'Cargo Trousers', quantity: 3, price: 80.00 },
-        ]
-    },
-    { 
-        id: 'ORD009', 
-        user: 'Emma Brown', 
-        userEmail: 'emma@example.com',
-        date: '2023-10-24', 
-        total: 450.00, 
-        status: 'Delivered',
-        shippingAddress: '321 Birch Rd, Star City, CA 90210',
-        items: [
-            { productId: '6', productName: 'Minimalist Sneakers', quantity: 5, price: 90.00 },
-        ]
-    },
-    { 
-        id: 'ORD008', 
-        user: 'Ava Jones', 
-        userEmail: 'ava@example.com',
-        date: '2023-10-23', 
-        total: 55.00, 
-        status: 'Cancelled',
-        shippingAddress: '654 Cedar Blvd, Central City, MO 63101',
-        items: [
-             { productId: '7', productName: 'Linen Button-Up Shirt', quantity: 1, price: 55.00 },
-        ]
-    },
-];
-
 const ADMIN_EMAIL = "admin@example.com";
 
 export default function AdminDashboardPage() {
@@ -100,7 +32,7 @@ export default function AdminDashboardPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isSeeding, setIsSeeding] = useState(false);
-    const [orders, setOrders] = useState<Order[]>(initialOrders);
+    const [orders, setOrders] = useState<Order[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isViewOrderOpen, setIsViewOrderOpen] = useState(false);
     const [updatedStatus, setUpdatedStatus] = useState<OrderStatus | null>(null);
@@ -261,8 +193,8 @@ export default function AdminDashboardPage() {
                         <BarChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$45,231.89</div>
-                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                        <div className="text-2xl font-bold">$0.00</div>
+                        <p className="text-xs text-muted-foreground">No revenue data yet</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -271,8 +203,8 @@ export default function AdminDashboardPage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+2350</div>
-                        <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+                        <div className="text-2xl font-bold">0</div>
+                        <p className="text-xs text-muted-foreground">No new customers yet</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -281,8 +213,8 @@ export default function AdminDashboardPage() {
                         <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+12,234</div>
-                        <p className="text-xs text-muted-foreground">+19% from last month</p>
+                        <div className="text-2xl font-bold">{orders.length}</div>
+                        <p className="text-xs text-muted-foreground">No orders yet</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -291,8 +223,10 @@ export default function AdminDashboardPage() {
                         <Package className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">573</div>
-                        <p className="text-xs text-muted-foreground">2 products need restocking</p>
+                         <div className="text-2xl font-bold">
+                            {productsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : products.length}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Products currently in store</p>
                     </CardContent>
                 </Card>
             </div>
@@ -317,29 +251,37 @@ export default function AdminDashboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {orders.map((order) => (
-                            <TableRow key={order.id}>
-                                <TableCell className="font-medium">{order.id}</TableCell>
-                                <TableCell>{order.user}</TableCell>
-                                <TableCell>{order.date}</TableCell>
-                                <TableCell>${order.total.toFixed(2)}</TableCell>
-                                <TableCell>
-                                <Badge 
-                                    variant={
-                                        order.status === 'Pending' ? 'destructive' :
-                                        order.status === 'Shipped' ? 'default' :
-                                        order.status === 'Delivered' ? 'secondary' :
-                                        'outline'
-                                    }
-                                >
-                                    {order.status}
-                                </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="link" size="sm" onClick={() => handleViewOrder(order)}>View Order</Button>
-                                </TableCell>
-                            </TableRow>
-                            ))}
+                            {orders.length > 0 ? (
+                                orders.map((order) => (
+                                <TableRow key={order.id}>
+                                    <TableCell className="font-medium">{order.id}</TableCell>
+                                    <TableCell>{order.user}</TableCell>
+                                    <TableCell>{order.date}</TableCell>
+                                    <TableCell>${order.total.toFixed(2)}</TableCell>
+                                    <TableCell>
+                                    <Badge 
+                                        variant={
+                                            order.status === 'Pending' ? 'destructive' :
+                                            order.status === 'Shipped' ? 'default' :
+                                            order.status === 'Delivered' ? 'secondary' :
+                                            'outline'
+                                        }
+                                    >
+                                        {order.status}
+                                    </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="link" size="sm" onClick={() => handleViewOrder(order)}>View Order</Button>
+                                    </TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center">
+                                        No orders found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                     </CardContent>
@@ -524,4 +466,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
