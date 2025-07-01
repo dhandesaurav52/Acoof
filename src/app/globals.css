@@ -29,6 +29,7 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     --radius: 0.5rem;
+    --auth-background: 354 30% 12%;
   }
   .dark {
     --background: 224 71.4% 4.1%;
@@ -55,6 +56,7 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --auth-background: 354 30% 12%;
   }
 }
 
