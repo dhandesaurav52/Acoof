@@ -1,5 +1,5 @@
 
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -13,8 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Edit, Home, Mail, Phone, User, MapPin, Loader2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { APIProvider } from "@vis.gl/react-google-maps";
-import { LocationMap } from "@/components/LocationMap";
 
 export default function UserDashboardPage() {
   const { user, loading, uploadProfilePicture, updateUserProfile } = useAuth();
@@ -24,11 +22,6 @@ export default function UserDashboardPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  // This is a hardcoded position for "Styleville, CA" which is used in the mock data.
-  // A real application would use a geocoding service to convert the address to coordinates.
-  const mapPosition = { lat: 34.0522, lng: -118.2437 };
   
   const [userProfile, setUserProfile] = useState({
     name: '',
@@ -256,28 +249,6 @@ export default function UserDashboardPage() {
                   <span className="w-32 text-muted-foreground">Address</span>
                   <span className="text-foreground font-medium">{`${userProfile.address}, ${userProfile.city}, ${userProfile.state}`}</span>
               </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Location</CardTitle>
-            <CardDescription>This is your primary address on file.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {apiKey ? (
-              <APIProvider apiKey={apiKey}>
-                <LocationMap position={mapPosition} />
-              </APIProvider>
-            ) : (
-              <div className="text-center py-10 bg-secondary rounded-md">
-                <MapPin className="mx-auto h-10 w-10 text-muted-foreground" />
-                <p className="mt-4 font-semibold">Google Maps not configured</p>
-                <p className="text-sm text-muted-foreground">
-                  Please add your Google Maps API Key to the .env file to see the map.
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
