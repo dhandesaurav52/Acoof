@@ -200,9 +200,9 @@ export const looks: Look[] = [
     {
         id: 13,
         name: 'Coffee Run',
-        image: 'https://images.pexels.com/photos/3772510/pexels-photo-3772510.jpeg',
+        image: 'https://images.pexels.com/photos/15647646/pexels-photo-15647646.jpeg',
         products: ['4', '2', '6'],
-        aiHint: 'man drinking coffee',
+        aiHint: 'man tank top',
         category: 'Weekend'
     },
     {
