@@ -27,54 +27,47 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-            try {
-                // Try to sign up the admin user. This will fail if the user already exists.
-                await signupWithEmail(email, password, "Admin", "User");
-                // A successful signup automatically logs the user in.
-                router.push('/dashboard/admin');
-            } catch (error: any) {
-                // If signup failed because the email is already in use, it means the admin account exists.
-                // So, we try to log in instead.
-                if (error.code === 'auth/email-already-in-use') {
-                    try {
-                        const userCredential = await loginWithEmail(email, password);
-                        if (userCredential?.user) {
-                            router.push('/dashboard/admin');
-                        }
-                    } catch(loginError) {
-                        // If login also fails, re-throw to be handled by the outer catch
-                        throw loginError;
-                    }
-                } else {
-                    // If signup failed for another reason (e.g., weak password, network error),
-                    // we show the error by re-throwing it to the outer catch block.
-                    throw error;
-                }
-            }
+      const userCredential = await loginWithEmail(email, password);
+      if (userCredential?.user) {
+        if (userCredential.user.email === ADMIN_EMAIL) {
+          router.push('/dashboard/admin');
         } else {
-            // Standard login for regular users.
-            const userCredential = await loginWithEmail(email, password);
-            if (userCredential?.user) {
-                if (userCredential.user.email === ADMIN_EMAIL) {
-                    router.push('/dashboard/admin');
-                } else {
-                    router.push('/dashboard/user');
-                }
-            }
+          router.push('/dashboard/user');
         }
+      }
     } catch (error: any) {
-        let errorMessage = "An unknown error occurred.";
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
-            errorMessage = "Invalid email or password. Please try again.";
-        } else {
-            errorMessage = error.message;
+      // If login fails, check if it's the special admin user and the account might not exist yet.
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
+        try {
+          // Attempt to create the admin account. This is a one-time setup.
+          const adminUserCredential = await signupWithEmail(email, password, 'Admin', 'User');
+          if (adminUserCredential?.user) {
+            router.push('/dashboard/admin'); // Redirect on successful creation
+          }
+        } catch (signupError: any) {
+          // This catch block handles two cases:
+          // 1. The account *does* exist, but the initial login password was wrong.
+          // 2. The signup failed for another reason (e.g., weak password).
+          toast({
+            variant: 'destructive',
+            title: 'Admin Login Failed',
+            description: 'Could not log in. Please check your password or Firebase configuration.',
+          });
+        }
+      } else {
+        // This is the general error handler for non-admin users or other admin login errors.
+        let errorMessage = 'An unknown error occurred.';
+        if (error.code === 'auth/invalid-credential') {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (error.message) {
+          errorMessage = error.message;
         }
         toast({
-            variant: 'destructive',
-            title: "Login Failed",
-            description: errorMessage,
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: errorMessage,
         });
+      }
     }
   };
 
