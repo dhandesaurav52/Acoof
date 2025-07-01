@@ -14,7 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/use-auth";
@@ -188,6 +195,10 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-background">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Menu</SheetTitle>
+                  <SheetDescription>Main navigation and account links</SheetDescription>
+                </SheetHeader>
                 <div className="p-6">
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
                     <Logo className="h-10 w-auto" />
