@@ -64,7 +64,25 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
 }
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    // --- Start of Debugging Logs ---
+    console.log("\n--- Razorpay Order Creation Debug ---");
+    if (keyId) {
+        console.log(`[SERVER] Found RAZORPAY_KEY_ID ending in: ...${keyId.slice(-4)}`);
+    } else {
+        console.log("[SERVER] RAZORPAY_KEY_ID was NOT found in .env file.");
+    }
+    if (keySecret) {
+        console.log("[SERVER] Found RAZORPAY_KEY_SECRET: Yes (value is hidden for security)");
+    } else {
+        console.log("[SERVER] RAZORPAY_KEY_SECRET was NOT found in .env file.");
+    }
+    console.log("-------------------------------------\n");
+    // --- End of Debugging Logs ---
+
+    if (!keyId || !keySecret) {
         console.error("Razorpay API keys not found in .env file. Please check your .env or .env.local file.");
         return { error: 'Payment gateway is not configured on the server. Please check your API keys and contact support.' };
     }
@@ -74,12 +92,9 @@ export async function createRazorpayOrder(amount: number, receiptId?: string): P
         return { error: 'The total amount must be at least ₹1.00 to proceed with payment.' };
     }
 
-    const keyId = process.env.RAZORPAY_KEY_ID.trim();
-    const keySecret = process.env.RAZORPAY_KEY_SECRET.trim();
-
     const razorpay = new Razorpay({
-        key_id: keyId,
-        key_secret: keySecret,
+        key_id: keyId.trim(),
+        key_secret: keySecret.trim(),
     });
 
     const receipt = receiptId || `receipt_${randomBytes(6).toString('hex')}`;
@@ -112,7 +127,19 @@ export async function verifyRazorpayPayment(data: {
   paymentId: string;
   signature: string;
 }): Promise<{ success: boolean; error?: string }> {
-  if (!process.env.RAZORPAY_KEY_SECRET) {
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  // --- Start of Debugging Logs ---
+  console.log("\n--- Razorpay Payment Verification Debug ---");
+  if (keySecret) {
+      console.log("[SERVER] Verification is using RAZORPAY_KEY_SECRET: Yes (value is hidden for security)");
+  } else {
+      console.log("[SERVER] Verification FAILED: RAZORPAY_KEY_SECRET was NOT found in .env file.");
+  }
+  console.log("-----------------------------------------\n");
+  // --- End of Debugging Logs ---
+
+  if (!keySecret) {
       console.error("Razorpay secret key not found in .env file");
       return { success: false, error: 'Payment verification is not configured. The secret key is missing on the server.' };
   }
@@ -120,9 +147,7 @@ export async function verifyRazorpayPayment(data: {
   const { orderId, paymentId, signature } = data;
   const body = orderId + "|" + paymentId;
   
-  const keySecret = process.env.RAZORPAY_KEY_SECRET.trim();
-
-  const expectedSignature = createHmac('sha256', keySecret)
+  const expectedSignature = createHmac('sha256', keySecret.trim())
     .update(body.toString())
     .digest('hex');
 
