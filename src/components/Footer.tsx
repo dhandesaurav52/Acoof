@@ -101,7 +101,7 @@ export function Footer() {
         
         <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <p className="text-center text-sm leading-loose text-muted-foreground">
+            <p className="text-center text-sm leading-loose text-muted-foreground" suppressHydrationWarning>
               © {year} Acoof. All Rights Reserved.
             </p>
             <div className="flex items-center gap-4">
