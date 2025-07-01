@@ -10,16 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, ShoppingBag, Plus, Minus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { createRazorpayOrder } from '@/app/actions';
 
 export default function CartPage() {
     const { cart, removeFromCart, updateQuantity, cartTotal, cartCount, clearCart } = useCart();
-    const router = useRouter();
-    const { user } = useAuth();
-    const { toast } = useToast();
 
     const QuantityControl = ({ itemId, quantity }: { itemId: string, quantity: number }) => (
         <div className="flex items-center justify-center gap-2">
@@ -39,63 +32,12 @@ export default function CartPage() {
         </div>
     );
     
-    const handleCheckout = async () => {
-        if (cart.length === 0) return;
-
-        const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-        if (!keyId) {
-            toast({
-                variant: 'destructive',
-                title: 'Payment Gateway Error',
-                description: 'Payment gateway is not configured. Please contact support.',
-            });
-            return;
+    const handleCheckout = () => {
+        if (cart.length > 0) {
+            // Placeholder for checkout logic
+            alert('Proceeding to checkout!');
+            // In a real app, you would redirect to a checkout page or open a payment modal.
         }
-
-        const response = await createRazorpayOrder(cartTotal);
-
-        if (!response.success || !response.order) {
-            toast({
-                variant: "destructive",
-                title: "Payment Error",
-                description: response.error || "Could not initiate payment.",
-            });
-            return;
-        }
-    
-        const order = response.order;
-    
-        const options = {
-            key: keyId,
-            amount: order.amount,
-            currency: order.currency,
-            name: "Acoof",
-            description: `Payment for ${cartCount} items`,
-            order_id: order.id,
-            handler: function (response: any) {
-                toast({
-                    title: "Payment Successful!",
-                    description: `Payment ID: ${response.razorpay_payment_id}`,
-                });
-                clearCart();
-                router.push('/dashboard/user/orders');
-            },
-            prefill: {
-                name: user?.displayName || "",
-                email: user?.email || "",
-                contact: user?.phone || "",
-            },
-            notes: {
-                address: user?.address || "Acoof - Style Redefined",
-                productIds: cart.map(item => item.id).join(', '),
-            },
-            theme: {
-                color: "#e53935",
-            },
-        };
-    
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
     };
 
     return (

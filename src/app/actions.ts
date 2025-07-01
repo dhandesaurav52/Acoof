@@ -6,8 +6,6 @@ import { database } from '@/lib/firebase';
 import { ref as dbRef, set, push, get } from "firebase/database";
 import type { Product } from '@/types';
 import { products as staticProducts } from '@/lib/data';
-import Razorpay from 'razorpay';
-import { randomBytes } from 'crypto';
 
 export async function getAiSuggestions(browsingHistory: string) {
   try {
@@ -62,33 +60,4 @@ export async function seedDatabase(): Promise<{ success?: string; error?: string
     }
     return { error: errorMessage };
   }
-}
-
-export async function createRazorpayOrder(amount: number) {
-    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    if (!keyId || !keySecret) {
-        console.error("Razorpay key ID or secret is not defined in environment variables.");
-        return { success: false, error: 'Payment gateway is not configured. Please contact support.' };
-    }
-
-    const razorpay = new Razorpay({
-        key_id: keyId,
-        key_secret: keySecret,
-    });
-
-    const options = {
-        amount: Math.round(amount * 100), // amount in the smallest currency unit (paise)
-        currency: 'INR',
-        receipt: `receipt_order_${randomBytes(4).toString('hex')}`,
-    };
-
-    try {
-        const order = await razorpay.orders.create(options);
-        return { success: true, order };
-    } catch (error) {
-        console.error('Razorpay order creation failed:', error);
-        return { success: false, error: 'Failed to create Razorpay order.' };
-    }
 }

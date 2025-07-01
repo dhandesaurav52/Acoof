@@ -46,7 +46,6 @@ export default function RootLayout({
             </ProductsProvider>
           </AuthProvider>
         </ThemeProvider>
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </body>
     </html>
   );

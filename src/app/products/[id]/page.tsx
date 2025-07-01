@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { createRazorpayOrder } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -72,63 +71,12 @@ export default function ProductDetailPage() {
         }
     };
 
-    const handleBuyNow = async () => {
-        const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-        if (!keyId) {
-            toast({
-                variant: 'destructive',
-                title: 'Payment Gateway Error',
-                description: 'Payment gateway is not configured. Please contact support.',
-            });
-            return;
-        }
-
+    const handleBuyNow = () => {
         if (!product) return;
-
-        const response = await createRazorpayOrder(product.price);
-
-        if (!response.success || !response.order) {
-            toast({
-                variant: "destructive",
-                title: "Payment Error",
-                description: response.error || "Could not initiate payment.",
-            });
-            return;
-        }
-
-        const order = response.order;
-
-        const options = {
-            key: keyId,
-            amount: order.amount,
-            currency: order.currency,
-            name: "Acoof",
-            description: `Payment for ${product.name}`,
-            order_id: order.id,
-            handler: function (response: any) {
-                toast({
-                    title: "Payment Successful!",
-                    description: `Payment ID: ${response.razorpay_payment_id}`,
-                });
-                addToCart(product);
-                router.push('/dashboard/user/orders');
-            },
-            prefill: {
-                name: user?.displayName || "",
-                email: user?.email || "",
-                contact: user?.phone || "",
-            },
-            notes: {
-                address: user?.address || "Acoof - Style Redefined",
-                productId: product.id,
-            },
-            theme: {
-                color: "#e53935",
-            },
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
+        // Placeholder for Buy Now logic
+        alert('Buying now!');
+        addToCart(product);
+        // In a real app, you would redirect to a checkout page or open a payment modal.
     };
 
     return (
