@@ -144,7 +144,7 @@ export const looks: Look[] = [
     {
         id: 6,
         name: 'Office Ready',
-        image: 'https://images.pexels.com/photos/3769747/pexels-photo-3769747.jpeg',
+        image: 'https://images.pexels.com/photos/2897883/pexels-photo-2897883.jpeg',
         products: ['7', '5', '3'],
         aiHint: 'business casual',
         category: 'Smart Casual'
@@ -160,7 +160,7 @@ export const looks: Look[] = [
     {
         id: 8,
         name: 'Beach Day',
-        image: 'https://images.pexels.com/photos/2088383/pexels-photo-2088383.jpeg',
+        image: 'https://images.pexels.com/photos/1674666/pexels-photo-1674666.jpeg',
         products: ['7', '8'],
         aiHint: 'beach fashion',
         category: 'Summer'
@@ -192,7 +192,7 @@ export const looks: Look[] = [
     {
         id: 12,
         name: 'Evening Out',
-        image: 'https://images.pexels.com/photos/3762800/pexels-photo-3762800.jpeg',
+        image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg',
         products: ['7', '2', '3'],
         aiHint: 'night out fashion',
         category: 'Smart Casual'
