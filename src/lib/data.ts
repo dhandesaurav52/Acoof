@@ -128,7 +128,7 @@ export const looks: Look[] = [
     {
         id: 4,
         name: 'Summer Vibe',
-        image: 'https://images.pexels.com/photos/1674666/pexels-photo-1674666.jpeg',
+        image: 'https://images.pexels.com/photos/4066288/pexels-photo-4066288.jpeg',
         products: ['1', '8'],
         aiHint: 'summer style',
         category: 'Summer',
