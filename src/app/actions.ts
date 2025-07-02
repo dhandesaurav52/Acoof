@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
@@ -10,6 +11,12 @@ import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 
 export async function getAiSuggestions(browsingHistory: string) {
+  if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
+    const errorMessage = "The AI feature is not configured on the server. The `GOOGLE_API_KEY` is missing from the .env file. Please obtain a key from Google AI Studio and add it to your project's environment variables to enable the AI stylist.";
+    console.error(errorMessage);
+    return { suggestions: [], error: errorMessage };
+  }
+  
   try {
     const result = await generateOutfitSuggestions({ browsingHistory });
     if (!result || !result.suggestions) {
@@ -18,7 +25,15 @@ export async function getAiSuggestions(browsingHistory: string) {
     return { suggestions: result.suggestions, error: null };
   } catch (error) {
     console.error('AI suggestion generation failed:', error);
-    return { suggestions: [], error: 'Failed to generate suggestions. Please try again later.' };
+    let detailedError = 'Failed to generate suggestions. Please try again later.';
+    if (error instanceof Error) {
+        if (error.message.includes('API key not valid')) {
+            detailedError = "The provided AI API key is not valid. Please check it for typos or generate a new one.";
+        } else if (error.message.includes('permission')) {
+            detailedError = "AI generation failed due to a permission issue. Please ensure the Google AI API is enabled in your cloud project.";
+        }
+    }
+    return { suggestions: [], error: detailedError };
   }
 }
 
