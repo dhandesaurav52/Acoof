@@ -56,7 +56,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const dbProfile = snapshot.val();
               setUser({ ...user, ...dbProfile });
             } else {
-              setUser(user);
+              // If no profile exists, create one for users who signed up before this logic was added
+              const initialProfile = {
+                  email: user.email,
+                  displayName: user.displayName,
+              };
+              await set(userDbRef, initialProfile);
+              setUser({ ...user, ...initialProfile });
             }
         } catch (error: any) {
             // Silently fall back to the basic user object if the profile can't be fetched.
@@ -73,10 +79,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   const loginWithGoogle = async () => {
-    if (!auth) throw NOT_CONFIGURED_ERROR;
+    if (!auth || !database) throw NOT_CONFIGURED_ERROR;
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      if (user) {
+        const userDbRef = dbRef(database, `users/${user.uid}`);
+        const snapshot = await get(userDbRef);
+        if (!snapshot.exists()) {
+            await set(userDbRef, {
+                email: user.email,
+                displayName: user.displayName,
+            });
+        }
+      }
       return result;
     } catch (error) {
       console.error("Error signing in with Google", error);
@@ -90,11 +107,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const signupWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
-    if (!auth) throw NOT_CONFIGURED_ERROR;
+    if (!auth || !database) throw NOT_CONFIGURED_ERROR;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     if (userCredential.user) {
       const displayName = `${firstName} ${lastName}`;
       await updateProfile(userCredential.user, { displayName });
+      const userDbRef = dbRef(database, `users/${userCredential.user.uid}`);
+      await set(userDbRef, {
+        email: userCredential.user.email,
+        displayName: displayName,
+      });
     }
     return userCredential;
   }
@@ -124,6 +146,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const dbData = {
             ...currentDbData,
+            displayName: data.displayName,
+            email: data.email,
             phone: data.phone,
             address: data.address,
             city: data.city,
