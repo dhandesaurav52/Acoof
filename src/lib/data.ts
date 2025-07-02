@@ -208,7 +208,7 @@ export const looks: Look[] = [
     {
         id: 14,
         name: 'Park Stroll',
-        image: 'https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg',
+        image: 'https://images.pexels.com/photos/32770739/pexels-photo-32770739.jpeg',
         products: ['1', '5', '6'],
         aiHint: 'man walking park',
         category: 'Weekend'
