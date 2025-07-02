@@ -136,7 +136,7 @@ export const looks: Look[] = [
     {
         id: 5,
         name: 'Urban Explorer',
-        image: 'https://images.pexels.com/photos/1300550/pexels-photo-1300550.jpeg',
+        image: 'https://images.pexels.com/photos/32779453/pexels-photo-32779453.jpeg',
         products: ['4', '5', '6'],
         aiHint: 'urban fashion',
         category: 'Streetwear'
