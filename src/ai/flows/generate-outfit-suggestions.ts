@@ -37,7 +37,7 @@ export async function generateOutfitSuggestions(
 
 const prompt = ai.definePrompt({
   name: 'generateOutfitSuggestionsPrompt',
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateOutfitSuggestionsInputSchema},
   output: {schema: GenerateOutfitSuggestionsOutputSchema},
   prompt: `You are a personal stylist for Acoof, specializing in creating personalized outfit suggestions.
