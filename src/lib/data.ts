@@ -12,7 +12,7 @@ export const products: Product[] = [
     isNew: true,
     aiHint: 'white shirt',
     colors: ['White', 'Black', 'Gray'],
-    sizes: ['S', 'M', 'L', 'XL']
+    sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
   {
     id: '2',
@@ -60,7 +60,7 @@ export const products: Product[] = [
     isNew: false,
     aiHint: 'cargo pants',
     colors: ['Khaki', 'Olive', 'Black'],
-    sizes: ['S', 'M', 'L']
+    sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
   {
     id: '6',
@@ -84,7 +84,7 @@ export const products: Product[] = [
     isNew: false,
     aiHint: 'linen shirt',
     colors: ['Beige', 'White', 'Light Blue'],
-    sizes: ['S', 'M', 'L', 'XL']
+    sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
   {
     id: '8',
