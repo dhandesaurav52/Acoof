@@ -75,7 +75,9 @@ export function AiStylist() {
             
             // Stop camera stream
             const stream = video.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
         }
     }
   };
@@ -213,7 +215,7 @@ export function AiStylist() {
           <Button 
             size="lg"
             onClick={handleGenerateSuggestions} 
-            disabled={isLoading || (hasCameraPermission && !capturedImage)}
+            disabled={isLoading || (hasCameraPermission === true && !capturedImage)}
             className="w-full sm:w-auto"
           >
             {isLoading ? (
