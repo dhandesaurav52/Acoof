@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -10,12 +11,12 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const GenerateOutfitImageInputSchema = z.object({
+const GenerateOutfitImageInputSchema = z.object({
   description: z.string().describe('A detailed description of the outfit to generate an image for.'),
 });
 export type GenerateOutfitImageInput = z.infer<typeof GenerateOutfitImageInputSchema>;
 
-export const GenerateOutfitImageOutputSchema = z.object({
+const GenerateOutfitImageOutputSchema = z.object({
     imageUrl: z.string().describe("A data URI of the generated image. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
 export type GenerateOutfitImageOutput = z.infer<typeof GenerateOutfitImageOutputSchema>;
