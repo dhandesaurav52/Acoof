@@ -154,7 +154,7 @@ export function AiStylist() {
   const CapturedView = () => (
     <div className="space-y-4">
         <div className="relative aspect-video w-full max-w-md mx-auto rounded-lg overflow-hidden">
-            {capturedImage && <Image src={capturedImage} alt="Captured user photo" layout="fill" objectFit="cover" />}
+            {capturedImage && <Image src={capturedImage} alt="Captured user photo" fill className="object-cover" />}
         </div>
         <div className="flex justify-center">
             <Button onClick={handleRetake} variant="outline">
