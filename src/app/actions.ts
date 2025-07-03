@@ -163,8 +163,7 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
         return { success: false, error: 'User is not properly authenticated. Cannot save order without a User ID.' };
     }
 
-    const ordersRef = dbRef(database, 'orders');
-    const newOrderRef = push(ordersRef);
+    const newOrderRef = push(dbRef(database, 'orders'));
     const newId = newOrderRef.key;
 
     if (!newId) {
@@ -173,11 +172,8 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
     
     const orderWithId: Order = { ...orderData, id: newId };
     
-    const updates: { [key: string]: any } = {};
-    updates[`/orders/${newId}`] = orderWithId;
-
     try {
-        await update(dbRef(database), updates);
+        await set(newOrderRef, orderWithId);
         return { success: true, orderId: newId };
     } catch (error: any) {
         console.error('Failed to save order:', error);
