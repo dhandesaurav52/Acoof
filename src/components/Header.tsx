@@ -83,25 +83,28 @@ export function Header() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {isAdmin && (
+        {isAdmin ? (
           <>
             <DropdownMenuLabel>Admin</DropdownMenuLabel>
             <DropdownMenuItem asChild>
               <Link href="/dashboard/admin"><Shield className="mr-2 h-4 w-4" />Dashboard</Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+          </>
+        ) : (
+          <>
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/user">Your profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/user/orders">Your orders</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/user/wishlist">Wishlist</Link>
+            </DropdownMenuItem>
           </>
         )}
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/user">Your profile</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/user/orders">Your orders</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/user/wishlist">Wishlist</Link>
-        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dashboard/notifications">Notifications</Link>
         </DropdownMenuItem>
@@ -149,7 +152,7 @@ export function Header() {
                 </div>
              ) : user ? (
                 <>
-                  {!isMounted || wishlistLoading ? (
+                  {!isAdmin && (!isMounted || wishlistLoading ? (
                     <Skeleton className="h-10 w-10 rounded-full" />
                   ) : (
                     <Button variant="ghost" size="icon" asChild>
@@ -163,7 +166,7 @@ export function Header() {
                         <span className="sr-only">Wishlist</span>
                       </Link>
                     </Button>
-                  )}
+                  ))}
                   <UserMenu />
                 </>
              ) : (
@@ -214,15 +217,20 @@ export function Header() {
                         </div>
                      ) : user ? (
                        <>
-                        {isAdmin && <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>}
-                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
-                        <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
-                        {!isMounted || wishlistLoading ? (
-                          <Skeleton className="h-8 w-32" />
-                        ): (
-                          <Link href="/dashboard/user/wishlist" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                            Wishlist ({wishlist.length})
-                          </Link>
+                        {isAdmin ? (
+                            <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>
+                        ) : (
+                          <>
+                            <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
+                            <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
+                            {!isMounted || wishlistLoading ? (
+                              <Skeleton className="h-8 w-32" />
+                            ): (
+                              <Link href="/dashboard/user/wishlist" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                                Wishlist ({wishlist.length})
+                              </Link>
+                            )}
+                          </>
                         )}
                         <Link href="/dashboard/notifications" className="text-lg" onClick={() => setIsMenuOpen(false)}>Notifications</Link>
                         <Link href="/dashboard/settings" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
