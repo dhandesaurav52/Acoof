@@ -38,6 +38,11 @@ export default function AdminDashboardPage() {
             
             try {
                 const token = await user.getIdToken();
+
+                if (!token || typeof token !== 'string') {
+                    throw new Error("Failed to retrieve a valid authentication token from Firebase. Please try logging out and back in.");
+                }
+
                 const response = await fetch('/api/admin/data', {
                     headers: {
                         'Authorization': `Bearer ${token}`

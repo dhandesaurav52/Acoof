@@ -53,7 +53,7 @@ export async function GET() {
         return NextResponse.json(data);
 
     } catch (error: any) {
-        console.error("API Error: ", error);
+        console.error("API Error verifying token. Token received:", token, "Full Error:", error);
         let message = 'Invalid auth token.';
         if (error.code === 'auth/id-token-expired') {
             message = 'Auth token has expired. Please log in again.';
