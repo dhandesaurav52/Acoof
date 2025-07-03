@@ -34,7 +34,17 @@ export async function GET() {
             ordersRef.once('value')
         ]);
 
-        const usersCount = usersSnapshot.exists() ? usersSnapshot.numChildren() : 0;
+        let usersCount = 0;
+        if (usersSnapshot.exists()) {
+            const usersData = usersSnapshot.val();
+            const totalUsers = usersSnapshot.numChildren();
+            
+            // Check if any user is the admin by iterating through the values
+            const hasAdmin = Object.values(usersData).some((user: any) => user.email === ADMIN_EMAIL);
+            
+            // Subtract 1 from the total if the admin user is present in the database.
+            usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
+        }
         
         let totalRevenue = 0;
         let salesCount = 0;
