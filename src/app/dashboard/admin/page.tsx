@@ -83,7 +83,7 @@ export default function AdminDashboardPage() {
                 if (usersSnapshot.exists()) {
                     const usersData = usersSnapshot.val();
                     if (typeof usersData === 'object' && usersData !== null) {
-                        const totalUsers = usersSnapshot.numChildren();
+                        const totalUsers = Object.keys(usersData).length;
                         const hasAdmin = Object.values(usersData).some((u: any) => u && typeof u === 'object' && u.email === ADMIN_EMAIL);
                         usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
                     } else {
