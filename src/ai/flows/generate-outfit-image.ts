@@ -28,26 +28,6 @@ export async function generateOutfitImage(
     return generateOutfitImageFlow(input);
 }
 
-const imagePrompt = ai.definePrompt(
-    {
-        name: 'generateOutfitImagePrompt',
-        input: { schema: GenerateOutfitImageInputSchema },
-        prompt: `Generate a photorealistic image of {{#if photoDataUri}}the person from the provided photo{{else}}a fashion model{{/if}} wearing the described outfit.
-{{#if photoDataUri}}
-Maintain the person's features, body shape, and pose from the original photo.
-Replace their current clothes with the new outfit, seamlessly blending it onto their body.
-The background should be a simple, neutral studio setting to focus on the person and the outfit.
-{{media url=photoDataUri}}
-{{else}}
-The model should be in a modern, urban setting. The image should be full-body.
-{{/if}}
-The final image must be high-quality and suitable for a fashion lookbook.
-
-Outfit description: {{{description}}}`,
-    }
-);
-
-
 const generateOutfitImageFlow = ai.defineFlow(
     {
         name: 'generateOutfitImageFlow',
@@ -55,10 +35,31 @@ const generateOutfitImageFlow = ai.defineFlow(
         outputSchema: GenerateOutfitImageOutputSchema,
     },
     async (input) => {
+        const { description, photoDataUri } = input;
+        let prompt: any;
+
+        if (photoDataUri) {
+            prompt = [
+                { media: { url: photoDataUri } },
+                { text: `Generate a photorealistic image of the person from the provided photo wearing the described outfit.
+Maintain the person's features, body shape, and pose from the original photo.
+Replace their current clothes with the new outfit, seamlessly blending it onto their body.
+The background should be a simple, neutral studio setting to focus on the person and the outfit.
+The final image must be high-quality and suitable for a fashion lookbook.
+
+Outfit description: ${description}` }
+            ];
+        } else {
+            prompt = `Generate a photorealistic image of a fashion model wearing the described outfit.
+The model should be in a modern, urban setting. The image should be full-body.
+The final image must be high-quality and suitable for a fashion lookbook.
+
+Outfit description: ${description}`;
+        }
+
         const { media } = await ai.generate({
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
-            prompt: imagePrompt,
-            input: input,
+            prompt: prompt,
             config: {
                 responseModalities: ['TEXT', 'IMAGE'],
             },
