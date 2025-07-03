@@ -39,7 +39,18 @@ export default function AdminDashboardPage() {
             setError(null);
             
             try {
+                // Add a check to ensure getIdToken function exists.
+                if (typeof user.getIdToken !== 'function') {
+                    throw new Error("User object is invalid and missing required authentication functions. Please try logging out and back in.");
+                }
+
                 const token = await user.getIdToken();
+
+                // Add a check to ensure the token is valid before sending.
+                if (!token) {
+                    throw new Error("Failed to retrieve a valid authentication token. Please try logging out and back in.");
+                }
+
                 const response = await fetch('/api/admin/data', {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -61,7 +72,7 @@ export default function AdminDashboardPage() {
                 console.error("Failed to fetch admin data:", e);
                 let detailedError = e.message;
                 if (e.message.includes('Invalid auth token')) {
-                    detailedError = "Authentication with the server failed. This can happen if your session has expired. Please try logging out and logging back in.";
+                    detailedError = "Authentication with the server failed. This can happen if your session has expired or there's a configuration issue. Please try logging out and logging back in.";
                 } else if (e.message.includes('Firebase Admin SDK not initialized')) {
                     detailedError = 'Server configuration error: The Admin SDK is not set up correctly. Please check your server environment variables and logs.';
                 }
