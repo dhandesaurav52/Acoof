@@ -156,31 +156,40 @@ export async function verifyRazorpayPayment(data: {
 
 export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     if (!database) {
-        return { success: false, error: 'Firebase is not configured. Cannot save order.' };
+        return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
     }
 
     if (!orderData.userId) {
-        return { success: false, error: 'User is not properly authenticated. Cannot save order without a User ID.' };
+        return { success: false, error: 'Cannot save the order because the User ID is missing. This usually means the user is not properly logged in when trying to check out.' };
     }
-
+    
     const newOrderRef = push(dbRef(database, 'orders'));
     const newId = newOrderRef.key;
 
     if (!newId) {
-        return { success: false, error: 'Failed to generate a new order ID from Firebase.' };
+        return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
     }
     
-    const orderWithId: Order = { ...orderData, id: newId };
+    const finalOrderData: Order = { ...orderData, id: newId };
     
+    console.log(`Attempting to save order ${newId} for user ${orderData.userId}`);
+
     try {
-        await set(newOrderRef, orderWithId);
+        await set(newOrderRef, finalOrderData);
+        console.log(`Successfully saved order ${newId}`);
         return { success: true, orderId: newId };
     } catch (error: any) {
-        console.error('Failed to save order:', error);
+        console.error(`!!! FAILED TO SAVE ORDER ${newId} !!!`);
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+        console.error('Order Data Sent:', JSON.stringify(finalOrderData, null, 2));
+        
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            return { success: false, error: "Permission denied. This is a Firebase security rule issue. Please ensure your Realtime Database rules allow authenticated users to write to the 'orders' path if the 'userId' in the order matches their own ID. Also, double-check that you've correctly copied the security rules provided in the previous step." };
+            const errorMessage = "Firebase Realtime Database Permission Denied. This is a security rule issue. The app's code is correct, but the database is rejecting the request. Please, carefully re-apply the security rules provided in the instructions. This is the most common cause for this specific error.";
+            return { success: false, error: errorMessage };
         }
-        return { success: false, error: 'An error occurred while saving the order.' };
+        
+        return { success: false, error: `An unexpected error occurred while saving the order: ${error.message}` };
     }
 }
 
