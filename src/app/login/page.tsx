@@ -15,14 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 import { AuthBackground } from "@/components/AuthBackground";
 
 const ADMIN_EMAIL = "admin@example.com";
-const ADMIN_PASSWORD = "admin@12345";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
-  const { loginWithEmail, loginWithGoogle, signupWithEmail } = useAuth();
+  const { loginWithEmail, loginWithGoogle } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -30,35 +29,12 @@ export default function LoginPage() {
     try {
       const userCredential = await loginWithEmail(email, password);
       if (userCredential?.user) {
-        if (userCredential.user.email === ADMIN_EMAIL) {
-          router.push('/dashboard/admin');
-        } else {
-          router.push('/dashboard/user');
-        }
+        // All users, including admin, are redirected to their user dashboard.
+        router.push('/dashboard/user');
       }
     } catch (error: any) {
-      // If login fails, check if it's the special admin user and the account might not exist yet.
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
-        try {
-          // Attempt to create the admin account. This is a one-time setup.
-          const adminUserCredential = await signupWithEmail(email, password, 'Admin', 'User');
-          if (adminUserCredential?.user) {
-            router.push('/dashboard/admin'); // Redirect on successful creation
-          }
-        } catch (signupError: any) {
-          // This catch block handles two cases:
-          // 1. The account *does* exist, but the initial login password was wrong.
-          // 2. The signup failed for another reason (e.g., weak password).
-          toast({
-            variant: 'destructive',
-            title: 'Admin Login Failed',
-            description: 'Could not log in. Please check your password or Firebase configuration.',
-          });
-        }
-      } else {
-        // This is the general error handler for non-admin users or other admin login errors.
         let errorMessage = 'An unknown error occurred.';
-        if (error.code === 'auth/invalid-credential') {
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
           errorMessage = 'Invalid email or password. Please try again.';
         } else if (error.message) {
           errorMessage = error.message;
@@ -68,7 +44,6 @@ export default function LoginPage() {
           title: 'Login Failed',
           description: errorMessage,
         });
-      }
     }
   };
 
@@ -76,11 +51,8 @@ export default function LoginPage() {
     try {
         const userCredential = await loginWithGoogle();
         if (userCredential?.user) {
-            if (userCredential.user.email === ADMIN_EMAIL) {
-                router.push('/dashboard/admin');
-            } else {
-                router.push('/dashboard/user');
-            }
+            // All users, including admin, are redirected to their user dashboard.
+            router.push('/dashboard/user');
         }
     } catch (error: any) {
         toast({

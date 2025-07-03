@@ -29,13 +29,11 @@ import { useWishlist } from "@/hooks/use-wishlist";
 import { useCart } from "@/hooks/use-cart";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const defaultNavLinks = [
+const navLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
   { href: "/lookbook", label: "Lookbook" },
 ];
-
-const ADMIN_EMAIL = "admin@example.com";
 
 export function Header() {
   const pathname = usePathname();
@@ -48,11 +46,6 @@ export function Header() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const navLinks = [
-      ...defaultNavLinks,
-      ...(user?.email === ADMIN_EMAIL ? [{ href: "/dashboard/admin/operate-store", label: "Operate Store" }] : [])
-  ];
 
   const handleLogout = () => {
     logout();
@@ -88,28 +81,15 @@ export function Header() {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {user?.email === ADMIN_EMAIL ? (
-            <>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/user">Your profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/admin">Admin Dashboard</Link>
-                </DropdownMenuItem>
-            </>
-        ) : (
-            <>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/user">Your profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/user/orders">Your orders</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/user/wishlist">Wishlist</Link>
-                </DropdownMenuItem>
-            </>
-        )}
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user">Your profile</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user/orders">Your orders</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user/wishlist">Wishlist</Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard/notifications">Notifications</Link>
         </DropdownMenuItem>
@@ -222,23 +202,14 @@ export function Header() {
                         </div>
                      ) : user ? (
                        <>
-                        {user.email === ADMIN_EMAIL ? (
-                            <>
-                                <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
-                                <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
-                                <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
-                                {!isMounted || wishlistLoading ? (
-                                  <Skeleton className="h-8 w-32" />
-                                ): (
-                                  <Link href="/dashboard/user/wishlist" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                                    Wishlist ({wishlist.length})
-                                  </Link>
-                                )}
-                            </>
+                        <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
+                        <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
+                        {!isMounted || wishlistLoading ? (
+                          <Skeleton className="h-8 w-32" />
+                        ): (
+                          <Link href="/dashboard/user/wishlist" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                            Wishlist ({wishlist.length})
+                          </Link>
                         )}
                         <Link href="/dashboard/notifications" className="text-lg" onClick={() => setIsMenuOpen(false)}>Notifications</Link>
                         <Link href="/dashboard/settings" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
