@@ -52,9 +52,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDbRef = dbRef(database, `users/${user.uid}`);
         try {
             const snapshot = await get(userDbRef);
+            const appUser: AppUser = user; // Start with the real User object
             if (snapshot.exists()) {
               const dbProfile = snapshot.val();
-              setUser({ ...user, ...dbProfile });
+              Object.assign(appUser, dbProfile); // Add profile properties to it
             } else {
               // If no profile exists, create one for users who signed up before this logic was added
               const initialProfile = {
@@ -62,8 +63,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   displayName: user.displayName,
               };
               await set(userDbRef, initialProfile);
-              setUser({ ...user, ...initialProfile });
+              Object.assign(appUser, initialProfile); // Add profile properties
             }
+            setUser(appUser); // Set the enhanced User object in state
         } catch (error: any) {
             // Silently fall back to the basic user object if the profile can't be fetched.
             // This prevents a crash if database security rules are not configured.
@@ -162,9 +164,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         await currentUser.reload();
-        const finalSnapshot = await get(userDbRef);
-        const dbProfile = finalSnapshot.exists() ? finalSnapshot.val() : {};
-        setUser({ ...auth.currentUser, ...dbProfile } as AppUser);
+        const reloadedUser = auth.currentUser;
+        if (reloadedUser) {
+            const finalSnapshot = await get(userDbRef);
+            const dbProfile = finalSnapshot.exists() ? finalSnapshot.val() : {};
+            const appUser: AppUser = reloadedUser;
+            Object.assign(appUser, dbProfile);
+            setUser(appUser);
+        } else {
+            setUser(null);
+        }
     } catch (error: any) {
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
              throw new Error("Permission Denied: Please check your Firebase Realtime Database security rules to allow users to read/write their own profile data.");
@@ -178,7 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const uploadProfilePicture = async (file: File) => {
     const currentUser = auth?.currentUser;
-    if (!auth || !storage || !currentUser) {
+    if (!auth || !storage || !database || !currentUser) {
         throw new Error("Firebase not configured or user not logged in.");
     }
     
@@ -189,7 +198,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       await updateProfile(currentUser, { photoURL });
       await currentUser.reload();
-      setUser(auth.currentUser ? { ...auth.currentUser } as AppUser : null);
+      const reloadedUser = auth.currentUser;
+      if (reloadedUser) {
+        const userDbRef = dbRef(database, `users/${reloadedUser.uid}`);
+        const snapshot = await get(userDbRef);
+        const appUser: AppUser = reloadedUser;
+        if (snapshot.exists()) {
+            Object.assign(appUser, snapshot.val());
+        }
+        setUser(appUser);
+      } else {
+        setUser(null);
+      }
     } catch (error: any) {
       if (error.code === 'storage/unauthorized') {
           throw new Error("You don't have permission to upload this file. Please check your Firebase Storage security rules.");
