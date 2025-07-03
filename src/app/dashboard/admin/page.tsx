@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useProducts } from '@/hooks/use-products';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle, Package } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle, Package, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { database } from '@/lib/firebase';
 import { ref, get, type DataSnapshot } from 'firebase/database';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -20,11 +22,19 @@ interface AdminStats {
     usersCount: number;
 }
 
+const chartConfig = {
+    sales: {
+      label: "Sales",
+      color: "hsl(var(--primary))",
+    },
+} satisfies ChartConfig;
+
 export default function AdminDashboardPage() {
     const { user, loading: authLoading } = useAuth();
     const { products, loading: productsLoading } = useProducts();
     const router = useRouter();
     const [stats, setStats] = useState<AdminStats | null>(null);
+    const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
     const [loadingStats, setLoadingStats] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +116,40 @@ export default function AdminDashboardPage() {
                             }
                             return acc;
                         }, 0);
+
+                        // Process data for sales chart
+                        const today = new Date();
+                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                        
+                        const monthlySalesData = Array.from({ length: 12 }, (_, i) => {
+                            const d = new Date();
+                            d.setMonth(d.getMonth() - i);
+                            return {
+                                key: `${d.getFullYear()}-${d.getMonth()}`,
+                                name: monthNames[d.getMonth()],
+                                sales: 0,
+                            };
+                        });
+
+                        deliveredOrders.forEach((order: any) => {
+                            if (!order.date) return;
+                            try {
+                                const orderDate = new Date(order.date);
+                                if (isNaN(orderDate.getTime())) return;
+                                
+                                const orderKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
+                                const monthData = monthlySalesData.find(d => d.key === orderKey);
+                                
+                                if (monthData) {
+                                    monthData.sales++;
+                                }
+                            } catch (e) {
+                                console.warn(`Could not parse date for order`);
+                            }
+                        });
+                        
+                        setSalesData(monthlySalesData.reverse().map(d => ({ name: d.name, sales: d.sales })));
+
                     } else {
                         console.warn("Expected '/orders' to be an object, but it was not. Data:", ordersData);
                     }
@@ -205,6 +249,53 @@ export default function AdminDashboardPage() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-6 w-6" />
+                            Sales Overview
+                        </CardTitle>
+                        <CardDescription>Number of sales for the last 12 months.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingStats ? (
+                             <div className="flex items-center justify-center h-[300px]">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : salesData.some(d => d.sales > 0) ? (
+                            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                                <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis
+                                        dataKey="name"
+                                        tickLine={false}
+                                        tickMargin={10}
+                                        axisLine={false}
+                                        stroke="hsl(var(--muted-foreground))"
+                                        fontSize={12}
+                                    />
+                                    <YAxis
+                                        stroke="hsl(var(--muted-foreground))"
+                                        fontSize={12}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        allowDecimals={false}
+                                    />
+                                    <Tooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent indicator="dot" />}
+                                    />
+                                    <Bar dataKey="sales" fill="hsl(var(--primary))" radius={4} />
+                                </BarChart>
+                            </ChartContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                No sales data available for the last 12 months.
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader>
