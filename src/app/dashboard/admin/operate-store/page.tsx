@@ -1,90 +1,65 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
-import { useProducts } from '@/hooks/use-products';
-import type { Product } from '@/types';
-import { Loader2, Trash2, Search, ListFilter } from 'lucide-react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2, PlusCircle, UploadCloud, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
 import { categories } from '@/lib/data';
-
+import { database, storage } from '@/lib/firebase';
+import { ref as dbRef, push, set } from 'firebase/database';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const ADMIN_EMAIL = "admin@example.com";
 
-export default function OperateStorePage() {
+const productSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters long"),
+  description: z.string().min(10, "Description must be at least 10 characters long"),
+  price: z.coerce.number().min(0, "Price must be a positive number"),
+  category: z.string().min(1, "Please select a category"),
+  isNew: z.boolean().default(false),
+  colors: z.string().optional(),
+  sizes: z.string().optional(),
+  aiHint: z.string().optional(),
+  images: z.custom<FileList>().refine((files) => files.length > 0, "At least one image is required."),
+});
+
+type ProductFormValues = z.infer<typeof productSchema>;
+
+export default function AddProductPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
-    const { products, loading: productsLoading, removeProduct } = useProducts();
-    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('All');
-    const [selectedColor, setSelectedColor] = useState('All');
-    const [selectedSize, setSelectedSize] = useState('All');
-    const [sortOption, setSortOption] = useState('default');
-  
-    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-    };
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     
-    const availableColors = useMemo(() => {
-      const allColors = products.flatMap(p => p.colors || []);
-      return ['All', ...Array.from(new Set(allColors))];
-    }, [products]);
-  
-    const availableSizes = useMemo(() => {
-      const allSizes = products.flatMap(p => p.sizes || []);
-      return ['All', ...Array.from(new Set(allSizes))];
-    }, [products]);
-  
-    const filteredProducts = useMemo(() => {
-      let filtered = products
-        .filter(product => selectedCategory === 'All' || product.category === selectedCategory)
-        .filter(product => selectedColor === 'All' || product.colors?.includes(selectedColor))
-        .filter(product => selectedSize === 'All' || product.sizes?.includes(selectedSize))
-        .filter(product => {
-          if (!searchQuery) return true;
-          const lowercasedQuery = searchQuery.toLowerCase();
-          return (
-            product.name.toLowerCase().includes(lowercasedQuery) ||
-            product.description.toLowerCase().includes(lowercasedQuery) ||
-            product.category.toLowerCase().includes(lowercasedQuery)
-          );
-        });
-        
-      const sorted = [...filtered];
-  
-      switch (sortOption) {
-        case 'price-asc':
-          sorted.sort((a, b) => a.price - b.price);
-          break;
-        case 'price-desc':
-          sorted.sort((a, b) => b.price - a.price);
-          break;
-        case 'name-asc':
-          sorted.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case 'name-desc':
-          sorted.sort((a, b) => b.name.localeCompare(a.name));
-          break;
-        default:
-          break;
-      }
-  
-      return sorted;
-    }, [searchQuery, products, selectedCategory, selectedColor, selectedSize, sortOption]);
+    const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<ProductFormValues>({
+        resolver: zodResolver(productSchema),
+        defaultValues: { isNew: true }
+    });
+
+    const watchedImages = watch("images");
+
+    useEffect(() => {
+        if (watchedImages && watchedImages.length > 0) {
+            const newPreviews = Array.from(watchedImages).map(file => URL.createObjectURL(file));
+            setImagePreviews(newPreviews);
+            return () => newPreviews.forEach(url => URL.revokeObjectURL(url));
+        }
+        setImagePreviews([]);
+    }, [watchedImages]);
 
     useEffect(() => {
         if (!authLoading && (!user || user.email !== ADMIN_EMAIL)) {
@@ -92,181 +67,165 @@ export default function OperateStorePage() {
         }
     }, [user, authLoading, router]);
 
-    if (authLoading || productsLoading) {
+    const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
+        if (!database || !storage) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured. Cannot add product.' });
+            return;
+        }
+        setIsSubmitting(true);
+
+        try {
+            const newProductRef = push(dbRef(database, 'products'));
+            const newProductId = newProductRef.key;
+            if (!newProductId) throw new Error("Failed to generate a new product ID.");
+            
+            const imageUrls: string[] = [];
+            for (const file of Array.from(data.images)) {
+                const imageFileRef = storageRef(storage, `products/${newProductId}/${file.name}`);
+                await uploadBytes(imageFileRef, file);
+                const url = await getDownloadURL(imageFileRef);
+                imageUrls.push(url);
+            }
+
+            const productData = {
+                name: data.name,
+                description: data.description,
+                price: data.price,
+                category: data.category,
+                isNew: data.isNew,
+                images: imageUrls,
+                colors: data.colors ? data.colors.split(',').map(s => s.trim()).filter(Boolean) : [],
+                sizes: data.sizes ? data.sizes.split(',').map(s => s.trim()).filter(Boolean) : [],
+                aiHint: data.aiHint || '',
+            };
+
+            await set(newProductRef, productData);
+            toast({ title: "Product Added", description: `"${data.name}" has been successfully added to the store.` });
+            router.push('/dashboard/admin');
+
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Submission Failed',
+                description: "Could not add product. Please check console for details.",
+            });
+            console.error("Failed to add product:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    if (authLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
-    
-    const handleConfirmDelete = async () => {
-        if (!productToDelete) return;
-        setIsDeleting(true);
-
-        try {
-            await removeProduct(productToDelete);
-            toast({ title: "Product Removed", description: `"${productToDelete.name}" has been removed from the store.` });
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Removal Failed',
-                description: "Could not remove product. Please check console for details.",
-            });
-            console.error("Failed to remove product:", error);
-        } finally {
-            setIsDeleting(false);
-            setProductToDelete(null);
-        }
-    };
 
     return (
         <div className="container mx-auto py-12 px-4">
-            <Card>
+            <Card className="max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle>Manage Products</CardTitle>
-                    <CardDescription>View, edit, and remove products from your store.</CardDescription>
+                    <CardTitle>Add New Product</CardTitle>
+                    <CardDescription>Fill out the form below to add a new product to your store catalog.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="mb-8 flex flex-col gap-4">
-                        <div className="relative w-full">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input
-                            type="text"
-                            placeholder="Search products by name, ID, category..."
-                            value={searchQuery}
-                            onChange={handleSearchChange}
-                            className="pl-10"
-                          />
+                <CardContent>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                        {/* Product Details */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Product Name</Label>
+                                <Input id="name" {...register("name")} />
+                                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="price">Price (₹)</Label>
+                                <Input id="price" type="number" step="0.01" {...register("price")} />
+                                {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+                            </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="All Categories" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="All">All Categories</SelectItem>
-                              {categories.map(cat => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                
-                          <Select value={selectedColor} onValueChange={setSelectedColor}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="All Colors" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableColors.map(color => (
-                                  <SelectItem key={color} value={color}>{color === 'All' ? 'All Colors' : color}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          
-                          <Select value={selectedSize} onValueChange={setSelectedSize}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="All Sizes" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableSizes.map(size => (
-                                  <SelectItem key={size} value={size}>{size === 'All' ? 'All Sizes' : size}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          
-                          <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" className="w-full sm:w-auto flex-shrink-0">
-                                      <ListFilter className="mr-2 h-4 w-4" />
-                                      Sort
-                                  </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
-                                      <DropdownMenuRadioItem value="default">Default</DropdownMenuRadioItem>
-                                      <DropdownMenuRadioItem value="name-asc">Name: A to Z</DropdownMenuRadioItem>
-                                      <DropdownMenuRadioItem value="name-desc">Name: Z to A</DropdownMenuRadioItem>
-                                      <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
-                                      <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
-                                  </DropdownMenuRadioGroup>
-                              </DropdownMenuContent>
-                          </DropdownMenu>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea id="description" {...register("description")} />
+                            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
                         </div>
-                    </div>
-                    
-                    <div className="border rounded-lg overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[80px]">Image</TableHead>
-                                    <TableHead>Product Name</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead className="text-right">Price</TableHead>
-                                    <TableHead className="w-[100px]">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredProducts.length > 0 ? filteredProducts.map((product) => (
-                                    <TableRow key={product.id}>
-                                        <TableCell>
-                                            <Image
-                                                src={product.images[0] || 'https://placehold.co/64x64.png'}
-                                                alt={product.name}
-                                                width={64}
-                                                height={64}
-                                                className="rounded-md object-cover"
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="font-medium">{product.name}</div>
-                                            <div className="text-xs text-muted-foreground">{product.id}</div>
-                                        </TableCell>
-                                        <TableCell>{product.category}</TableCell>
-                                        <TableCell className="text-right">₹{product.price.toFixed(2)}</TableCell>
-                                        <TableCell className="text-center">
-                                            <Button
-                                                variant="destructive"
-                                                size="icon"
-                                                onClick={() => setProductToDelete(product)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center h-24">No products found.</TableCell>
-                                    </TableRow>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div className="space-y-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Select onValueChange={(value) => setValue('category', value)} defaultValue={control._defaultValues.category}>
+                                    <SelectTrigger id="category">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map(cat => (
+                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="aiHint">AI Image Hint (Optional)</Label>
+                                <Input id="aiHint" {...register("aiHint")} placeholder="e.g., 'denim jeans'" />
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="colors">Colors (comma-separated)</Label>
+                                <Input id="colors" {...register("colors")} placeholder="e.g., Black, White, Blue"/>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="sizes">Sizes (comma-separated)</Label>
+                                <Input id="sizes" {...register("sizes")} placeholder="e.g., S, M, L, XL" />
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <Label>Product Images</Label>
+                             <div className="relative border-2 border-dashed border-muted rounded-lg p-6 text-center">
+                                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <p className="mt-2 text-sm text-muted-foreground">Drag & drop files here, or click to select files</p>
+                                <Input id="images" type="file" {...register("images")} multiple accept="image/png, image/jpeg, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                            </div>
+                            {errors.images && <p className="text-sm text-destructive">{errors.images.message}</p>}
+                            {imagePreviews.length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    {imagePreviews.map((src, index) => (
+                                        <div key={index} className="relative aspect-square">
+                                            <Image src={src} alt={`Preview ${index}`} fill className="rounded-md object-cover" />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                            <Switch id="isNew" {...register("isNew")} defaultChecked={control._defaultValues.isNew} onCheckedChange={(checked) => setValue('isNew', checked)} />
+                            <Label htmlFor="isNew">Mark as New Arrival</Label>
+                        </div>
+                        
+                        <div className="flex justify-end">
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Adding Product...
+                                    </>
+                                ) : (
+                                    <>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add Product
+                                    </>
                                 )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                            </Button>
+                        </div>
+                    </form>
                 </CardContent>
             </Card>
-
-            <AlertDialog open={!!productToDelete} onOpenChange={(open) => { if (!open) setProductToDelete(null); }}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the product <span className="font-semibold">"{productToDelete?.name}"</span> and all of its associated images from the database.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setProductToDelete(null)} disabled={isDeleting}>Back</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={handleConfirmDelete} 
-                            disabled={isDeleting} 
-                            className={buttonVariants({ variant: "destructive" })}
-                        >
-                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {isDeleting ? "Deleting..." : "Confirm Deletion"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
