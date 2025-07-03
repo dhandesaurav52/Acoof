@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { createRazorpayOrder, verifyRazorpayPayment, saveOrder } from '@/app/actions';
 import type { Order, OrderItem } from '@/types';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function ProductDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -33,6 +34,8 @@ export default function ProductDetailPage() {
     const [selectedColor, setSelectedColor] = useState<string | undefined>();
     const [selectedSize, setSelectedSize] = useState<string | undefined>();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isCodProcessing, setIsCodProcessing] = useState(false);
+    const [isBuyNowOpen, setIsBuyNowOpen] = useState(false);
 
     const product = products.find(p => p.id === id);
     
@@ -134,6 +137,7 @@ export default function ProductDetailPage() {
                         status: 'Pending',
                         shippingAddress: user.address || 'Not provided',
                         items: [orderItem],
+                        paymentMethod: 'Razorpay',
                         orderId: response.razorpay_order_id,
                         paymentId: response.razorpay_payment_id,
                         paymentSignature: response.razorpay_signature,
@@ -142,6 +146,7 @@ export default function ProductDetailPage() {
                     const saveResult = await saveOrder(orderData);
                     if (saveResult.success) {
                         toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
+                        setIsBuyNowOpen(false);
                         router.push('/dashboard/user/orders');
                     } else {
                         toast({ variant: 'destructive', title: 'Order Error', description: saveResult.error });
@@ -170,6 +175,47 @@ export default function ProductDetailPage() {
         const paymentObject = new (window as any).Razorpay(options);
         paymentObject.open();
     };
+
+    const handleCodBuyNow = async () => {
+        if (!product) return;
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
+            router.push('/login');
+            return;
+        }
+        
+        setIsCodProcessing(true);
+    
+        const orderItem: OrderItem = {
+            productId: product.id,
+            productName: product.name,
+            quantity: 1,
+            price: product.price,
+        };
+        
+        const orderData: Omit<Order, 'id'> = {
+            user: user.displayName || 'Anonymous',
+            userEmail: user.email || 'N/A',
+            date: new Date().toISOString().split('T')[0],
+            total: product.price,
+            status: 'Pending',
+            shippingAddress: user.address || 'Not provided',
+            items: [orderItem],
+            paymentMethod: 'COD',
+        };
+        
+        const saveResult = await saveOrder(orderData);
+        if (saveResult.success) {
+            toast({ title: 'Order Placed!', description: 'Your order for has been placed. You will pay upon delivery.' });
+            setIsBuyNowOpen(false);
+            router.push('/dashboard/user/orders');
+        } else {
+            toast({ variant: 'destructive', title: 'Order Error', description: saveResult.error });
+        }
+    
+        setIsCodProcessing(false);
+    };
+
 
     return (
         <div className="container mx-auto py-12 px-4">
@@ -283,18 +329,47 @@ export default function ProductDetailPage() {
 
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Button size="lg" variant="outline" className="w-full" onClick={() => addToCart(product)} disabled={isProcessing}>
+                        <Button size="lg" variant="outline" className="w-full" onClick={() => addToCart(product)} disabled={isProcessing || isCodProcessing}>
                             <ShoppingCart className="mr-2 h-5 w-5" />
                             Add to Cart
                         </Button>
-                        <Button size="lg" className="w-full" onClick={handleBuyNow} disabled={isProcessing}>
-                            {isProcessing ? (
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            ) : (
-                                <Zap className="mr-2 h-5 w-5" />
-                            )}
-                            {isProcessing ? 'Processing...' : 'Buy Now'}
-                        </Button>
+                        <Dialog open={isBuyNowOpen} onOpenChange={setIsBuyNowOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="lg" className="w-full" disabled={isProcessing || isCodProcessing}>
+                                    <Zap className="mr-2 h-5 w-5" />
+                                    Buy Now
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Confirm Purchase</DialogTitle>
+                                    <DialogDescription>
+                                        Choose your preferred payment method for "{product.name}".
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4 space-y-4">
+                                    <div className="flex justify-between items-center p-4 border rounded-lg">
+                                        <div>
+                                            <p className="font-semibold">Total Amount</p>
+                                            <p className="text-2xl text-primary font-bold">₹{product.price.toFixed(2)}</p>
+                                        </div>
+                                        <div className="relative h-16 w-16">
+                                            <Image src={product.images[0]} alt={product.name} fill className="rounded-md object-cover" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <DialogFooter className="sm:justify-between gap-2">
+                                    <Button className="w-full sm:w-auto" onClick={handleBuyNow} disabled={isProcessing || isCodProcessing}>
+                                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        {isProcessing ? 'Processing...' : 'Pay Online'}
+                                    </Button>
+                                    <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCodBuyNow} disabled={isProcessing || isCodProcessing}>
+                                        {isCodProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        {isCodProcessing ? 'Placing Order...' : 'Cash on Delivery'}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </div>
 
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database, Trash2 } from 'lucide-react';
+import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database, Trash2, CreditCard } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -348,6 +348,12 @@ export default function AdminDashboardPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground flex items-center gap-2"><CreditCard className="h-4 w-4"/>Payment Method</span>
+                                    <Badge variant={selectedOrder.paymentMethod === 'COD' ? 'outline' : 'secondary'}>
+                                        {selectedOrder.paymentMethod}
+                                    </Badge>
+                                </div>
+                                <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground">Status</span>
                                     <Select value={updatedStatus ?? ''} onValueChange={(value: OrderStatus) => setUpdatedStatus(value)}>
                                         <SelectTrigger className="w-[180px]">
@@ -437,5 +443,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    

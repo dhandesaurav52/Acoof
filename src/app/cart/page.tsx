@@ -23,6 +23,7 @@ export default function CartPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isCodProcessing, setIsCodProcessing] = useState(false);
 
     const QuantityControl = ({ itemId, quantity }: { itemId: string, quantity: number }) => (
         <div className="flex items-center justify-center gap-2">
@@ -105,6 +106,7 @@ export default function CartPage() {
                         status: 'Pending',
                         shippingAddress: user.address || 'Not provided',
                         items: orderItems,
+                        paymentMethod: 'Razorpay',
                         orderId: response.razorpay_order_id,
                         paymentId: response.razorpay_payment_id,
                         paymentSignature: response.razorpay_signature,
@@ -141,6 +143,48 @@ export default function CartPage() {
 
         const paymentObject = new (window as any).Razorpay(options);
         paymentObject.open();
+    };
+
+    const handleCodCheckout = async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to proceed with checkout.' });
+            router.push('/login');
+            return;
+        }
+        if (cart.length === 0) {
+            toast({ variant: 'destructive', title: 'Empty Cart', description: 'Your cart is empty.' });
+            return;
+        }
+    
+        setIsCodProcessing(true);
+    
+        const orderItems: OrderItem[] = cart.map(item => ({
+            productId: item.id,
+            productName: item.name,
+            quantity: item.quantity,
+            price: item.price,
+        }));
+        
+        const orderData: Omit<Order, 'id'> = {
+            user: user.displayName || 'Anonymous',
+            userEmail: user.email || 'N/A',
+            date: new Date().toISOString().split('T')[0],
+            total: cartTotal,
+            status: 'Pending',
+            shippingAddress: user.address || 'Not provided',
+            items: orderItems,
+            paymentMethod: 'COD',
+        };
+        
+        const saveResult = await saveOrder(orderData);
+        if (saveResult.success) {
+            toast({ title: 'Order Placed!', description: 'Your order has been placed successfully. You will pay upon delivery.' });
+            clearCart();
+            router.push('/dashboard/user/orders');
+        } else {
+            toast({ variant: 'destructive', title: 'Order Error', description: saveResult.error });
+        }
+        setIsCodProcessing(false);
     };
 
     return (
@@ -265,11 +309,20 @@ export default function CartPage() {
                                 </div>
                             </CardContent>
                             <CardFooter className="flex-col gap-2">
-                                <Button className="w-full" onClick={handleCheckout} disabled={isProcessing}>
+                                <Button className="w-full" onClick={handleCheckout} disabled={isProcessing || isCodProcessing}>
                                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {isProcessing ? 'Processing...' : 'Proceed to Checkout'}
+                                    {isProcessing ? 'Processing...' : 'Pay Online'}
                                 </Button>
-                                <Button variant="outline" className="w-full" onClick={clearCart} disabled={isProcessing}>Clear Cart</Button>
+                                <div className="relative flex py-2 items-center w-full">
+                                    <div className="flex-grow border-t border-muted"></div>
+                                    <span className="flex-shrink mx-4 text-muted-foreground text-xs">OR</span>
+                                    <div className="flex-grow border-t border-muted"></div>
+                                </div>
+                                <Button className="w-full" variant="secondary" onClick={handleCodCheckout} disabled={isProcessing || isCodProcessing}>
+                                    {isCodProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    {isCodProcessing ? 'Placing Order...' : 'Pay with Cash on Delivery'}
+                                </Button>
+                                <Button variant="outline" className="w-full mt-2" onClick={clearCart} disabled={isProcessing || isCodProcessing}>Clear Cart</Button>
                             </CardFooter>
                         </Card>
                     </div>

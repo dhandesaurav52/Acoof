@@ -43,7 +43,8 @@ export interface Order {
   status: OrderStatus;
   shippingAddress: string;
   items: OrderItem[];
-  paymentId: string;
-  orderId: string;
-  paymentSignature: string;
+  paymentMethod: 'Razorpay' | 'COD';
+  orderId?: string; // Razorpay Order ID
+  paymentId?: string;
+  paymentSignature?: string;
 }
