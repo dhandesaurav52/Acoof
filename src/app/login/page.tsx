@@ -29,8 +29,11 @@ export default function LoginPage() {
     try {
       const userCredential = await loginWithEmail(email, password);
       if (userCredential?.user) {
-        // All users, including admin, are redirected to their user dashboard.
-        router.push('/dashboard/user');
+        if (userCredential.user.email === ADMIN_EMAIL) {
+            router.push('/dashboard/admin');
+        } else {
+            router.push('/dashboard/user');
+        }
       }
     } catch (error: any) {
         let errorMessage = 'An unknown error occurred.';
@@ -51,8 +54,11 @@ export default function LoginPage() {
     try {
         const userCredential = await loginWithGoogle();
         if (userCredential?.user) {
-            // All users, including admin, are redirected to their user dashboard.
-            router.push('/dashboard/user');
+            if (userCredential.user.email === ADMIN_EMAIL) {
+                router.push('/dashboard/admin');
+            } else {
+                router.push('/dashboard/user');
+            }
         }
     } catch (error: any) {
         toast({

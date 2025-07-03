@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Heart } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,8 @@ const navLinks = [
   { href: "/lookbook", label: "Lookbook" },
 ];
 
+const ADMIN_EMAIL = "admin@example.com";
+
 export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,6 +53,8 @@ export function Header() {
     logout();
     setIsMenuOpen(false);
   };
+  
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const NavLinks = ({ className }: { className?: string }) => (
     <nav className={cn("flex items-center gap-6 text-sm font-medium", className)}>
@@ -79,8 +83,16 @@ export function Header() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {isAdmin && (
+          <>
+            <DropdownMenuLabel>Admin</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/admin"><Shield className="mr-2 h-4 w-4" />Dashboard</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dashboard/user">Your profile</Link>
         </DropdownMenuItem>
@@ -202,6 +214,7 @@ export function Header() {
                         </div>
                      ) : user ? (
                        <>
+                        {isAdmin && <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>}
                         <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
                         <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
                         {!isMounted || wishlistLoading ? (
