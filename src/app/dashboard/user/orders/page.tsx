@@ -15,6 +15,7 @@ import { database } from '@/lib/firebase';
 import { ref, query, orderByChild, equalTo, get, update } from 'firebase/database';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export default function UserOrdersPage() {
@@ -192,14 +193,35 @@ export default function UserOrdersPage() {
                                                 </TableBody>
                                             </Table>
                                             <div className="mt-6 flex justify-end">
-                                                <Button
-                                                    variant="destructive"
-                                                    onClick={() => setOrderToCancel(order)}
-                                                    disabled={order.status !== 'Pending'}
-                                                >
-                                                    <XCircle className="mr-2 h-4 w-4" />
-                                                    Cancel Order
-                                                </Button>
+                                                {order.status === 'Pending' ? (
+                                                    <Button
+                                                        variant="destructive"
+                                                        onClick={() => setOrderToCancel(order)}
+                                                    >
+                                                        <XCircle className="mr-2 h-4 w-4" />
+                                                        Cancel Order
+                                                    </Button>
+                                                ) : (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <span tabIndex={0}>
+                                                                    <Button
+                                                                        variant="destructive"
+                                                                        disabled
+                                                                        className="pointer-events-none"
+                                                                    >
+                                                                        <XCircle className="mr-2 h-4 w-4" />
+                                                                        Cancel Order
+                                                                    </Button>
+                                                                </span>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>This order cannot be cancelled as its status is '{order.status}'.</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
                                             </div>
                                         </div>
                                     </AccordionContent>
