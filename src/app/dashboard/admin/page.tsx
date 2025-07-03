@@ -10,7 +10,7 @@ import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle, Packa
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { database } from '@/lib/firebase';
-import { ref, get } from 'firebase/database';
+import { ref, get, type DataSnapshot } from 'firebase/database';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -41,20 +41,46 @@ export default function AdminDashboardPage() {
             setLoadingStats(true);
             setError(null);
             
+            let usersSnapshot: DataSnapshot;
+            let ordersSnapshot: DataSnapshot;
+
+            // Fetch users data first to isolate potential errors
             try {
                 const usersRef = ref(database, 'users');
+                usersSnapshot = await get(usersRef);
+            } catch (e: any) {
+                console.error("Failed to fetch users data:", e);
+                if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
+                    setError("Permission Denied: Could not fetch user data. Please ensure your Firebase Realtime Database rules grant the admin read access to the '/users' path.");
+                } else {
+                    setError("An error occurred while fetching user data.");
+                }
+                setLoadingStats(false);
+                return;
+            }
+            
+            // Fetch orders data second
+            try {
                 const ordersRef = ref(database, 'orders');
+                ordersSnapshot = await get(ordersRef);
+            } catch (e: any) {
+                console.error("Failed to fetch orders data:", e);
+                if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
+                    setError("Permission Denied: Could not fetch order data. Please ensure your Firebase Realtime Database rules grant the admin read access to the '/orders' path.");
+                } else {
+                    setError("An error occurred while fetching order data.");
+                }
+                setLoadingStats(false);
+                return;
+            }
 
-                const [usersSnapshot, ordersSnapshot] = await Promise.all([
-                    get(usersRef),
-                    get(ordersRef)
-                ]);
-
+            // Process data now that both fetches succeeded
+            try {
                 let usersCount = 0;
                 if (usersSnapshot.exists()) {
                     const usersData = usersSnapshot.val();
                     const totalUsers = usersSnapshot.numChildren();
-                    const hasAdmin = Object.values(usersData).some((user: any) => user.email === ADMIN_EMAIL);
+                    const hasAdmin = Object.values(usersData).some((u: any) => u.email === ADMIN_EMAIL);
                     usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
                 }
                 
@@ -73,12 +99,8 @@ export default function AdminDashboardPage() {
                 });
 
             } catch (e: any) {
-                console.error("Failed to fetch admin data:", e);
-                let detailedError = "An unknown error occurred while fetching dashboard data.";
-                if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
-                     detailedError = "Permission Denied: The admin dashboard cannot fetch store data. This is a critical configuration error. Please ensure your Firebase Realtime Database rules grant read access for the admin user ('admin@example.com') to the '/users' and '/orders' paths. Refer to the documentation for the correct security rules.";
-                }
-                setError(detailedError);
+                console.error("Failed to process admin data:", e);
+                setError("An error occurred while processing the dashboard data.");
             } finally {
                 setLoadingStats(false);
             }
