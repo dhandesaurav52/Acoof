@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { auth } from '@/lib/firebase';
+import { database } from '@/lib/firebase';
+import { ref, get } from 'firebase/database';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -24,7 +25,7 @@ export default function AdminDashboardPage() {
     const { products, loading: productsLoading } = useProducts();
     const router = useRouter();
     const [stats, setStats] = useState<AdminStats | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loadingStats, setLoadingStats] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -35,63 +36,60 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         async function fetchAdminData() {
-            // Use the user from auth context for initial checks, but get the fresh, unmodified
-            // user object directly from the auth service to ensure its methods are intact.
-            const currentUser = auth?.currentUser;
-            if (!user || !currentUser) return;
+            if (!user || !database) return;
 
-            setLoading(true);
+            setLoadingStats(true);
             setError(null);
             
             try {
-                if (typeof currentUser.getIdToken !== 'function') {
-                    throw new Error("The user object is invalid and missing required authentication functions. Please try logging out and back in.");
+                const usersRef = ref(database, 'users');
+                const ordersRef = ref(database, 'orders');
+
+                const [usersSnapshot, ordersSnapshot] = await Promise.all([
+                    get(usersRef),
+                    get(ordersRef)
+                ]);
+
+                let usersCount = 0;
+                if (usersSnapshot.exists()) {
+                    const usersData = usersSnapshot.val();
+                    const totalUsers = usersSnapshot.numChildren();
+                    const hasAdmin = Object.values(usersData).some((user: any) => user.email === ADMIN_EMAIL);
+                    usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
+                }
+                
+                let totalRevenue = 0;
+                let salesCount = 0;
+                if (ordersSnapshot.exists()) {
+                    const ordersData = ordersSnapshot.val();
+                    salesCount = Object.keys(ordersData).length;
+                    totalRevenue = Object.values(ordersData).reduce((acc: number, order: any) => acc + (order.total || 0), 0);
                 }
 
-                const token = await currentUser.getIdToken();
-
-                if (!token) {
-                    throw new Error("Failed to retrieve a valid authentication token. Please try logging out and back in.");
-                }
-
-                const response = await fetch('/api/admin/data', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Request failed with status ${response.status}`);
-                }
-    
-                const data = await response.json();
                 setStats({
-                    totalRevenue: data.totalRevenue || 0,
-                    salesCount: data.salesCount || 0,
-                    usersCount: data.usersCount || 0,
+                    totalRevenue,
+                    salesCount,
+                    usersCount,
                 });
+
             } catch (e: any) {
                 console.error("Failed to fetch admin data:", e);
-                let detailedError = e.message;
-                if (e.message.includes('Invalid auth token')) {
-                    detailedError = "Authentication with the server failed. This can happen if your session has expired or there's a configuration issue. Please try logging out and logging back in.";
-                } else if (e.message.includes('Firebase Admin SDK not initialized')) {
-                    detailedError = 'Server configuration error: The Admin SDK is not set up correctly. Please check your server environment variables and logs.';
+                let detailedError = "An unknown error occurred while fetching dashboard data.";
+                if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
+                     detailedError = "Permission Denied: The admin dashboard cannot fetch store data. This is a critical configuration error. Please ensure your Firebase Realtime Database rules grant read access for the admin user ('admin@example.com') to the '/users' and '/orders' paths. Refer to the documentation for the correct security rules.";
                 }
                 setError(detailedError);
             } finally {
-                setLoading(false);
+                setLoadingStats(false);
             }
         }
 
-        // Run the fetch only after the auth state is confirmed and the user is the admin
         if (!authLoading && user && user.email === ADMIN_EMAIL) {
             fetchAdminData();
         }
     }, [user, authLoading]);
 
-    const isLoading = authLoading || loading || productsLoading;
+    const isLoading = authLoading || loadingStats || productsLoading;
 
     if (isLoading && !error) {
         return (
@@ -122,7 +120,7 @@ export default function AdminDashboardPage() {
                         <CardContent>
                             <p className="text-destructive">{error}</p>
                             <p className="text-muted-foreground mt-2 text-sm">
-                               This is often caused by a server-side configuration issue or an expired session. Please check your server logs or try logging out and back in.
+                               This is likely caused by your Firebase Realtime Database security rules. Please ensure they are configured correctly to allow admin access.
                             </p>
                         </CardContent>
                     </Card>
