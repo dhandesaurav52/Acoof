@@ -40,7 +40,7 @@ export default function AdminDashboardPage() {
     const [updatedStatus, setUpdatedStatus] = useState<OrderStatus | null>(null);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-    const { products, loading: productsLoading } = useProducts();
+    const { products, loading: productsLoading, removeProduct } = useProducts();
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -81,20 +81,26 @@ export default function AdminDashboardPage() {
                 }
             } catch (error: any) {
                 console.error('Failed to fetch user count:', error);
-                // Optionally show a toast, but can be noisy
+                 if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                     toast({
+                        variant: 'destructive',
+                        title: 'Permission Error Fetching Users',
+                        description: "Could not fetch user count. Please update your Realtime Database security rules to allow admins to read the '/users' path.",
+                    });
+                }
+                setUsersCount(0);
             }
             setUsersLoading(false);
         }
         if (user) {
             fetchUsers();
         }
-    }, [user]);
+    }, [user, toast]);
 
     useEffect(() => {
         async function fetchOrders() {
             if (user?.email !== ADMIN_EMAIL) return;
             if (!database) {
-                toast({ variant: 'destructive', title: 'Firebase Not Configured' });
                 setOrdersLoading(false);
                 return;
             }
@@ -188,7 +194,7 @@ export default function AdminDashboardPage() {
 
     const handleSeedDatabase = async () => {
         if (!database) {
-            toast({ error: 'Firebase is not configured. Cannot seed database.' });
+            toast({ variant: "destructive", title: 'Firebase is not configured. Cannot seed database.' });
             return;
         }
 
@@ -200,12 +206,12 @@ export default function AdminDashboardPage() {
             if (snapshot.exists()) {
                 toast({ variant: 'destructive', title: 'Database Seeding Failed', description: 'Database already contains products. Seeding aborted.' });
             } else {
-                const productsToSeed: { [key: string]: Product } = {};
+                const productsToSeed: { [key: string]: Omit<Product, 'id'> } = {};
                 staticProducts.forEach(product => {
                     const newProductRef = push(productsRef);
                     const newId = newProductRef.key;
                     if (newId) {
-                        productsToSeed[newId] = { ...product, id: newId };
+                        productsToSeed[newId] = { ...product };
                     }
                 });
 
@@ -228,7 +234,7 @@ export default function AdminDashboardPage() {
     };
 
     const handleConfirmDelete = async () => {
-        if (!productToDelete || !database || !storage) {
+        if (!productToDelete || !storage) {
             toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Configuration or product data is missing.' });
             return;
         };
@@ -236,34 +242,7 @@ export default function AdminDashboardPage() {
         setIsDeleting(true);
 
         try {
-            // Delete from Realtime Database
-            const productRef = dbRef(database, `products/${productToDelete.id}`);
-            await remove(productRef);
-
-            // Delete images from Storage
-            const imageDeletionPromises = productToDelete.images
-                .filter(url => url && url.includes('firebasestorage.googleapis.com'))
-                .map(url => {
-                    try {
-                        const imageRef = storageRef(storage, url);
-                        return deleteObject(imageRef).catch(err => {
-                            if (err.code === 'storage/object-not-found') {
-                                console.warn(`Image not found, skipping: ${url}`);
-                                return null;
-                            }
-                            throw err;
-                        });
-                    } catch (e) {
-                        console.error(`Invalid storage URL: ${url}`, e);
-                        return null;
-                    }
-                });
-            
-            const validPromises = imageDeletionPromises.filter((p): p is Promise<void> => p !== null);
-            if (validPromises.length > 0) {
-                await Promise.allSettled(validPromises);
-            }
-
+            await removeProduct(productToDelete);
             toast({ title: 'Product Deleted', description: 'Product and its images were successfully deleted.' });
         } catch (error: any) {
             console.error('Deletion failed:', error);
@@ -297,8 +276,8 @@ export default function AdminDashboardPage() {
         if (!selectedOrder || !updatedStatus || !database) return;
         setIsUpdatingStatus(true);
         
-        const orderRef = dbRef(database, `orders/${selectedOrder.id}`);
         try {
+            const orderRef = dbRef(database, `orders/${selectedOrder.id}`);
             await update(orderRef, { status: updatedStatus });
             setOrders(prevOrders =>
                 prevOrders.map(order =>
@@ -307,9 +286,10 @@ export default function AdminDashboardPage() {
             );
             toast({ title: "Status Updated", description: `Order status changed to ${updatedStatus}.` });
         } catch (error: any) {
+            console.error("Error updating order status:", error);
             let desc = 'An error occurred while updating the order status.';
-            if (error.code === 'PERMISSION_DENIED') {
-                desc = "Permission Denied. Check your Firebase security rules.";
+            if (error.code === 'PERMISSION_DENIED' || error.message.includes("permission_denied")) {
+                desc = "Permission Denied. Please ensure your Firebase security rules allow admins to update orders.";
             }
             toast({ variant: 'destructive', title: 'Update Failed', description: desc });
         }
@@ -686,7 +666,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
-
-    
