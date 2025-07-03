@@ -57,7 +57,8 @@ const generateOutfitImageFlow = ai.defineFlow(
     async (input) => {
         const { media } = await ai.generate({
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
-            prompt: await imagePrompt.render({input}),
+            prompt: imagePrompt,
+            input: input,
             config: {
                 responseModalities: ['TEXT', 'IMAGE'],
             },
