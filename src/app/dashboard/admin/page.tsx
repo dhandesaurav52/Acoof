@@ -1,16 +1,17 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useProducts } from '@/hooks/use-products';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle, Package, TrendingUp } from 'lucide-react';
+import { DollarSign, Users, CreditCard, Loader2, AlertCircle, Package, TrendingUp, LayoutGrid } from 'lucide-react';
 import { ref, get, type DataSnapshot } from 'firebase/database';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { database } from '@/lib/firebase';
+import type { OrderItem } from '@/types';
 
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -21,12 +22,20 @@ interface AdminStats {
     usersCount: number;
 }
 
-const chartConfig = {
+const salesChartConfig = {
     sales: {
       label: "Sales",
       color: "hsl(var(--primary))",
     },
 } satisfies ChartConfig;
+
+const categoryChartConfig = {
+    sales: {
+      label: "Items Sold",
+      color: "hsl(var(--primary))",
+    },
+} satisfies ChartConfig;
+
 
 export default function AdminDashboardPage() {
     const { user, loading: authLoading } = useAuth();
@@ -34,6 +43,7 @@ export default function AdminDashboardPage() {
     const router = useRouter();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
+    const [categorySalesData, setCategorySalesData] = useState<{ name: string; sales: number }[]>([]);
     const [loadingStats, setLoadingStats] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +55,12 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         async function fetchAdminData() {
-            if (!user || !database) return;
+            if (!user || !database || allProducts.length === 0) {
+                 if (!authLoading && !productsLoading) {
+                    setLoadingStats(false);
+                }
+                return;
+            };
 
             setLoadingStats(true);
             setError(null);
@@ -147,6 +162,28 @@ export default function AdminDashboardPage() {
                         });
                         
                         setSalesData(monthlySalesData.reverse().map(d => ({ name: d.name, sales: d.sales })));
+                        
+                        const salesByCategory: { [category: string]: number } = {};
+    
+                        deliveredOrders.forEach((order: any) => {
+                            if (!order.items || !Array.isArray(order.items)) return;
+
+                            order.items.forEach((item: OrderItem) => {
+                                if (!item.productId) return;
+                                const product = allProducts.find(p => p.id === item.productId);
+                                if (product) {
+                                    const category = product.category;
+                                    salesByCategory[category] = (salesByCategory[category] || 0) + (item.quantity || 1);
+                                }
+                            });
+                        });
+
+                        const categoryData = Object.keys(salesByCategory).map(category => ({
+                            name: category,
+                            sales: salesByCategory[category]
+                        })).sort((a, b) => b.sales - a.sales); 
+
+                        setCategorySalesData(categoryData);
 
                     } else {
                         console.warn("Expected '/orders' to be an object, but it was not. Data:", ordersData);
@@ -167,10 +204,10 @@ export default function AdminDashboardPage() {
             }
         }
 
-        if (!authLoading && user) {
+        if (!authLoading && user && !productsLoading) {
             fetchAdminData();
         }
-    }, [user, authLoading]);
+    }, [user, authLoading, allProducts, productsLoading]);
     
     const isLoading = authLoading || loadingStats || productsLoading;
 
@@ -248,52 +285,106 @@ export default function AdminDashboardPage() {
                     </Card>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-6 w-6" />
-                            Sales Overview
-                        </CardTitle>
-                        <CardDescription>Number of sales for the last 12 months.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {loadingStats ? (
-                             <div className="flex items-center justify-center h-[300px]">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : salesData.some(d => d.sales > 0) ? (
-                            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                                <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
-                                    <CartesianGrid vertical={false} />
-                                    <XAxis
-                                        dataKey="name"
-                                        tickLine={false}
-                                        tickMargin={10}
-                                        axisLine={false}
-                                        stroke="hsl(var(--muted-foreground))"
-                                        fontSize={12}
-                                    />
-                                    <YAxis
-                                        stroke="hsl(var(--muted-foreground))"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        allowDecimals={false}
-                                    />
-                                    <Tooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent indicator="dot" />}
-                                    />
-                                    <Bar dataKey="sales" fill="hsl(var(--primary))" radius={4} />
-                                </BarChart>
-                            </ChartContainer>
-                        ) : (
-                            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                                No sales data available for the last 12 months.
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                <div className="grid gap-8 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <TrendingUp className="h-6 w-6" />
+                                Sales Overview
+                            </CardTitle>
+                            <CardDescription>Number of sales for the last 12 months.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {loadingStats ? (
+                                <div className="flex items-center justify-center h-[300px]">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            ) : salesData.some(d => d.sales > 0) ? (
+                                <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
+                                    <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis
+                                            dataKey="name"
+                                            tickLine={false}
+                                            tickMargin={10}
+                                            axisLine={false}
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                        />
+                                        <YAxis
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            allowDecimals={false}
+                                        />
+                                        <Tooltip
+                                            cursor={false}
+                                            content={<ChartTooltipContent indicator="dot" />}
+                                        />
+                                        <Bar dataKey="sales" fill="hsl(var(--primary))" radius={4} />
+                                    </BarChart>
+                                </ChartContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                    No sales data available for the last 12 months.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <LayoutGrid className="h-6 w-6" />
+                                Top Selling Categories
+                            </CardTitle>
+                            <CardDescription>Total items sold per category.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {loadingStats ? (
+                                <div className="flex items-center justify-center h-[300px]">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            ) : categorySalesData.length > 0 ? (
+                                <ChartContainer config={categoryChartConfig} className="h-[300px] w-full">
+                                    <BarChart data={categorySalesData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                                        <CartesianGrid horizontal={false} />
+                                        <YAxis
+                                            dataKey="name"
+                                            type="category"
+                                            tickLine={false}
+                                            tickMargin={10}
+                                            axisLine={false}
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                            width={80}
+                                            interval={0}
+                                        />
+                                        <XAxis
+                                            dataKey="sales"
+                                            type="number"
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            allowDecimals={false}
+                                        />
+                                        <Tooltip
+                                            cursor={{ fill: 'hsl(var(--muted))' }}
+                                            content={<ChartTooltipContent indicator="dot" />}
+                                        />
+                                        <Bar dataKey="sales" layout="vertical" fill="hsl(var(--primary))" radius={4} />
+                                    </BarChart>
+                                </ChartContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                    No category sales data available.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );
