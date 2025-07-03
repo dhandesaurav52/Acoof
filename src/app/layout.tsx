@@ -21,6 +21,9 @@ export default function RootLayout({
       <head>
         <title>Acoof</title>
         <meta name="description" content="A new app built in Firebase Studio." />
+        <meta name="theme-color" content="#E53935" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png"></link>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
