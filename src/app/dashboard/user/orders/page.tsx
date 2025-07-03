@@ -9,10 +9,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { Order } from '@/types';
+import type { Order, OrderStatus } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { database } from '@/lib/firebase';
-import { ref, query, orderByChild, equalTo, get } from 'firebase/database';
+import { ref, query, orderByChild, equalTo, get, update } from 'firebase/database';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 
 export default function UserOrdersPage() {
@@ -21,6 +23,8 @@ export default function UserOrdersPage() {
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
+    const [isCancelling, setIsCancelling] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -87,6 +91,35 @@ export default function UserOrdersPage() {
             default: return <FileText className="h-5 w-5 text-muted-foreground" />;
         }
     }
+
+    const handleConfirmCancel = async () => {
+        if (!orderToCancel || !database) return;
+        setIsCancelling(true);
+        const orderRef = ref(database, `orders/${orderToCancel.id}`);
+        try {
+            await update(orderRef, { status: 'Cancelled' });
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order.id === orderToCancel.id ? { ...order, status: 'Cancelled' as OrderStatus } : order
+                )
+            );
+            toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
+        } catch (error: any) {
+            console.error('Failed to cancel order:', error);
+            let desc = 'An error occurred while cancelling your order.';
+            if (error.code === 'PERMISSION_DENIED') {
+                desc = "Permission denied. Please check your Firebase security rules."
+            }
+            toast({
+                variant: 'destructive',
+                title: 'Cancellation Failed',
+                description: desc,
+            });
+        } finally {
+            setIsCancelling(false);
+            setOrderToCancel(null);
+        }
+    };
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -158,6 +191,16 @@ export default function UserOrdersPage() {
                                                     ))}
                                                 </TableBody>
                                             </Table>
+                                            <div className="mt-6 flex justify-end">
+                                                <Button
+                                                    variant="destructive"
+                                                    onClick={() => setOrderToCancel(order)}
+                                                    disabled={order.status !== 'Pending'}
+                                                >
+                                                    <XCircle className="mr-2 h-4 w-4" />
+                                                    Cancel Order
+                                                </Button>
+                                            </div>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
@@ -171,6 +214,28 @@ export default function UserOrdersPage() {
                 </CardContent>
             </Card>
         </div>
+        
+        <AlertDialog open={!!orderToCancel} onOpenChange={(open) => { if (!open) setOrderToCancel(null); }}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will cancel your order <span className="font-semibold">#{orderToCancel?.id}</span>.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setOrderToCancel(null)} disabled={isCancelling}>Back</AlertDialogCancel>
+                    <AlertDialogAction 
+                        onClick={handleConfirmCancel} 
+                        disabled={isCancelling} 
+                        className={buttonVariants({ variant: "destructive" })}
+                    >
+                        {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {isCancelling ? "Cancelling..." : "Confirm Cancellation"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
