@@ -2,16 +2,23 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Wand2, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAiSuggestions } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/use-products";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Suggestion {
+  description: string;
+  imageUrl: string;
+}
 
 export function AiStylist() {
   const { products } = useProducts();
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -39,6 +46,23 @@ export function AiStylist() {
     setIsLoading(false);
   };
 
+  const LoadingSkeletons = () => (
+     <div className="space-y-4">
+        <h3 className="text-xl font-semibold">Generating your looks...</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, index) => (
+                <Card key={index} className="overflow-hidden bg-background">
+                    <Skeleton className="aspect-[4/5] w-full" />
+                    <CardContent className="p-4 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    </div>
+  );
+
   return (
     <Card className="bg-secondary/50">
       <CardHeader>
@@ -48,14 +72,14 @@ export function AiStylist() {
             </div>
             <div>
                 <CardTitle className="text-2xl">AI Personal Stylist</CardTitle>
-                <CardDescription>Get outfit ideas based on your style.</CardDescription>
+                <CardDescription>Get outfit ideas based on your style, complete with generated images.</CardDescription>
             </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-6">
           <p className="text-muted-foreground">
-            Let our AI stylist create unique looks for you. We'll use a sample of your interests to generate personalized outfit recommendations.
+            Let our AI stylist create unique looks for you. We'll use a sample of your interests to generate personalized outfit recommendations. This may take up to 30 seconds.
           </p>
           <Button onClick={handleGenerateSuggestions} disabled={isLoading} className="w-full sm:w-auto self-start">
             {isLoading ? (
@@ -71,14 +95,29 @@ export function AiStylist() {
             )}
           </Button>
 
-          {suggestions.length > 0 && (
+          {isLoading && <LoadingSkeletons />}
+
+          {!isLoading && suggestions.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">Your Personalized Lookbook:</h3>
-              <ul className="list-disc space-y-3 rounded-lg border bg-background p-6 pl-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {suggestions.map((suggestion, index) => (
-                  <li key={index} className="text-foreground/80">{suggestion}</li>
+                  <Card key={index} className="overflow-hidden bg-background group">
+                    <div className="relative aspect-[4/5] w-full">
+                      <Image
+                        src={suggestion.imageUrl}
+                        alt={`AI-generated look for: ${suggestion.description}`}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    </div>
+                    <CardContent className="p-4">
+                      <p className="text-sm text-muted-foreground">{suggestion.description}</p>
+                    </CardContent>
+                  </Card>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>

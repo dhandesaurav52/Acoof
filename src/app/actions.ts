@@ -31,6 +31,8 @@ export async function getAiSuggestions(browsingHistory: string) {
             detailedError = "The provided AI API key is not valid. Please check it for typos or generate a new one.";
         } else if (error.message.includes('permission')) {
             detailedError = "AI generation failed due to a permission issue. Please ensure the Google AI API is enabled in your cloud project.";
+        } else if (error.message.includes('Image generation failed')) {
+            detailedError = "The AI created outfit ideas, but failed to generate images. This can be due to safety filters or service load. Please try again."
         }
     }
     return { suggestions: [], error: detailedError };

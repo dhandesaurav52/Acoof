@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating personalized outfit suggestions based on user browsing history.
+ * @fileOverview This file defines a Genkit flow for generating personalized outfit suggestions with images based on user browsing history.
  *
- * The flow takes user browsing history as input and returns outfit suggestions.
+ * The flow takes user browsing history as input and returns outfit suggestions with generated images.
  *   - generateOutfitSuggestions - A function that generates outfit suggestions.
  *   - GenerateOutfitSuggestionsInput - The input type for the generateOutfitSuggestions function.
  *   - GenerateOutfitSuggestionsOutput - The return type for the generateOutfitSuggestions function.
@@ -12,6 +12,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { generateOutfitImage } from './generate-outfit-image';
 
 const GenerateOutfitSuggestionsInputSchema = z.object({
   browsingHistory: z
@@ -22,10 +23,15 @@ const GenerateOutfitSuggestionsInputSchema = z.object({
 });
 export type GenerateOutfitSuggestionsInput = z.infer<typeof GenerateOutfitSuggestionsInputSchema>;
 
+const SuggestionWithImageSchema = z.object({
+    description: z.string().describe('A detailed description of the outfit.'),
+    imageUrl: z.string().describe("A data URI of the generated image. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+});
+
 const GenerateOutfitSuggestionsOutputSchema = z.object({
   suggestions: z
-    .array(z.string())
-    .describe('An array of outfit suggestions, each a description of an outfit.'),
+    .array(SuggestionWithImageSchema)
+    .describe('An array of outfit suggestions, each with a description and a generated image.'),
 });
 export type GenerateOutfitSuggestionsOutput = z.infer<typeof GenerateOutfitSuggestionsOutputSchema>;
 
@@ -35,14 +41,19 @@ export async function generateOutfitSuggestions(
   return generateOutfitSuggestionsFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateOutfitSuggestionsPrompt',
+const outfitDescriptionPrompt = ai.definePrompt({
+  name: 'generateOutfitDescriptionsPrompt',
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateOutfitSuggestionsInputSchema},
-  output: {schema: GenerateOutfitSuggestionsOutputSchema},
+  output: {schema: z.object({
+      suggestions: z
+        .array(z.string())
+        .describe('An array of 3 outfit suggestions, each a detailed description of an outfit.'),
+    })
+  },
   prompt: `You are a personal stylist for Acoof, specializing in creating personalized outfit suggestions.
 
-Based on the user's browsing history, generate outfit suggestions that complement their viewed items and align with current fashion trends.
+Based on the user's browsing history, generate 3 creative and detailed outfit suggestions that complement their viewed items and align with current fashion trends. Describe each outfit clearly.
 
 Browsing History: {{{browsingHistory}}}
 
@@ -56,7 +67,25 @@ const generateOutfitSuggestionsFlow = ai.defineFlow(
     outputSchema: GenerateOutfitSuggestionsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    // 1. Get text-based suggestions first
+    const { output } = await outfitDescriptionPrompt(input);
+    if (!output?.suggestions) {
+        return { suggestions: [] };
+    }
+
+    // 2. Generate an image for each suggestion in parallel
+    const imageGenerationPromises = output.suggestions.map(description => 
+        generateOutfitImage({ description })
+    );
+
+    const imageResults = await Promise.all(imageGenerationPromises);
+    
+    // 3. Combine descriptions with their generated images
+    const suggestionsWithImages = output.suggestions.map((description, index) => ({
+        description,
+        imageUrl: imageResults[index].imageUrl,
+    }));
+
+    return { suggestions: suggestionsWithImages };
   }
 );
