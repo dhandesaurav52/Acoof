@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database, Trash2, CreditCard } from 'lucide-react';
+import { BarChart, Package, ShoppingCart, Users, Loader2, UserCircle, Mail, MapPin, Database, Trash2, CreditCard, Search, ListFilter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { database, storage } from '@/lib/firebase';
 import { ref as dbRef, get, set, push, remove, update } from 'firebase/database';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
-import { products as staticProducts } from '@/lib/data';
+import { products as staticProducts, categories } from '@/lib/data';
+import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -42,6 +44,13 @@ export default function AdminDashboardPage() {
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
+    
+    // State for product filtering and sorting
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [selectedColor, setSelectedColor] = useState('All');
+    const [selectedSize, setSelectedSize] = useState('All');
+    const [sortOption, setSortOption] = useState('default');
 
     useEffect(() => {
         if (loading) return;
@@ -102,6 +111,53 @@ export default function AdminDashboardPage() {
             totalOrders: orders.length,
         };
     }, [orders]);
+
+    const availableColors = useMemo(() => {
+        const allColors = products.flatMap(p => p.colors || []);
+        return ['All', ...Array.from(new Set(allColors))];
+    }, [products]);
+
+    const availableSizes = useMemo(() => {
+        const allSizes = products.flatMap(p => p.sizes || []);
+        return ['All', ...Array.from(new Set(allSizes))];
+    }, [products]);
+
+    const filteredProducts = useMemo(() => {
+        let filtered = products
+            .filter(product => selectedCategory === 'All' || product.category === selectedCategory)
+            .filter(product => selectedColor === 'All' || product.colors?.includes(selectedColor))
+            .filter(product => selectedSize === 'All' || product.sizes?.includes(selectedSize))
+            .filter(product => {
+                if (!searchQuery) return true;
+                const lowercasedQuery = searchQuery.toLowerCase();
+                return (
+                    product.name.toLowerCase().includes(lowercasedQuery) ||
+                    product.id.toLowerCase().includes(lowercasedQuery) ||
+                    product.category.toLowerCase().includes(lowercasedQuery)
+                );
+            });
+        
+        const sorted = [...filtered];
+
+        switch (sortOption) {
+            case 'price-asc':
+                sorted.sort((a, b) => a.price - b.price);
+                break;
+            case 'price-desc':
+                sorted.sort((a, b) => b.price - a.price);
+                break;
+            case 'name-asc':
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'name-desc':
+                sorted.sort((a, b) => b.name.localeCompare(a.name));
+                break;
+            default:
+                break;
+        }
+
+        return sorted;
+    }, [searchQuery, products, selectedCategory, selectedColor, selectedSize, sortOption]);
 
     const handleSeedDatabase = async () => {
         if (!database) {
@@ -351,17 +407,85 @@ export default function AdminDashboardPage() {
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Manage Products</CardTitle>
-                        <CardDescription>View and delete existing products from your store.</CardDescription>
+                        <CardDescription>View, filter, and delete products from your store.</CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex flex-col gap-4 mb-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search by name, ID, or category..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="All Categories" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Categories</SelectItem>
+                                        {categories.map(cat => (
+                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={selectedColor} onValueChange={setSelectedColor}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="All Colors" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableColors.map(color => (
+                                            <SelectItem key={color} value={color}>{color === 'All' ? 'All Colors' : color}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={selectedSize} onValueChange={setSelectedSize}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="All Sizes" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableSizes.map(size => (
+                                            <SelectItem key={size} value={size}>{size === 'All' ? 'All Sizes' : size}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full">
+                                            <ListFilter className="mr-2 h-4 w-4" />
+                                            Sort
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+                                            <DropdownMenuRadioItem value="default">Default</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="name-asc">Name: A-Z</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="name-desc">Name: Z-A</DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+
                         <ScrollArea className="h-72">
                             <div className="space-y-4 pr-4">
                                 {productsLoading ? (
                                     <div className="flex items-center justify-center h-full">
                                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                     </div>
-                                ) : products.length > 0 ? (
-                                    products.map(product => (
+                                ) : filteredProducts.length > 0 ? (
+                                    filteredProducts.map(product => (
                                         <div key={product.id} className="flex items-center justify-between p-3 rounded-md hover:bg-secondary">
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium truncate">{product.name}</p>
@@ -374,8 +498,8 @@ export default function AdminDashboardPage() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex items-center justify-center h-full">
-                                        <p className="text-muted-foreground text-center">No products found.</p>
+                                    <div className="flex items-center justify-center h-full py-10">
+                                        <p className="text-muted-foreground text-center">No products match your filters.</p>
                                     </div>
                                 )}
                             </div>
@@ -533,3 +657,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
