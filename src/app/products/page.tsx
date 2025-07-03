@@ -7,7 +7,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { ListFilter, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProducts } from '@/hooks/use-products';
-import { categories, allSizes } from '@/lib/data';
+import { categories, alphaSizes, numericSizes } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -16,7 +16,8 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedColor, setSelectedColor] = useState('All');
-  const [selectedSize, setSelectedSize] = useState('All');
+  const [selectedAlphaSize, setSelectedAlphaSize] = useState('All');
+  const [selectedNumericSize, setSelectedNumericSize] = useState('All');
   const [sortOption, setSortOption] = useState('default');
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -27,8 +28,6 @@ export default function ProductsPage() {
     const allColors = products.flatMap(p => p.colors || []);
     return ['All', ...Array.from(new Set(allColors))];
   }, [products]);
-
-  const availableSizes = ['All', ...allSizes];
 
   const filteredProducts = useMemo(() => {
     let filtered = products
@@ -44,8 +43,9 @@ export default function ProductsPage() {
       })
       .filter(product => {
         // Size filter
-        if (selectedSize === 'All') return true;
-        return product.sizes?.includes(selectedSize);
+        const alphaMatch = selectedAlphaSize === 'All' || (product.sizes && product.sizes.includes(selectedAlphaSize));
+        const numericMatch = selectedNumericSize === 'All' || (product.sizes && product.sizes.includes(selectedNumericSize));
+        return alphaMatch && numericMatch;
       })
       .filter(product => {
         // Search query filter
@@ -72,7 +72,7 @@ export default function ProductsPage() {
     }
 
     return sorted;
-  }, [searchQuery, products, selectedCategory, selectedColor, selectedSize, sortOption]);
+  }, [searchQuery, products, selectedCategory, selectedColor, selectedAlphaSize, selectedNumericSize, sortOption]);
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -118,14 +118,27 @@ export default function ProductsPage() {
             </SelectContent>
           </Select>
           
-          <Select value={selectedSize} onValueChange={setSelectedSize}>
+          <Select value={selectedAlphaSize} onValueChange={setSelectedAlphaSize}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Sizes" />
+              <SelectValue placeholder="All Alpha Sizes" />
             </SelectTrigger>
             <SelectContent>
-              {availableSizes.map(size => (
-                  <SelectItem key={size} value={size}>{size === 'All' ? 'All Sizes' : size}</SelectItem>
-              ))}
+                <SelectItem value="All">All Alpha Sizes</SelectItem>
+                {alphaSizes.map(size => (
+                    <SelectItem key={size} value={size}>{size}</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+
+           <Select value={selectedNumericSize} onValueChange={setSelectedNumericSize}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All Numeric Sizes" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="All">All Numeric Sizes</SelectItem>
+                {numericSizes.map(size => (
+                    <SelectItem key={size} value={size}>{size}</SelectItem>
+                ))}
             </SelectContent>
           </Select>
           
