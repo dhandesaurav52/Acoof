@@ -41,7 +41,6 @@ export default function AdminDashboardPage() {
             setLoadingStats(true);
             setError(null);
             
-            // Crucial check: Ensure the logged-in user is the admin.
             if (user.email !== ADMIN_EMAIL) {
                 setError(`Access Denied: You must be logged in as ${ADMIN_EMAIL} to view this dashboard.`);
                 setLoadingStats(false);
@@ -51,7 +50,6 @@ export default function AdminDashboardPage() {
             let usersSnapshot: DataSnapshot;
             let ordersSnapshot: DataSnapshot;
 
-            // Fetch users data first to isolate potential errors
             try {
                 const usersRef = ref(database, 'users');
                 usersSnapshot = await get(usersRef);
@@ -66,7 +64,6 @@ export default function AdminDashboardPage() {
                 return;
             }
             
-            // Fetch orders data second
             try {
                 const ordersRef = ref(database, 'orders');
                 ordersSnapshot = await get(ordersRef);
@@ -81,23 +78,34 @@ export default function AdminDashboardPage() {
                 return;
             }
 
-            // Process data now that both fetches succeeded
             try {
                 let usersCount = 0;
                 if (usersSnapshot.exists()) {
                     const usersData = usersSnapshot.val();
-                    const totalUsers = usersSnapshot.numChildren();
-                    // Exclude admin from the customer count
-                    const hasAdmin = Object.values(usersData).some((u: any) => u.email === ADMIN_EMAIL);
-                    usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
+                    if (typeof usersData === 'object' && usersData !== null) {
+                        const totalUsers = usersSnapshot.numChildren();
+                        const hasAdmin = Object.values(usersData).some((u: any) => u && typeof u === 'object' && u.email === ADMIN_EMAIL);
+                        usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
+                    } else {
+                        console.warn("Expected '/users' to be an object, but it was not. Data:", usersData);
+                    }
                 }
                 
                 let totalRevenue = 0;
                 let salesCount = 0;
                 if (ordersSnapshot.exists()) {
                     const ordersData = ordersSnapshot.val();
-                    salesCount = Object.keys(ordersData).length;
-                    totalRevenue = Object.values(ordersData).reduce((acc: number, order: any) => acc + (order.total || 0), 0);
+                    if (typeof ordersData === 'object' && ordersData !== null) {
+                        salesCount = Object.keys(ordersData).length;
+                        totalRevenue = Object.values(ordersData).reduce((acc: number, order: any) => {
+                            if (order && typeof order.total === 'number') {
+                                return acc + order.total;
+                            }
+                            return acc;
+                        }, 0);
+                    } else {
+                        console.warn("Expected '/orders' to be an object, but it was not. Data:", ordersData);
+                    }
                 }
 
                 setStats({
