@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { auth } from '@/lib/firebase';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -34,19 +35,21 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         async function fetchAdminData() {
-            if (!user) return;
+            // Use the user from auth context for initial checks, but get the fresh, unmodified
+            // user object directly from the auth service to ensure its methods are intact.
+            const currentUser = auth?.currentUser;
+            if (!user || !currentUser) return;
+
             setLoading(true);
             setError(null);
             
             try {
-                // Add a check to ensure getIdToken function exists.
-                if (typeof user.getIdToken !== 'function') {
-                    throw new Error("User object is invalid and missing required authentication functions. Please try logging out and back in.");
+                if (typeof currentUser.getIdToken !== 'function') {
+                    throw new Error("The user object is invalid and missing required authentication functions. Please try logging out and back in.");
                 }
 
-                const token = await user.getIdToken();
+                const token = await currentUser.getIdToken();
 
-                // Add a check to ensure the token is valid before sending.
                 if (!token) {
                     throw new Error("Failed to retrieve a valid authentication token. Please try logging out and back in.");
                 }
@@ -82,10 +85,11 @@ export default function AdminDashboardPage() {
             }
         }
 
-        if (user && user.email === ADMIN_EMAIL) {
+        // Run the fetch only after the auth state is confirmed and the user is the admin
+        if (!authLoading && user && user.email === ADMIN_EMAIL) {
             fetchAdminData();
         }
-    }, [user]);
+    }, [user, authLoading]);
 
     const isLoading = authLoading || loading || productsLoading;
 
