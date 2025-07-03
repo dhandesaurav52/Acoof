@@ -174,7 +174,7 @@ export default function AddProductPage() {
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="sizes">Sizes (comma-separated)</Label>
-                                <Input id="sizes" {...register("sizes")} placeholder="e.g., S, M, L, XL" />
+                                <Input id="sizes" {...register("sizes")} placeholder="e.g., S, M, 30, 32" />
                             </div>
                         </div>
                         
