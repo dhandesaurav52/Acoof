@@ -259,12 +259,12 @@ export async function getOrders(): Promise<{ orders?: Order[]; error?: string; }
     }
 }
 
-export async function getUserOrders(userEmail: string): Promise<{ orders?: Order[]; error?: string; }> {
+export async function getUserOrders(userId: string): Promise<{ orders?: Order[]; error?: string; }> {
     if (!database) {
         return { error: 'Firebase is not configured. Cannot fetch orders.' };
     }
     const ordersRef = dbRef(database, 'orders');
-    const userOrdersQuery = query(ordersRef, orderByChild('userEmail'), equalTo(userEmail));
+    const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(userId));
     
     try {
         const snapshot = await get(userOrdersQuery);

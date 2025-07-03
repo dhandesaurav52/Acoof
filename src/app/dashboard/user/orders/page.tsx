@@ -28,9 +28,9 @@ export default function UserOrdersPage() {
     
     useEffect(() => {
         async function fetchUserOrders() {
-            if (!user?.email) return;
+            if (!user?.uid) return;
             setLoading(true);
-            const { orders: fetchedOrders, error } = await getUserOrders(user.email);
+            const { orders: fetchedOrders, error } = await getUserOrders(user.uid);
             if (fetchedOrders) {
                 setOrders(fetchedOrders);
             } else if (error) {

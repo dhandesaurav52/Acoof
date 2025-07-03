@@ -130,6 +130,7 @@ export default function ProductDetailPage() {
                     };
                     
                     const orderData: Omit<Order, 'id'> = {
+                        userId: user.uid,
                         user: user.displayName || 'Anonymous',
                         userEmail: user.email || 'N/A',
                         date: new Date().toISOString().split('T')[0],
@@ -194,6 +195,7 @@ export default function ProductDetailPage() {
         };
         
         const orderData: Omit<Order, 'id'> = {
+            userId: user.uid,
             user: user.displayName || 'Anonymous',
             userEmail: user.email || 'N/A',
             date: new Date().toISOString().split('T')[0],
