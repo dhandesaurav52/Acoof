@@ -45,6 +45,9 @@ export default function AdminDashboardPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     
+    const [usersCount, setUsersCount] = useState(0);
+    const [usersLoading, setUsersLoading] = useState(true);
+
     // State for product filtering and sorting
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
@@ -60,6 +63,32 @@ export default function AdminDashboardPage() {
             router.push('/dashboard/user');
         }
     }, [user, loading, router]);
+    
+    useEffect(() => {
+        async function fetchUsers() {
+            if (!user || user.email !== ADMIN_EMAIL || !database) {
+                setUsersLoading(false);
+                return;
+            }
+            setUsersLoading(true);
+            const usersRef = dbRef(database, 'users');
+            try {
+                const snapshot = await get(usersRef);
+                if (snapshot.exists()) {
+                    setUsersCount(Object.keys(snapshot.val()).length);
+                } else {
+                    setUsersCount(0);
+                }
+            } catch (error: any) {
+                console.error('Failed to fetch user count:', error);
+                // Optionally show a toast, but can be noisy
+            }
+            setUsersLoading(false);
+        }
+        if (user) {
+            fetchUsers();
+        }
+    }, [user]);
 
     useEffect(() => {
         async function fetchOrders() {
@@ -104,10 +133,8 @@ export default function AdminDashboardPage() {
             }
             return acc;
         }, 0);
-        const uniqueCustomers = new Set(orders.map(order => order.userEmail)).size;
         return {
             totalRevenue,
-            uniqueCustomers,
             totalOrders: orders.length,
         };
     }, [orders]);
@@ -319,8 +346,10 @@ export default function AdminDashboardPage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.uniqueCustomers}</div>
-                        <p className="text-xs text-muted-foreground">Customers who have ordered</p>
+                        <div className="text-2xl font-bold">
+                           {usersLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : usersCount}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Total registered users</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -657,5 +686,7 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
 
     
