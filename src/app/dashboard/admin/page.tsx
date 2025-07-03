@@ -29,7 +29,7 @@ export default function AdminDashboardPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!authLoading && (!user || user.email !== ADMIN_EMAIL)) {
+        if (!authLoading && !user) {
             router.push('/login');
         }
     }, [user, authLoading, router]);
@@ -41,6 +41,13 @@ export default function AdminDashboardPage() {
             setLoadingStats(true);
             setError(null);
             
+            // Crucial check: Ensure the logged-in user is the admin.
+            if (user.email !== ADMIN_EMAIL) {
+                setError(`Access Denied: You must be logged in as ${ADMIN_EMAIL} to view this dashboard.`);
+                setLoadingStats(false);
+                return;
+            }
+
             let usersSnapshot: DataSnapshot;
             let ordersSnapshot: DataSnapshot;
 
@@ -80,6 +87,7 @@ export default function AdminDashboardPage() {
                 if (usersSnapshot.exists()) {
                     const usersData = usersSnapshot.val();
                     const totalUsers = usersSnapshot.numChildren();
+                    // Exclude admin from the customer count
                     const hasAdmin = Object.values(usersData).some((u: any) => u.email === ADMIN_EMAIL);
                     usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
                 }
@@ -106,7 +114,7 @@ export default function AdminDashboardPage() {
             }
         }
 
-        if (!authLoading && user && user.email === ADMIN_EMAIL) {
+        if (!authLoading && user) {
             fetchAdminData();
         }
     }, [user, authLoading]);
@@ -142,7 +150,7 @@ export default function AdminDashboardPage() {
                         <CardContent>
                             <p className="text-destructive">{error}</p>
                             <p className="text-muted-foreground mt-2 text-sm">
-                               This is likely caused by your Firebase Realtime Database security rules. Please ensure they are configured correctly to allow admin access.
+                               This may be caused by your Firebase Realtime Database security rules. Please ensure they are configured correctly to allow admin access.
                             </p>
                         </CardContent>
                     </Card>
