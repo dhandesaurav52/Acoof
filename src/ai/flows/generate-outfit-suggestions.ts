@@ -52,9 +52,9 @@ const outfitDescriptionPrompt = ai.definePrompt({
         .describe('An array of 3 outfit suggestions, each a detailed description of an outfit.'),
     })
   },
-  prompt: `You are a personal stylist for Acoof, specializing in creating personalized outfit suggestions.
+  prompt: `You are a personal stylist for Acoof, a modern **men's clothing brand**. Your specialty is creating personalized outfit suggestions for men.
 
-Based on the user's browsing history, generate 3 creative and detailed outfit suggestions that complement their viewed items and align with current fashion trends. Describe each outfit clearly.
+Based on the user's browsing history, generate 3 creative and detailed men's outfit suggestions that complement their viewed items and align with current men's fashion trends. Describe each outfit clearly.
 
 Browsing History: {{{browsingHistory}}}
 

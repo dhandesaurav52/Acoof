@@ -41,20 +41,23 @@ const generateOutfitImageFlow = ai.defineFlow(
         if (photoDataUri) {
             prompt = [
                 { media: { url: photoDataUri } },
-                { text: `Generate a photorealistic image of the person from the provided photo wearing the described outfit.
-Maintain the person's features, body shape, and pose from the original photo.
-Replace their current clothes with the new outfit, seamlessly blending it onto their body.
-The background should be a simple, neutral studio setting to focus on the person and the outfit.
-The final image must be high-quality and suitable for a fashion lookbook.
+                { text: `Task: Perform a virtual try-on.
+You will receive a photo of a person and a description of an outfit. Your job is to generate a new, photorealistic image of that **exact same person** wearing the new outfit.
 
-Outfit description: ${description}` }
+**Crucial Instructions:**
+1.  **Identity Preservation:** You MUST preserve the person's identity from the original photo. Do not change their face, gender, ethnicity, body shape, or pose.
+2.  **Outfit Replacement:** Seamlessly replace their original clothing with the outfit described below. The fit should look natural.
+3.  **Background:** Place them in a simple, neutral studio background to keep the focus on the person and the clothes.
+4.  **Quality:** The final image must be high-quality and photorealistic, suitable for a fashion lookbook.
+
+**Outfit Description:** ${description}` }
             ];
         } else {
-            prompt = `Generate a photorealistic image of a fashion model wearing the described outfit.
+            prompt = `Generate a photorealistic image of a **male fashion model** wearing the described outfit.
 The model should be in a modern, urban setting. The image should be full-body.
 The final image must be high-quality and suitable for a fashion lookbook.
 
-Outfit description: ${description}`;
+**Outfit Description:** ${description}`;
         }
 
         const { media } = await ai.generate({
