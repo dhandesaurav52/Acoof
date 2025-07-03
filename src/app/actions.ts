@@ -306,9 +306,13 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
         await update(orderRef, { status });
         return { success: true };
     } catch (error: any) {
-        console.error('Failed to update order status:', error);
+        console.error(`--- FAILED TO UPDATE ORDER STATUS for orderId: ${orderId} ---`);
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+        console.error('----------------------------------------------------');
+        
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            return { error: "Permission denied. Please check your Firebase Realtime Database security rules to allow admins to update orders." };
+            return { error: "Firebase Permission Denied. This is a security rule issue. Your app code is trying to update the order status, but your Realtime Database rules are blocking it. Please ensure your rules allow an admin user to write to the 'status' field of an existing order." };
         }
         return { error: 'An error occurred while updating the order status.' };
     }
