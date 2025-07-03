@@ -96,9 +96,12 @@ export default function AdminDashboardPage() {
                 if (ordersSnapshot.exists()) {
                     const ordersData = ordersSnapshot.val();
                     if (typeof ordersData === 'object' && ordersData !== null) {
-                        salesCount = Object.keys(ordersData).length;
-                        totalRevenue = Object.values(ordersData).reduce((acc: number, order: any) => {
-                            if (order && typeof order.total === 'number' && order.status === 'Delivered') {
+                        const deliveredOrders = Object.values(ordersData).filter((order: any) => order?.status === 'Delivered');
+
+                        salesCount = deliveredOrders.length;
+                        
+                        totalRevenue = deliveredOrders.reduce((acc: number, order: any) => {
+                            if (order && typeof order.total === 'number') {
                                 return acc + order.total;
                             }
                             return acc;
