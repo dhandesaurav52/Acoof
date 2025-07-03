@@ -160,7 +160,7 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
     }
 
     if (!orderData.userId) {
-        return { success: false, error: 'Cannot save the order because the User ID is missing. This usually means the user is not properly logged in when trying to check out.' };
+        return { success: false, error: 'Cannot save order, user ID is missing. The user might not be logged in.' };
     }
     
     const newOrderRef = push(dbRef(database, 'orders'));
@@ -172,23 +172,14 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
     
     const finalOrderData: Order = { ...orderData, id: newId };
     
-    console.log(`Attempting to save order ${newId} for user ${orderData.userId}`);
-
     try {
         await set(newOrderRef, finalOrderData);
-        console.log(`Successfully saved order ${newId}`);
         return { success: true, orderId: newId };
     } catch (error: any) {
-        console.error(`!!! FAILED TO SAVE ORDER ${newId} !!!`);
-        console.error('Error Code:', error.code);
-        console.error('Error Message:', error.message);
-        console.error('Order Data Sent:', JSON.stringify(finalOrderData, null, 2));
-        
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            const errorMessage = "Firebase Realtime Database Permission Denied. This is a security rule issue. The app's code is correct, but the database is rejecting the request. Please, carefully re-apply the security rules provided in the instructions. This is the most common cause for this specific error.";
+            const errorMessage = "Firebase Permission Denied. This indicates an issue with your Realtime Database security rules. Please ensure they allow writes for authenticated users.";
             return { success: false, error: errorMessage };
         }
-        
         return { success: false, error: `An unexpected error occurred while saving the order: ${error.message}` };
     }
 }
@@ -306,13 +297,8 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
         await update(orderRef, { status });
         return { success: true };
     } catch (error: any) {
-        console.error(`--- FAILED TO UPDATE ORDER STATUS for orderId: ${orderId} ---`);
-        console.error('Error Code:', error.code);
-        console.error('Error Message:', error.message);
-        console.error('----------------------------------------------------');
-        
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            return { error: "Firebase Permission Denied. This is a security rule issue. Your app code is trying to update the order status, but your Realtime Database rules are blocking it. Please ensure your rules allow an admin user to write to the 'status' field of an existing order." };
+            return { error: "Firebase Permission Denied. This indicates an issue with your Realtime Database security rules. Please ensure they allow an admin user to update the status." };
         }
         return { error: 'An error occurred while updating the order status.' };
     }
