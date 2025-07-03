@@ -89,10 +89,14 @@ export default function AdminDashboardPage() {
     
             } catch (error: any) {
                 console.error('Failed to fetch admin data:', error);
+                let description = error.message;
+                if (error.message.includes('Invalid auth token')) {
+                    description = "Authentication with the server failed. This is often due to a server configuration issue where it lacks the necessary Firebase Admin credentials for your project. Please verify your hosting environment's setup.";
+                }
                 toast({
                     variant: 'destructive',
                     title: 'Failed to Load Dashboard Data',
-                    description: error.message,
+                    description: description,
                 });
                 setOrders([]);
                 setUsersCount(0);

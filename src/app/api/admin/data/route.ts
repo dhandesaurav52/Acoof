@@ -23,6 +23,7 @@ export async function GET() {
     try {
         decodedToken = await admin.auth().verifyIdToken(token);
     } catch (error) {
+        console.error("Firebase admin token verification failed:", error);
         return NextResponse.json({ error: 'Invalid auth token', details: (error as Error).message }, { status: 403 });
     }
 
