@@ -179,7 +179,7 @@ export default function AddProductPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <div className="space-y-2">
                                 <Label htmlFor="sizesText">Text-based Sizes (comma-separated)</Label>
-                                <Input id="sizesText" {...register("sizesText")} placeholder="e.g., S, M, L" />
+                                <Input id="sizesText" {...register("sizesText")} placeholder="e.g., S, M, L, XL, XXL" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="sizesNumeric">Numeric Sizes (comma-separated)</Label>
