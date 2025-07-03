@@ -31,7 +31,8 @@ const productSchema = z.object({
   category: z.string().min(1, "Please select a category"),
   isNew: z.boolean().default(false),
   colors: z.string().optional(),
-  sizes: z.string().optional(),
+  sizesText: z.string().optional(),
+  sizesNumeric: z.string().optional(),
   images: z.custom<FileList>().refine((files) => files.length > 0, "At least one image is required."),
 });
 
@@ -86,6 +87,10 @@ export default function AddProductPage() {
                 imageUrls.push(url);
             }
 
+            const textSizes = data.sizesText ? data.sizesText.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const numericSizes = data.sizesNumeric ? data.sizesNumeric.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const allSizes = [...textSizes, ...numericSizes];
+
             const productData = {
                 name: data.name,
                 description: data.description,
@@ -94,7 +99,7 @@ export default function AddProductPage() {
                 isNew: data.isNew,
                 images: imageUrls,
                 colors: data.colors ? data.colors.split(',').map(s => s.trim()).filter(Boolean) : [],
-                sizes: data.sizes ? data.sizes.split(',').map(s => s.trim()).filter(Boolean) : [],
+                sizes: allSizes,
             };
 
             await set(newProductRef, productData);
@@ -173,8 +178,14 @@ export default function AddProductPage() {
                                 <Input id="colors" {...register("colors")} placeholder="e.g., Black, White, Blue"/>
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="sizes">Sizes (comma-separated)</Label>
-                                <Input id="sizes" {...register("sizes")} placeholder="e.g., S, M, 30, 32" />
+                                <Label htmlFor="sizesText">Text-based Sizes (comma-separated)</Label>
+                                <Input id="sizesText" {...register("sizesText")} placeholder="e.g., S, M, L" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="sizesNumeric">Numeric Sizes (comma-separated)</Label>
+                                <Input id="sizesNumeric" {...register("sizesNumeric")} placeholder="e.g., 28, 30, 32" />
                             </div>
                         </div>
                         
