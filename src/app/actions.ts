@@ -159,6 +159,10 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
         return { success: false, error: 'Firebase is not configured. Cannot save order.' };
     }
 
+    if (!orderData.userId) {
+        return { success: false, error: 'User is not properly authenticated. Cannot save order without a User ID.' };
+    }
+
     const ordersRef = dbRef(database, 'orders');
     const newOrderRef = push(ordersRef);
     const newId = newOrderRef.key;
@@ -175,7 +179,7 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
     } catch (error: any) {
         console.error('Failed to save order:', error);
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            return { success: false, error: "Permission denied. Please check your Firebase Realtime Database security rules to allow users to create orders." };
+            return { success: false, error: "Permission denied. This is a Firebase security rule issue. Please ensure your Realtime Database rules allow authenticated users to write to the 'orders' path if the 'userId' in the order matches their own ID. Also, double-check that you've correctly copied the security rules provided in the previous step." };
         }
         return { success: false, error: 'An error occurred while saving the order.' };
     }
