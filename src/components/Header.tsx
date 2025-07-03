@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,6 +103,9 @@ export function Header() {
             </DropdownMenuItem>
              <DropdownMenuItem asChild>
                <Link href="/dashboard/admin"><ShoppingBag className="mr-2 h-4 w-4" />Manage Products</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/admin/orders"><Package className="mr-2 h-4 w-4" />Manage Orders</Link>
             </DropdownMenuItem>
              <DropdownMenuItem asChild>
               <Link href="/dashboard/user">Admin profile</Link>
@@ -239,6 +242,7 @@ export function Header() {
                           <>
                             <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>
                             <Link href="/dashboard/admin" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><ShoppingBag className="h-5 w-5"/>Manage Products</Link>
+                            <Link href="/dashboard/admin/orders" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5"/>Manage Orders</Link>
                             <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin profile</Link>
                           </>
                         ) : (
