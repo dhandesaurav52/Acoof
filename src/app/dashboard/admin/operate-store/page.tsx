@@ -134,7 +134,7 @@ export default function AddProductPage() {
                     <CardDescription>Fill out the form below to add a new product to your store catalog.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         {/* Product Details */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -170,19 +170,17 @@ export default function AddProductPage() {
                                 </Select>
                                 {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
                             </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label htmlFor="colors">Colors (comma-separated)</Label>
                                 <Input id="colors" {...register("colors")} placeholder="e.g., Black, White, Blue"/>
                             </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <div className="space-y-2">
                                 <Label htmlFor="sizesText">Text-based Sizes (comma-separated)</Label>
                                 <Input id="sizesText" {...register("sizesText")} placeholder="e.g., S, M, L" />
                             </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label htmlFor="sizesNumeric">Numeric Sizes (comma-separated)</Label>
                                 <Input id="sizesNumeric" {...register("sizesNumeric")} placeholder="e.g., 28, 30, 32" />
