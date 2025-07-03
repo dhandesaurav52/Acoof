@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
                     if (typeof ordersData === 'object' && ordersData !== null) {
                         salesCount = Object.keys(ordersData).length;
                         totalRevenue = Object.values(ordersData).reduce((acc: number, order: any) => {
-                            if (order && typeof order.total === 'number') {
+                            if (order && typeof order.total === 'number' && order.status === 'Delivered') {
                                 return acc + order.total;
                             }
                             return acc;
