@@ -38,11 +38,6 @@ export default function AdminDashboardPage() {
             
             try {
                 const token = await user.getIdToken();
-
-                if (!token || typeof token !== 'string') {
-                    throw new Error("Failed to retrieve a valid authentication token from Firebase. Please try logging out and back in.");
-                }
-
                 const response = await fetch('/api/admin/data', {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -51,11 +46,7 @@ export default function AdminDashboardPage() {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    let detailedError = errorData.error || `Request failed with status ${response.status}`;
-                    if (errorData.detail?.includes('credential')) {
-                        detailedError = 'Server configuration error. The Admin SDK is not authenticated. Please check server logs and environment variables.'
-                    }
-                    throw new Error(detailedError);
+                    throw new Error(errorData.error || `Request failed with status ${response.status}`);
                 }
     
                 const data = await response.json();
@@ -106,7 +97,7 @@ export default function AdminDashboardPage() {
                         <CardContent>
                             <p className="text-destructive">{error}</p>
                             <p className="text-muted-foreground mt-2 text-sm">
-                                This is often caused by a server-side configuration issue with the Firebase Admin SDK. Please check your hosting environment variables and server logs for more details.
+                                This is often caused by a server-side configuration issue. Please ensure your Firebase Admin SDK has the correct credentials and permissions. Check your server logs for more details.
                             </p>
                         </CardContent>
                     </Card>

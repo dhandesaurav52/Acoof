@@ -53,13 +53,7 @@ export async function GET() {
         return NextResponse.json(data);
 
     } catch (error: any) {
-        console.error("API Error verifying token. Token received:", token, "Full Error:", error);
-        let message = 'Invalid auth token.';
-        if (error.code === 'auth/id-token-expired') {
-            message = 'Auth token has expired. Please log in again.';
-        } else if (error.code === 'auth/argument-error') {
-            message = 'Invalid auth token format.';
-        }
-        return NextResponse.json({ error: message, detail: error.message }, { status: 401 });
+        console.error("API Error verifying token:", error);
+        return NextResponse.json({ error: 'Invalid auth token. Please check server logs.' }, { status: 401 });
     }
 }
