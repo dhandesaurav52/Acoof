@@ -10,7 +10,7 @@ import { products as staticProducts } from '@/lib/data';
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 
-export async function getAiSuggestions(browsingHistory: string) {
+export async function getAiSuggestions(browsingHistory: string, photoDataUri?: string) {
   if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
     const errorMessage = "The AI feature is not configured on the server. The `GOOGLE_API_KEY` is missing from the .env file. Please obtain a key from Google AI Studio and add it to your project's environment variables to enable the AI stylist.";
     console.error(errorMessage);
@@ -18,7 +18,7 @@ export async function getAiSuggestions(browsingHistory: string) {
   }
   
   try {
-    const result = await generateOutfitSuggestions({ browsingHistory });
+    const result = await generateOutfitSuggestions({ browsingHistory, photoDataUri });
     if (!result || !result.suggestions) {
       return { suggestions: [], error: 'Received an invalid response from the AI.' };
     }

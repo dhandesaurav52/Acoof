@@ -20,6 +20,7 @@ const GenerateOutfitSuggestionsInputSchema = z.object({
     .describe(
       'A string containing the user browsing history, including viewed product names and categories.'
     ),
+  photoDataUri: z.string().optional().describe("An optional photo of a person as a data URI. If provided, generated outfits will be shown on this person. Format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
 export type GenerateOutfitSuggestionsInput = z.infer<typeof GenerateOutfitSuggestionsInputSchema>;
 
@@ -75,7 +76,7 @@ const generateOutfitSuggestionsFlow = ai.defineFlow(
 
     // 2. Generate an image for each suggestion in parallel
     const imageGenerationPromises = output.suggestions.map(description => 
-        generateOutfitImage({ description })
+        generateOutfitImage({ description, photoDataUri: input.photoDataUri })
     );
 
     const imageResults = await Promise.all(imageGenerationPromises);

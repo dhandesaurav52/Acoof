@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const GenerateOutfitImageInputSchema = z.object({
   description: z.string().describe('A detailed description of the outfit to generate an image for.'),
+  photoDataUri: z.string().optional().describe("An optional photo of a person as a data URI. If provided, the generated image will feature this person wearing the outfit. Format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
 export type GenerateOutfitImageInput = z.infer<typeof GenerateOutfitImageInputSchema>;
 
@@ -27,6 +28,25 @@ export async function generateOutfitImage(
     return generateOutfitImageFlow(input);
 }
 
+const imagePrompt = ai.definePrompt(
+    {
+        name: 'generateOutfitImagePrompt',
+        input: { schema: GenerateOutfitImageInputSchema },
+        prompt: `Generate a photorealistic image of {{#if photoDataUri}}the person from the provided photo{{else}}a fashion model{{/if}} wearing the described outfit.
+{{#if photoDataUri}}
+Maintain the person's features, body shape, and pose from the original photo.
+Replace their current clothes with the new outfit, seamlessly blending it onto their body.
+The background should be a simple, neutral studio setting to focus on the person and the outfit.
+{{media url=photoDataUri}}
+{{else}}
+The model should be in a modern, urban setting. The image should be full-body.
+{{/if}}
+The final image must be high-quality and suitable for a fashion lookbook.
+
+Outfit description: {{{description}}}`,
+    }
+);
+
 
 const generateOutfitImageFlow = ai.defineFlow(
     {
@@ -37,7 +57,7 @@ const generateOutfitImageFlow = ai.defineFlow(
     async (input) => {
         const { media } = await ai.generate({
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
-            prompt: `Generate a photorealistic, full-body image of a male model wearing the following outfit. The model should be in a modern, urban setting. The image should be high-quality and suitable for a fashion lookbook. Outfit description: ${input.description}`,
+            prompt: await imagePrompt.render({input}),
             config: {
                 responseModalities: ['TEXT', 'IMAGE'],
             },
