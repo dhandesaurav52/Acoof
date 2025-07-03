@@ -1,14 +1,16 @@
 
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Product } from '@/types';
-import { database } from '@/lib/firebase';
-import { ref, onValue, off } from 'firebase/database';
+import { database, storage } from '@/lib/firebase';
+import { ref, onValue, off, remove } from 'firebase/database';
+import { ref as storageRef, deleteObject } from 'firebase/storage';
 
 interface ProductsContextType {
     products: Product[];
     loading: boolean;
+    removeProduct: (product: Product) => Promise<void>;
 }
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
@@ -29,11 +31,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         const listener = onValue(productsRef, (snapshot) => {
             if (snapshot.exists()) {
                 const productsData = snapshot.val();
-                // Firebase returns an object, so we convert it to an array
                 const productsList: Product[] = Object.keys(productsData)
                     .map(key => {
                         const product = productsData[key];
-                        // Data validation and sanitization
                         if (
                             !product ||
                             typeof product.name !== 'string' ||
@@ -58,10 +58,10 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
                         };
                     })
                     .filter((p): p is Product => p !== null)
-                    .reverse(); // Show newest products first
+                    .reverse();
                 setProducts(productsList);
             } else {
-                setProducts([]); // Handle case where there are no products
+                setProducts([]);
             }
             setLoading(false);
         }, (error) => {
@@ -69,7 +69,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         });
 
-        // Cleanup listener on unmount
         return () => {
             if (database) {
                 off(productsRef, 'value', listener);
@@ -77,8 +76,31 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         };
     }, []);
 
+    const removeProduct = useCallback(async (product: Product) => {
+        if (!database || !storage) {
+            throw new Error('Firebase not configured.');
+        }
+
+        const productRef = ref(database, `products/${product.id}`);
+        await remove(productRef);
+
+        const imageDeletePromises = product.images
+            .filter(url => url.includes('firebasestorage.googleapis.com'))
+            .map(url => {
+                try {
+                    const imageFileRef = storageRef(storage, url);
+                    return deleteObject(imageFileRef);
+                } catch (error) {
+                    console.error(`Error creating ref for image ${url}. It might not be a valid storage URL.`, error);
+                    return Promise.resolve();
+                }
+            });
+        
+        await Promise.all(imageDeletePromises);
+    }, []);
+
     return (
-        <ProductsContext.Provider value={{ products, loading }}>
+        <ProductsContext.Provider value={{ products, loading, removeProduct }}>
             {children}
         </ProductsContext.Provider>
     );

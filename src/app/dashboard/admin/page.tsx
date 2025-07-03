@@ -28,7 +28,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadio
 const ADMIN_EMAIL = "admin@example.com";
 
 export default function AdminDashboardPage() {
-    const { user, loading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [isSeeding, setIsSeeding] = useState(false);
@@ -48,7 +48,6 @@ export default function AdminDashboardPage() {
     const [usersCount, setUsersCount] = useState(0);
     const [usersLoading, setUsersLoading] = useState(true);
 
-    // State for product filtering and sorting
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedColor, setSelectedColor] = useState('All');
@@ -56,80 +55,54 @@ export default function AdminDashboardPage() {
     const [sortOption, setSortOption] = useState('default');
 
     useEffect(() => {
-        if (loading) return;
+        if (authLoading) return;
         if (!user) {
             router.push('/login');
         } else if (user.email !== ADMIN_EMAIL) {
             router.push('/dashboard/user');
         }
-    }, [user, loading, router]);
-    
-    useEffect(() => {
-        async function fetchUsers() {
-            if (!user || user.email !== ADMIN_EMAIL || !database) {
-                setUsersLoading(false);
-                return;
-            }
-            setUsersLoading(true);
-            const usersRef = dbRef(database, 'users');
-            try {
-                const snapshot = await get(usersRef);
-                if (snapshot.exists()) {
-                    setUsersCount(Object.keys(snapshot.val()).length);
-                } else {
-                    setUsersCount(0);
-                }
-            } catch (error: any) {
-                console.error('Failed to fetch user count:', error);
-                 if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-                     toast({
-                        variant: 'destructive',
-                        title: 'Permission Error Fetching Users',
-                        description: "Could not fetch user count. Please update your Realtime Database security rules to allow admins to read the '/users' path.",
-                    });
-                }
-                setUsersCount(0);
-            }
-            setUsersLoading(false);
-        }
-        if (user) {
-            fetchUsers();
-        }
-    }, [user, toast]);
+    }, [user, authLoading, router]);
 
     useEffect(() => {
-        async function fetchOrders() {
-            if (user?.email !== ADMIN_EMAIL) return;
-            if (!database) {
-                setOrdersLoading(false);
-                return;
-            }
+        async function fetchAdminData() {
+            if (!user) return;
+    
             setOrdersLoading(true);
-            const ordersRef = dbRef(database, 'orders');
+            setUsersLoading(true);
+    
             try {
-                const snapshot = await get(ordersRef);
-                if (snapshot.exists()) {
-                    const ordersData = snapshot.val();
-                    const ordersList: Order[] = Object.keys(ordersData)
-                        .map(key => ({ id: key, ...ordersData[key] }))
-                        .reverse();
-                    setOrders(ordersList);
-                } else {
-                    setOrders([]);
+                const token = await user.getIdToken();
+                const response = await fetch('/api/admin/data', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+    
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Request failed with status ${response.status}`);
                 }
+    
+                const data = await response.json();
+                setOrders(data.orders || []);
+                setUsersCount(data.usersCount || 0);
+    
             } catch (error: any) {
-                console.error('Failed to fetch orders:', error);
-                let desc = 'An error occurred while fetching orders.';
-                if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-                    desc = "Permission denied. Please update your Realtime Database security rules to allow admins to read the '/orders' path.";
-                }
-                toast({ variant: 'destructive', title: 'Failed to fetch orders', description: desc });
+                console.error('Failed to fetch admin data:', error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Failed to Load Dashboard Data',
+                    description: error.message,
+                });
+                setOrders([]);
+                setUsersCount(0);
+            } finally {
+                setOrdersLoading(false);
+                setUsersLoading(false);
             }
-            setOrdersLoading(false);
         }
-        if(user) {
-            fetchOrders();
-        }
+    
+        fetchAdminData();
     }, [user, toast]);
 
     const stats = useMemo(() => {
@@ -258,7 +231,7 @@ export default function AdminDashboardPage() {
         }
     };
     
-    if (loading || !user || user.email !== ADMIN_EMAIL) {
+    if (authLoading || !user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -666,5 +639,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
