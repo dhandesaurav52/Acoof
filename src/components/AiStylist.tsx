@@ -27,12 +27,26 @@ export function AiStylist() {
   const [isClient, setIsClient] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Effect to attach the stream to the video element and handle cleanup
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+    // Cleanup function to stop the stream when it's no longer needed
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -45,11 +59,9 @@ export function AiStylist() {
         return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setStream(mediaStream);
       setHasCameraPermission(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch (error) {
       console.error("Error accessing camera:", error);
       setHasCameraPermission(false);
@@ -73,11 +85,8 @@ export function AiStylist() {
             const dataUri = canvas.toDataURL('image/jpeg');
             setCapturedImage(dataUri);
             
-            // Stop camera stream
-            const stream = video.srcObject as MediaStream;
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            // Stop camera stream by clearing the stream state, which triggers the cleanup in useEffect
+            setStream(null);
         }
     }
   };
