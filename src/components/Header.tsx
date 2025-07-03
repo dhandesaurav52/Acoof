@@ -89,6 +89,9 @@ export function Header() {
             <DropdownMenuItem asChild>
               <Link href="/dashboard/admin"><Shield className="mr-2 h-4 w-4" />Dashboard</Link>
             </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+              <Link href="/dashboard/user">Your profile</Link>
+            </DropdownMenuItem>
           </>
         ) : (
           <>
@@ -218,7 +221,10 @@ export function Header() {
                      ) : user ? (
                        <>
                         {isAdmin ? (
+                          <>
                             <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>
+                            <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
+                          </>
                         ) : (
                           <>
                             <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
