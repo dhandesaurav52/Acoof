@@ -120,8 +120,8 @@ export default function AdminDashboardPage() {
             } catch (error: any) {
                 console.error('Failed to fetch orders:', error);
                 let desc = 'An error occurred while fetching orders.';
-                if (error.code === 'PERMISSION_DENIED') {
-                    desc = "Permission denied. Check your Firebase rules.";
+                if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                    desc = "Permission denied. Please update your Realtime Database security rules to allow admins to read the '/orders' path.";
                 }
                 toast({ variant: 'destructive', title: 'Failed to fetch orders', description: desc });
             }
@@ -644,7 +644,7 @@ export default function AdminDashboardPage() {
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete the product
-                    <span className="font-bold"> "{productToDelete?.name}" </span>
+                    <span className="font-bold"> "{productToDelete?.name}" </span> 
                     and all of its associated images from the servers.
                 </AlertDialogDescription>
             </AlertDialogHeader>
@@ -666,3 +666,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
