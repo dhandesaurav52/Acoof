@@ -16,9 +16,12 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { seedDatabase, deleteProduct, getOrders, updateOrderStatus } from '@/app/actions';
 import { useProducts } from '@/hooks/use-products';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { database, storage } from '@/lib/firebase';
+import { ref as dbRef, get, set, push, remove, update } from 'firebase/database';
+import { ref as storageRef, deleteObject } from 'firebase/storage';
+import { products as staticProducts } from '@/lib/data';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -52,12 +55,31 @@ export default function AdminDashboardPage() {
     useEffect(() => {
         async function fetchOrders() {
             if (user?.email !== ADMIN_EMAIL) return;
+            if (!database) {
+                toast({ variant: 'destructive', title: 'Firebase Not Configured' });
+                setOrdersLoading(false);
+                return;
+            }
             setOrdersLoading(true);
-            const result = await getOrders();
-            if (result.orders) {
-                setOrders(result.orders);
-            } else if (result.error) {
-                toast({ variant: 'destructive', title: 'Failed to fetch orders', description: result.error });
+            const ordersRef = dbRef(database, 'orders');
+            try {
+                const snapshot = await get(ordersRef);
+                if (snapshot.exists()) {
+                    const ordersData = snapshot.val();
+                    const ordersList: Order[] = Object.keys(ordersData)
+                        .map(key => ({ id: key, ...ordersData[key] }))
+                        .reverse();
+                    setOrders(ordersList);
+                } else {
+                    setOrders([]);
+                }
+            } catch (error: any) {
+                console.error('Failed to fetch orders:', error);
+                let desc = 'An error occurred while fetching orders.';
+                if (error.code === 'PERMISSION_DENIED') {
+                    desc = "Permission denied. Check your Firebase rules.";
+                }
+                toast({ variant: 'destructive', title: 'Failed to fetch orders', description: desc });
             }
             setOrdersLoading(false);
         }
@@ -82,32 +104,96 @@ export default function AdminDashboardPage() {
     }, [orders]);
 
     const handleSeedDatabase = async () => {
+        if (!database) {
+            toast({ error: 'Firebase is not configured. Cannot seed database.' });
+            return;
+        }
+
         setIsSeeding(true);
-        const result = await seedDatabase();
-        if (result.error) {
-            toast({ variant: 'destructive', title: 'Database Seeding Failed', description: result.error });
-        } else {
-            toast({ title: 'Database Seeding Successful', description: result.success });
+        const productsRef = dbRef(database, 'products');
+        
+        try {
+            const snapshot = await get(productsRef);
+            if (snapshot.exists()) {
+                toast({ variant: 'destructive', title: 'Database Seeding Failed', description: 'Database already contains products. Seeding aborted.' });
+            } else {
+                const productsToSeed: { [key: string]: Product } = {};
+                staticProducts.forEach(product => {
+                    const newProductRef = push(productsRef);
+                    const newId = newProductRef.key;
+                    if (newId) {
+                        productsToSeed[newId] = { ...product, id: newId };
+                    }
+                });
+
+                if (Object.keys(productsToSeed).length > 0) {
+                    await set(productsRef, productsToSeed);
+                    toast({ title: 'Database Seeding Successful', description: `Successfully seeded ${staticProducts.length} products.` });
+                } else if (staticProducts.length > 0) {
+                    toast({ variant: 'destructive', title: 'Database Seeding Failed', description: 'Failed to generate IDs for seeding.' });
+                }
+            }
+        } catch (error: any) {
+            console.error('Database seeding failed:', error);
+            let errorMessage = 'An unknown error occurred during database seeding.';
+            if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                errorMessage = "Permission denied. Please check your Firebase Realtime Database security rules.";
+            }
+            toast({ variant: 'destructive', title: 'Database Seeding Failed', description: errorMessage });
         }
         setIsSeeding(false);
     };
 
     const handleConfirmDelete = async () => {
-        if (!productToDelete) return;
+        if (!productToDelete || !database || !storage) {
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Configuration or product data is missing.' });
+            return;
+        };
+
         setIsDeleting(true);
 
-        const { success, error } = await deleteProduct(productToDelete.id, productToDelete.images);
+        try {
+            // Delete from Realtime Database
+            const productRef = dbRef(database, `products/${productToDelete.id}`);
+            await remove(productRef);
 
-        if (error) {
-            toast({ variant: 'destructive', title: 'Deletion Failed', description: error });
+            // Delete images from Storage
+            const imageDeletionPromises = productToDelete.images
+                .filter(url => url && url.includes('firebasestorage.googleapis.com'))
+                .map(url => {
+                    try {
+                        const imageRef = storageRef(storage, url);
+                        return deleteObject(imageRef).catch(err => {
+                            if (err.code === 'storage/object-not-found') {
+                                console.warn(`Image not found, skipping: ${url}`);
+                                return null;
+                            }
+                            throw err;
+                        });
+                    } catch (e) {
+                        console.error(`Invalid storage URL: ${url}`, e);
+                        return null;
+                    }
+                });
+            
+            const validPromises = imageDeletionPromises.filter((p): p is Promise<void> => p !== null);
+            if (validPromises.length > 0) {
+                await Promise.allSettled(validPromises);
+            }
+
+            toast({ title: 'Product Deleted', description: 'Product and its images were successfully deleted.' });
+        } catch (error: any) {
+            console.error('Deletion failed:', error);
+            let errorMessage = 'An unexpected error occurred.';
+            if (error.code === 'PERMISSION_DENIED' || error.message.includes('permission_denied')) {
+                errorMessage = "Permission denied. Check your Firebase rules for database writes and storage deletes.";
+            }
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: errorMessage });
+        } finally {
+            setIsDeleting(false);
+            setProductToDelete(null);
+            setIsAlertOpen(false);
         }
-        if (success) {
-            toast({ title: 'Product Deleted', description: success });
-        }
-        
-        setIsDeleting(false);
-        setProductToDelete(null);
-        setIsAlertOpen(false);
     };
     
     if (loading || !user || user.email !== ADMIN_EMAIL) {
@@ -125,20 +211,24 @@ export default function AdminDashboardPage() {
     }
 
     const handleUpdateOrderStatus = async () => {
-        if (!selectedOrder || !updatedStatus) return;
+        if (!selectedOrder || !updatedStatus || !database) return;
         setIsUpdatingStatus(true);
         
-        const result = await updateOrderStatus(selectedOrder.id, updatedStatus);
-
-        if(result.success) {
+        const orderRef = dbRef(database, `orders/${selectedOrder.id}`);
+        try {
+            await update(orderRef, { status: updatedStatus });
             setOrders(prevOrders =>
                 prevOrders.map(order =>
-                    order.id === selectedOrder.id ? { ...order, status: updatedStatus } : order
+                    order.id === selectedOrder.id ? { ...order, status: updatedStatus! } : order
                 )
             );
-            toast({ title: "Status Updated", description: `Order ${selectedOrder.id.substring(0, 7)}... status changed to ${updatedStatus}.` });
-        } else {
-            toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
+            toast({ title: "Status Updated", description: `Order status changed to ${updatedStatus}.` });
+        } catch (error: any) {
+            let desc = 'An error occurred while updating the order status.';
+            if (error.code === 'PERMISSION_DENIED') {
+                desc = "Permission Denied. Check your Firebase security rules.";
+            }
+            toast({ variant: 'destructive', title: 'Update Failed', description: desc });
         }
 
         setIsUpdatingStatus(false);

@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { Order } from '@/types';
-import { getUserOrders } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { database } from '@/lib/firebase';
+import { ref, query, orderByChild, equalTo, get } from 'firebase/database';
+
 
 export default function UserOrdersPage() {
     const { user, loading: authLoading } = useAuth();
@@ -28,16 +30,36 @@ export default function UserOrdersPage() {
     
     useEffect(() => {
         async function fetchUserOrders() {
-            if (!user?.uid) return;
+            if (!user?.uid || !database) {
+                setLoading(false);
+                return;
+            };
+
             setLoading(true);
-            const { orders: fetchedOrders, error } = await getUserOrders(user.uid);
-            if (fetchedOrders) {
-                setOrders(fetchedOrders);
-            } else if (error) {
+            const ordersRef = ref(database, 'orders');
+            const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(user.uid));
+            
+            try {
+                const snapshot = await get(userOrdersQuery);
+                if (snapshot.exists()) {
+                    const ordersData = snapshot.val();
+                    const ordersList: Order[] = Object.keys(ordersData)
+                        .map(key => ({ id: key, ...ordersData[key] }))
+                        .reverse();
+                    setOrders(ordersList);
+                } else {
+                    setOrders([]);
+                }
+            } catch (error: any) {
+                console.error('Failed to fetch user orders:', error);
+                let desc = 'An error occurred while fetching your orders.';
+                if (error.code === 'PERMISSION_DENIED') {
+                    desc = "Permission denied. Check your Firebase security rules."
+                }
                 toast({
                     variant: 'destructive',
                     title: 'Failed to fetch orders',
-                    description: error,
+                    description: desc,
                 });
             }
             setLoading(false);

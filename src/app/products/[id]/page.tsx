@@ -18,9 +18,42 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { createRazorpayOrder, verifyRazorpayPayment, saveOrder } from '@/app/actions';
+import { createRazorpayOrder, verifyRazorpayPayment } from '@/app/actions';
 import type { Order, OrderItem } from '@/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { database } from '@/lib/firebase';
+import { ref as dbRef, set, push } from 'firebase/database';
+
+async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+    if (!database) {
+        return { success: false, error: 'Firebase is not configured. Cannot save order.' };
+    }
+
+    if (!orderData.userId) {
+        return { success: false, error: 'Cannot save order without a user ID.' };
+    }
+    
+    const newOrderRef = push(dbRef(database, 'orders'));
+    const newId = newOrderRef.key;
+
+    if (!newId) {
+        return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
+    }
+    
+    const finalOrderData: Order = { ...orderData, id: newId };
+    
+    try {
+        await set(newOrderRef, finalOrderData);
+        return { success: true, orderId: newId };
+    } catch (error: any) {
+        let errorMessage = 'An unexpected error occurred while saving the order.';
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders' path.";
+        }
+        console.error("Firebase saveOrder error:", error);
+        return { success: false, error: errorMessage };
+    }
+}
 
 export default function ProductDetailPage() {
     const { id } = useParams<{ id: string }>();
