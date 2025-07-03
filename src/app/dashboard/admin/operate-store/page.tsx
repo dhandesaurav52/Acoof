@@ -26,8 +26,8 @@ export default function OperateStorePage() {
     const router = useRouter();
     const { toast } = useToast();
     const { products, loading: productsLoading, removeProduct } = useProducts();
-    const [productToCancel, setProductToCancel] = useState<Product | null>(null);
-    const [isCancelling, setIsCancelling] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
@@ -51,18 +51,9 @@ export default function OperateStorePage() {
   
     const filteredProducts = useMemo(() => {
       let filtered = products
-        .filter(product => {
-          if (selectedCategory === 'All') return true;
-          return product.category === selectedCategory;
-        })
-        .filter(product => {
-          if (selectedColor === 'All') return true;
-          return product.colors?.includes(selectedColor);
-        })
-        .filter(product => {
-          if (selectedSize === 'All') return true;
-          return product.sizes?.includes(selectedSize);
-        })
+        .filter(product => selectedCategory === 'All' || product.category === selectedCategory)
+        .filter(product => selectedColor === 'All' || product.colors?.includes(selectedColor))
+        .filter(product => selectedSize === 'All' || product.sizes?.includes(selectedSize))
         .filter(product => {
           if (!searchQuery) return true;
           const lowercasedQuery = searchQuery.toLowerCase();
@@ -109,13 +100,13 @@ export default function OperateStorePage() {
         );
     }
     
-    const handleConfirmCancel = async () => {
-        if (!productToCancel) return;
-        setIsCancelling(true);
+    const handleConfirmDelete = async () => {
+        if (!productToDelete) return;
+        setIsDeleting(true);
 
         try {
-            await removeProduct(productToCancel);
-            toast({ title: "Product Removed", description: `"${productToCancel.name}" has been removed from the store.` });
+            await removeProduct(productToDelete);
+            toast({ title: "Product Removed", description: `"${productToDelete.name}" has been removed from the store.` });
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -124,8 +115,8 @@ export default function OperateStorePage() {
             });
             console.error("Failed to remove product:", error);
         } finally {
-            setIsCancelling(false);
-            setProductToCancel(null);
+            setIsDeleting(false);
+            setProductToDelete(null);
         }
     };
 
@@ -238,7 +229,7 @@ export default function OperateStorePage() {
                                             <Button
                                                 variant="destructive"
                                                 size="icon"
-                                                onClick={() => setProductToCancel(product)}
+                                                onClick={() => setProductToDelete(product)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -255,23 +246,23 @@ export default function OperateStorePage() {
                 </CardContent>
             </Card>
 
-            <AlertDialog open={!!productToCancel} onOpenChange={(open) => { if (!open) setProductToCancel(null); }}>
+            <AlertDialog open={!!productToDelete} onOpenChange={(open) => { if (!open) setProductToDelete(null); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the product <span className="font-semibold">"{productToCancel?.name}"</span> and all of its associated images from the database.
+                            This action cannot be undone. This will permanently delete the product <span className="font-semibold">"{productToDelete?.name}"</span> and all of its associated images from the database.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setProductToCancel(null)} disabled={isCancelling}>Back</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setProductToDelete(null)} disabled={isDeleting}>Back</AlertDialogCancel>
                         <AlertDialogAction 
-                            onClick={handleConfirmCancel} 
-                            disabled={isCancelling} 
+                            onClick={handleConfirmDelete} 
+                            disabled={isDeleting} 
                             className={buttonVariants({ variant: "destructive" })}
                         >
-                            {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {isCancelling ? "Deleting..." : "Confirm Deletion"}
+                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            {isDeleting ? "Deleting..." : "Confirm Deletion"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

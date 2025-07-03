@@ -4,8 +4,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { useProducts } from '@/hooks/use-products';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle } from 'lucide-react';
+import { DollarSign, Users, CreditCard, ShoppingBag, Loader2, AlertCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +20,7 @@ interface AdminStats {
 
 export default function AdminDashboardPage() {
     const { user, loading: authLoading } = useAuth();
+    const { products, loading: productsLoading } = useProducts();
     const router = useRouter();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [loading, setLoading] = useState(true);
@@ -57,7 +59,13 @@ export default function AdminDashboardPage() {
                 });
             } catch (e: any) {
                 console.error("Failed to fetch admin data:", e);
-                setError(e.message);
+                let detailedError = e.message;
+                if (e.message.includes('Invalid auth token')) {
+                    detailedError = "Authentication with the server failed. This can happen if your session has expired. Please try logging out and logging back in.";
+                } else if (e.message.includes('Firebase Admin SDK not initialized')) {
+                    detailedError = 'Server configuration error: The Admin SDK is not set up correctly. Please check your server environment variables and logs.';
+                }
+                setError(detailedError);
             } finally {
                 setLoading(false);
             }
@@ -68,7 +76,9 @@ export default function AdminDashboardPage() {
         }
     }, [user]);
 
-    if (authLoading || loading) {
+    const isLoading = authLoading || loading || productsLoading;
+
+    if (isLoading && !error) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -97,7 +107,7 @@ export default function AdminDashboardPage() {
                         <CardContent>
                             <p className="text-destructive">{error}</p>
                             <p className="text-muted-foreground mt-2 text-sm">
-                                This is often caused by a server-side configuration issue. Please ensure your Firebase Admin SDK has the correct credentials and permissions. Check your server logs for more details.
+                               This is often caused by a server-side configuration issue or an expired session. Please check your server logs or try logging out and back in.
                             </p>
                         </CardContent>
                     </Card>
@@ -133,16 +143,28 @@ export default function AdminDashboardPage() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Manage Products</CardTitle>
-                            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                            <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                           <Button asChild className="w-full">
-                                <Link href="/dashboard/admin/operate-store">Go to Store</Link>
-                           </Button>
+                            <div className="text-2xl font-bold">{products.length}</div>
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Store Management</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col sm:flex-row gap-4">
+                         <Button asChild className="w-full sm:w-auto">
+                            <Link href="/dashboard/admin/operate-store">
+                                <ShoppingBag className="mr-2 h-4 w-4" />
+                                Manage Products
+                            </Link>
+                       </Button>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

@@ -54,6 +54,12 @@ export async function GET() {
 
     } catch (error: any) {
         console.error("API Error verifying token:", error);
-        return NextResponse.json({ error: 'Invalid auth token. Please check server logs.' }, { status: 401 });
+        if (error.code === 'auth/id-token-expired') {
+            return NextResponse.json({ error: 'Authentication token has expired. Please log in again.' }, { status: 401 });
+        }
+        if (error.code === 'auth/argument-error') {
+            return NextResponse.json({ error: 'Invalid auth token format.' }, { status: 401 });
+        }
+        return NextResponse.json({ error: 'Invalid auth token. Please check server logs for details.' }, { status: 401 });
     }
 }
