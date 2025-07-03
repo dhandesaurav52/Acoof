@@ -172,9 +172,12 @@ export async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success
     }
     
     const orderWithId: Order = { ...orderData, id: newId };
+    
+    const updates: { [key: string]: any } = {};
+    updates[`/orders/${newId}`] = orderWithId;
 
     try {
-        await set(newOrderRef, orderWithId);
+        await update(dbRef(database), updates);
         return { success: true, orderId: newId };
     } catch (error: any) {
         console.error('Failed to save order:', error);
