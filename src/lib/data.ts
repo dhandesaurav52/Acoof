@@ -210,3 +210,5 @@ export const lookCategories: LookCategory[] = ['Streetwear', 'Smart Casual', 'We
 
 
 export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Bags', 'Belts', 'Socks', 'Wallets', 'Sweater', 'Sweatshirt', 'Jackets', 'Track pants'];
+
+export const allSizes: string[] = ['S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36'];

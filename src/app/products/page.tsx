@@ -7,7 +7,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { ListFilter, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProducts } from '@/hooks/use-products';
-import { categories } from '@/lib/data';
+import { categories, allSizes } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -28,10 +28,7 @@ export default function ProductsPage() {
     return ['All', ...Array.from(new Set(allColors))];
   }, [products]);
 
-  const availableSizes = useMemo(() => {
-    const allSizes = products.flatMap(p => p.sizes || []);
-    return ['All', ...Array.from(new Set(allSizes))];
-  }, [products]);
+  const availableSizes = ['All', ...allSizes];
 
   const filteredProducts = useMemo(() => {
     let filtered = products
