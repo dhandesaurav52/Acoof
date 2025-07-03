@@ -71,6 +71,18 @@ export function Header() {
           {link.label}
         </Link>
       ))}
+      {isAdmin && (
+         <Link
+            href="/dashboard/admin/operate-store"
+            className={cn(
+              "transition-colors hover:text-primary",
+              pathname === "/dashboard/admin/operate-store" ? "text-primary font-semibold" : "text-foreground/80",
+            )}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Operate Store
+        </Link>
+      )}
     </nav>
   );
 
