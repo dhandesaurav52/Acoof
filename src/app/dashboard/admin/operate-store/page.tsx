@@ -32,7 +32,6 @@ const productSchema = z.object({
   isNew: z.boolean().default(false),
   colors: z.string().optional(),
   sizes: z.string().optional(),
-  aiHint: z.string().optional(),
   images: z.custom<FileList>().refine((files) => files.length > 0, "At least one image is required."),
 });
 
@@ -96,7 +95,6 @@ export default function AddProductPage() {
                 images: imageUrls,
                 colors: data.colors ? data.colors.split(',').map(s => s.trim()).filter(Boolean) : [],
                 sizes: data.sizes ? data.sizes.split(',').map(s => s.trim()).filter(Boolean) : [],
-                aiHint: data.aiHint || '',
             };
 
             await set(newProductRef, productData);
@@ -166,10 +164,6 @@ export default function AddProductPage() {
                                     </SelectContent>
                                 </Select>
                                 {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="aiHint">AI Image Hint (Optional)</Label>
-                                <Input id="aiHint" {...register("aiHint")} placeholder="e.g., 'denim jeans'" />
                             </div>
                         </div>
                         

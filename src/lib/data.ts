@@ -10,7 +10,6 @@ export const products: Product[] = [
     category: 'Tshirts',
     images: ['https://placehold.co/600x800.png'],
     isNew: true,
-    aiHint: 'white shirt',
     colors: ['White', 'Black', 'Gray'],
     sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
@@ -22,7 +21,6 @@ export const products: Product[] = [
     category: 'Jeans',
     images: ['https://placehold.co/600x800.png'],
     isNew: true,
-    aiHint: 'denim jeans',
     colors: ['Dark Wash', 'Light Wash', 'Black'],
     sizes: ['30', '32', '34', '36']
   },
@@ -34,7 +32,6 @@ export const products: Product[] = [
     category: 'Shoes',
     images: ['https://placehold.co/600x800.png'],
     isNew: true,
-    aiHint: 'leather shoes',
     colors: ['Black', 'Brown'],
     sizes: ['9', '10', '11', '12']
   },
@@ -46,7 +43,6 @@ export const products: Product[] = [
     category: 'Shirts',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'graphic hoodie',
     colors: ['Black', 'Heather Gray', 'Navy'],
     sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
@@ -58,7 +54,6 @@ export const products: Product[] = [
     category: 'Trousers',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'cargo pants',
     colors: ['Khaki', 'Olive', 'Black'],
     sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
@@ -70,7 +65,6 @@ export const products: Product[] = [
     category: 'Shoes',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'white sneakers',
     colors: ['White', 'Black', 'Cream'],
     sizes: ['8', '9', '10', '11', '12', '13']
   },
@@ -82,7 +76,6 @@ export const products: Product[] = [
     category: 'Shirts',
     images: ['https://placehold.co/600x800.png'],
     isNew: false,
-    aiHint: 'linen shirt',
     colors: ['Beige', 'White', 'Light Blue'],
     sizes: ['S', 'M', 'L', 'XL', 'XXL']
   },
@@ -94,7 +87,6 @@ export const products: Product[] = [
     category: 'Bags',
     images: ['https://placehold.co/600x600.png'],
     isNew: true,
-    aiHint: 'tote bag',
     colors: ['Natural', 'Black'],
     sizes: ['One Size']
   }
@@ -106,7 +98,6 @@ export const looks: Look[] = [
         name: 'Casual Weekend',
         image: 'https://images.pexels.com/photos/2413023/pexels-photo-2413023.jpeg',
         products: ['1', '2', '6'],
-        aiHint: 'casual style',
         category: 'Weekend',
     },
     {
@@ -114,7 +105,6 @@ export const looks: Look[] = [
         name: 'Street Style',
         image: 'https://images.pexels.com/photos/3133688/pexels-photo-3133688.jpeg',
         products: ['4', '5', '6'],
-        aiHint: 'street fashion',
         category: 'Streetwear',
     },
     {
@@ -122,7 +112,6 @@ export const looks: Look[] = [
         name: 'Smart Casual',
         image: 'https://images.pexels.com/photos/837140/pexels-photo-837140.jpeg',
         products: ['7', '2', '3'],
-        aiHint: 'fashion model',
         category: 'Smart Casual',
     },
     {
@@ -130,7 +119,6 @@ export const looks: Look[] = [
         name: 'Summer Vibe',
         image: 'https://images.pexels.com/photos/4066288/pexels-photo-4066288.jpeg',
         products: ['1', '8'],
-        aiHint: 'summer style',
         category: 'Summer',
     },
     {
@@ -138,7 +126,6 @@ export const looks: Look[] = [
         name: 'Urban Explorer',
         image: 'https://images.pexels.com/photos/32779453/pexels-photo-32779453.jpeg',
         products: ['4', '5', '6'],
-        aiHint: 'urban fashion',
         category: 'Streetwear'
     },
     {
@@ -146,7 +133,6 @@ export const looks: Look[] = [
         name: 'Office Ready',
         image: 'https://images.pexels.com/photos/937481/pexels-photo-937481.jpeg',
         products: ['7', '5', '3'],
-        aiHint: 'business casual',
         category: 'Smart Casual'
     },
     {
@@ -154,7 +140,6 @@ export const looks: Look[] = [
         name: 'Relaxed Day Off',
         image: 'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg',
         products: ['1', '2', '6'],
-        aiHint: 'casual outfit',
         category: 'Weekend'
     },
     {
@@ -162,7 +147,6 @@ export const looks: Look[] = [
         name: 'Beach Day',
         image: 'https://images.pexels.com/photos/12169183/pexels-photo-12169183.jpeg',
         products: ['7', '8'],
-        aiHint: 'beach fashion',
         category: 'Summer'
     },
     {
@@ -170,7 +154,6 @@ export const looks: Look[] = [
         name: 'Downtown Cool',
         image: 'https://images.pexels.com/photos/5157207/pexels-photo-5157207.jpeg',
         products: ['4', '2', '6'],
-        aiHint: 'man skateboard',
         category: 'Streetwear'
     },
     {
@@ -178,7 +161,6 @@ export const looks: Look[] = [
         name: 'Skater Vibe',
         image: 'https://images.pexels.com/photos/32310255/pexels-photo-32310255.jpeg',
         products: ['1', '5', '6'],
-        aiHint: 'skater fashion',
         category: 'Streetwear'
     },
     {
@@ -186,7 +168,6 @@ export const looks: Look[] = [
         name: 'Modern Professional',
         image: 'https://images.pexels.com/photos/2897883/pexels-photo-2897883.jpeg',
         products: ['7', '5', '3'],
-        aiHint: 'professional attire',
         category: 'Smart Casual'
     },
     {
@@ -194,7 +175,6 @@ export const looks: Look[] = [
         name: 'Evening Out',
         image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg',
         products: ['7', '2', '3'],
-        aiHint: 'night out fashion',
         category: 'Smart Casual'
     },
     {
@@ -202,7 +182,6 @@ export const looks: Look[] = [
         name: 'Coffee Run',
         image: 'https://images.pexels.com/photos/15647646/pexels-photo-15647646.jpeg',
         products: ['4', '2', '6'],
-        aiHint: 'man tank top',
         category: 'Weekend'
     },
     {
@@ -210,7 +189,6 @@ export const looks: Look[] = [
         name: 'Park Stroll',
         image: 'https://images.pexels.com/photos/32770739/pexels-photo-32770739.jpeg',
         products: ['1', '5', '6'],
-        aiHint: 'man walking park',
         category: 'Weekend'
     },
     {
@@ -218,7 +196,6 @@ export const looks: Look[] = [
         name: 'Vacation Mode',
         image: 'https://images.pexels.com/photos/1484806/pexels-photo-1484806.jpeg',
         products: ['7', '8'],
-        aiHint: 'vacation outfit',
         category: 'Summer'
     },
     {
@@ -226,7 +203,6 @@ export const looks: Look[] = [
         name: 'City Heat',
         image: 'https://images.pexels.com/photos/1040881/pexels-photo-1040881.jpeg',
         products: ['1', '8'],
-        aiHint: 'summer city fashion',
         category: 'Summer'
     }
 ];

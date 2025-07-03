@@ -13,9 +13,9 @@ export default function Home() {
   const { products } = useProducts();
   
   const featuredStyles = [
-    { name: 'HipHop', image: 'https://images.pexels.com/photos/7957440/pexels-photo-7957440.jpeg', aiHint: 'hiphop fashion' },
-    { name: 'Casual', image: 'https://images.pexels.com/photos/32796238/pexels-photo-32796238.jpeg', aiHint: 'casual fashion' },
-    { name: 'Party Wear', image: 'https://images.pexels.com/photos/532220/pexels-photo-532220.jpeg', aiHint: 'party fashion' },
+    { name: 'HipHop', image: 'https://images.pexels.com/photos/7957440/pexels-photo-7957440.jpeg' },
+    { name: 'Casual', image: 'https://images.pexels.com/photos/32796238/pexels-photo-32796238.jpeg' },
+    { name: 'Party Wear', image: 'https://images.pexels.com/photos/532220/pexels-photo-532220.jpeg' },
   ];
   
   const newArrivals = products.filter(p => p.isNew).slice(0, 8);
@@ -31,7 +31,6 @@ export default function Home() {
                 fill
                 className="object-cover object-center"
                 priority
-                data-ai-hint="male fashion model"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
         </div>
@@ -133,7 +132,6 @@ export default function Home() {
                     alt={style.name}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    data-ai-hint={style.aiHint}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

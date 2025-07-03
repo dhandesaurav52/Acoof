@@ -52,7 +52,6 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
                             category: product.category || 'Tshirts',
                             images: product.images.length > 0 ? product.images : ['https://placehold.co/600x800.png'],
                             isNew: product.isNew ?? false,
-                            aiHint: product.aiHint || '',
                             colors: product.colors || [],
                             sizes: product.sizes || [],
                         };

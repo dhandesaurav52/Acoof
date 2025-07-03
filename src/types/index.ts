@@ -7,7 +7,6 @@ export interface Product {
   category: 'Shirts' | 'Pants' | 'Shoes' | 'Tshirts' | 'Jeans' | 'Trousers' | 'Socks' | 'Wallets' | 'Bags' | 'Belts' | 'Sweater' | 'Sweatshirt' | 'Jackets' | 'Track pants';
   images: string[];
   isNew: boolean;
-  aiHint: string;
   colors: string[];
   sizes: string[];
 }
@@ -21,7 +20,6 @@ export interface Look {
   name: string;
   image: string;
   products: string[];
-  aiHint: string;
   category: LookCategory;
 }
 

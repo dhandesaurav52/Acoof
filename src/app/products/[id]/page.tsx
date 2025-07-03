@@ -269,7 +269,6 @@ export default function ProductDetailPage() {
                                                 fill
                                                 className="object-cover"
                                                 sizes="(max-width: 768px) 100vw, 50vw"
-                                                data-ai-hint={product.aiHint}
                                             />
                                         </CardContent>
                                     </Card>
