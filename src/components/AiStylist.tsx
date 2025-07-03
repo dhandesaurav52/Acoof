@@ -139,7 +139,7 @@ export function AiStylist() {
   const CameraView = () => (
     <div className="space-y-4">
         <div className="relative aspect-video w-full max-w-md mx-auto bg-muted rounded-lg overflow-hidden">
-            <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+            <video ref={videoRef} className="w-full h-full object-cover transform -scale-x-100" autoPlay muted playsInline />
             <canvas ref={canvasRef} className="hidden" />
         </div>
         <div className="flex justify-center">
