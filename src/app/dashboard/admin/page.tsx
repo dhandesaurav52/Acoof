@@ -46,25 +46,25 @@ export default function AdminDashboardPage() {
     const [categorySalesData, setCategorySalesData] = useState<{ name: string; sales: number }[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isAuthorized, setIsAuthorized] = useState(false);
 
-    // Effect for authorization
     useEffect(() => {
-        if (authLoading) return;
+        if (authLoading || productsLoading) {
+            return; // Wait for both auth and products to be ready
+        }
+
         if (!user) {
             router.push('/login');
-        } else if (user.email !== ADMIN_EMAIL) {
-            router.push('/dashboard/user');
-        } else {
-            setIsAuthorized(true);
+            return;
         }
-    }, [user, authLoading, router]);
 
-    // Effect for data fetching
-    useEffect(() => {
-        if (!isAuthorized || productsLoading) return;
-
+        if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
+            return;
+        }
+        
+        // User is admin, products are loaded. It's safe to fetch admin data.
         async function fetchAdminData() {
+            setLoadingData(true);
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
@@ -150,9 +150,17 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [isAuthorized, productsLoading, allProducts]);
+    }, [user, authLoading, productsLoading, allProducts, router]);
     
-    if (!isAuthorized || productsLoading || loadingData) {
+    if (authLoading || productsLoading || loadingData) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

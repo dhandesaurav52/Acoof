@@ -23,25 +23,23 @@ export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isAuthorized, setIsAuthorized] = useState(false);
 
-    // Effect 1: Handle Authentication and Authorization
     useEffect(() => {
-        if (authLoading) return;
+        if (authLoading) {
+            return; // Wait until we know who the user is
+        }
 
         if (!user) {
             router.push('/login');
-        } else if (user.email !== ADMIN_EMAIL) {
-            router.push('/dashboard/user');
-        } else {
-            setIsAuthorized(true);
+            return;
         }
-    }, [user, authLoading, router]);
 
-    // Effect 2: Fetch data ONLY if user is confirmed as admin
-    useEffect(() => {
-        if (!isAuthorized) return;
-
+        if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
+            return;
+        }
+        
+        // If we reach here, the user IS the admin. It is safe to fetch data.
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -71,12 +69,13 @@ export default function AdminOrdersPage() {
             setLoadingData(false);
         });
 
+        // Cleanup function for the listener
         return () => {
             if (database) {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [isAuthorized]);
+    }, [user, authLoading, router]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -89,15 +88,10 @@ export default function AdminOrdersPage() {
                 description: `Order #${orderId} has been updated to ${newStatus}.`
             });
         } catch (error: any) {
-            // If a permission error occurs, it's likely due to the user logging out
-            // immediately after triggering the update. We can safely ignore it to
-            // prevent showing an error toast after logout.
             if (error.code === 'PERMISSION_DENIED') {
                 console.warn("Order update permission denied, likely due to logout.");
-                return; // Exit silently
+                return;
             }
-
-            // For any other errors, show a toast.
             console.error("Failed to update order status:", error);
             toast({
                 variant: 'destructive',
@@ -107,7 +101,7 @@ export default function AdminOrdersPage() {
         }
     };
 
-    if (!isAuthorized || loadingData) {
+    if (authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -115,6 +109,15 @@ export default function AdminOrdersPage() {
         );
     }
     
+    // This case covers the brief moment before redirection for non-admins
+    if (!user || user.email !== ADMIN_EMAIL) {
+         return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto py-12 px-4">
             <div className="max-w-7xl mx-auto space-y-8">
