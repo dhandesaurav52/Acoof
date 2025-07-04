@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -53,7 +52,7 @@ export default function AdminOrdersPage() {
         }, (err: any) => {
             console.error("Firebase read failed: ", err);
             if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
-                setError("Permission Denied. This is a Firebase security rule issue. To fix this, go to your Firebase project's Realtime Database rules and ensure the admin user (admin@example.com) has read access to the entire '/orders' path.");
+                setError("Permission Denied. Could not fetch orders. This is almost always a Firebase security rule issue. Please verify two things: 1) You are logged in as the admin user (admin@example.com). 2) Your Realtime Database security rules allow the admin user to read the '/orders' path. Please check your Firebase console.");
             } else {
                 setError("An error occurred while fetching orders data.");
             }

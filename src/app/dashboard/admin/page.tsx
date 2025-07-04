@@ -173,7 +173,7 @@ export default function AdminDashboardPage() {
             } catch (e: any) {
                 console.error("Failed to fetch admin data:", e);
                 if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
-                    setError("Permission Denied. Could not fetch dashboard data. This is a Firebase security rule issue. To fix this, go to your Firebase project's Realtime Database rules and ensure the admin user (admin@example.com) has read access to both the '/users' and '/orders' paths.");
+                    setError("Permission Denied. Could not fetch dashboard data. This is almost always a Firebase security rule issue. Please verify two things: 1) You are logged in as the admin user (admin@example.com). 2) Your Realtime Database security rules allow the admin user to read both the '/users' and '/orders' paths. Please check your Firebase console.");
                 } else {
                     setError("An error occurred while processing the dashboard data.");
                 }
@@ -217,9 +217,6 @@ export default function AdminDashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-destructive">{error}</p>
-                            <p className="text-muted-foreground mt-2 text-sm">
-                               This may be caused by your Firebase Realtime Database security rules. Please ensure they are configured correctly to allow admin access.
-                            </p>
                         </CardContent>
                     </Card>
                 )}
