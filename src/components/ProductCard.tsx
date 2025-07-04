@@ -36,7 +36,7 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl bg-secondary border-secondary group">
+    <Card className="flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg bg-secondary border-secondary group">
       <CardHeader className="p-0">
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-lg">
           <Image
@@ -61,18 +61,18 @@ export function ProductCard({ product }: ProductCardProps) {
            <Link href={`/products/${product.id}`} className="absolute inset-0" aria-label={product.name} />
         </div>
       </CardHeader>
-      <CardContent className="flex-grow p-4">
-        <CardTitle className="text-base font-medium leading-tight">
+      <CardContent className="flex-grow p-3">
+        <CardTitle className="text-sm font-semibold leading-snug">
           <Link href={`/products/${product.id}`} className="focus:outline-none">
             <span className="absolute inset-0"></span>
             {product.name}
           </Link>
         </CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">{product.category}</p>
+        <p className="text-xs text-muted-foreground mt-1 truncate">{product.category}</p>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <p className="text-lg font-semibold text-primary">₹{product.price.toFixed(2)}</p>
-        <Button variant="outline" size="icon" onClick={handleAddToCartClick}>
+      <CardFooter className="p-3 pt-0 flex justify-between items-center">
+        <p className="text-base font-bold text-primary">₹{product.price.toFixed(2)}</p>
+        <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleAddToCartClick}>
           <ShoppingCart className="h-4 w-4" />
           <span className="sr-only">Add to Cart</span>
         </Button>
