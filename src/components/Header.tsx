@@ -159,13 +159,13 @@ export function Header() {
           <Logo className="h-10 w-auto text-primary" />
         </Link>
 
-        <div className="hidden md:flex flex-1 items-center justify-start">
+        <div className="hidden md:flex flex-1 items-center justify-start gap-6">
           <NavLinks />
+          {isMounted && installPromptEvent && <InstallButton />}
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-2">
            <div className="hidden md:flex items-center gap-2">
-            {installPromptEvent && <InstallButton />}
             {!isMounted || cartLoading ? (
               <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
@@ -234,14 +234,16 @@ export function Header() {
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
                     <Logo className="h-10 w-auto" />
                   </Link>
-                  <NavLinks className="flex-col items-start gap-4 text-lg"/>
-                   <div className="mt-8 pt-4 border-t">
-                    {installPromptEvent && (
-                      <button onClick={handleInstallClick} className="text-lg flex items-center gap-2 mb-4">
+                  <div className="flex flex-col items-start gap-4 text-lg">
+                    <NavLinks className="flex-col items-start gap-4 text-lg"/>
+                    {isMounted && installPromptEvent && (
+                      <button onClick={handleInstallClick} className="text-lg flex items-center gap-2">
                           <Download className="h-5 w-5" />
                           <span>Install App</span>
                       </button>
                     )}
+                  </div>
+                   <div className="mt-8 pt-4 border-t">
                     {!isMounted || cartLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (
