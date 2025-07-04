@@ -142,7 +142,7 @@ export async function clearAllOrders(): Promise<{ success: boolean; error?: stri
         console.error("Failed to clear all orders:", error);
         let errorMessage = 'An unexpected error occurred while clearing orders.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Could not clear orders. Please ensure your Firebase security rules grant the admin user write permissions for the root of '/orders' and for each user's '/orders' path.";
+            errorMessage = `Permission Denied: Could not clear all orders. This is a Firebase security rule issue. For this operation to succeed, the admin account must have explicit write permission for the root '/orders' path, for every individual order path ('/orders/$orderId'), AND for each user's orders path ('/users/$uid/orders'). Please check your rules in the Firebase console. The specific path that failed was likely: ${error.message}`;
         } else {
              errorMessage = error.message || errorMessage;
         }
