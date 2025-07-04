@@ -48,14 +48,17 @@ export default function AdminDashboardPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!authLoading && !user) {
+        if (authLoading) return;
+        if (!user) {
             router.push('/login');
+        } else if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
         }
     }, [user, authLoading, router]);
 
     useEffect(() => {
         async function fetchAdminData() {
-            if (!user || !database || allProducts.length === 0) {
+            if (!user || user.email !== ADMIN_EMAIL || !database || allProducts.length === 0) {
                  if (!authLoading && !productsLoading) {
                     setLoadingStats(false);
                 }
@@ -64,12 +67,6 @@ export default function AdminDashboardPage() {
 
             setLoadingStats(true);
             setError(null);
-            
-            if (user.email !== ADMIN_EMAIL) {
-                setError(`Access Denied: You must be logged in as ${ADMIN_EMAIL} to view this dashboard.`);
-                setLoadingStats(false);
-                return;
-            }
 
             let usersSnapshot: DataSnapshot;
             let ordersSnapshot: DataSnapshot;
@@ -209,11 +206,11 @@ export default function AdminDashboardPage() {
         }
     }, [user, authLoading, allProducts, productsLoading]);
     
-    const isLoading = authLoading || loadingStats || productsLoading;
+    const isLoading = authLoading || loadingStats || productsLoading || (user && user.email !== ADMIN_EMAIL);
 
     if (isLoading && !error) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );

@@ -62,8 +62,11 @@ export default function AddProductPage() {
     }, [watchedImages]);
 
     useEffect(() => {
-        if (!authLoading && (!user || user.email !== ADMIN_EMAIL)) {
+        if (authLoading) return;
+        if (!user) {
             router.push('/login');
+        } else if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
         }
     }, [user, authLoading, router]);
 
@@ -118,9 +121,9 @@ export default function AddProductPage() {
         }
     };
     
-    if (authLoading) {
+    if (authLoading || (user && user.email !== ADMIN_EMAIL)) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );

@@ -25,13 +25,16 @@ export default function AdminOrdersPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!authLoading && (!user || user.email !== ADMIN_EMAIL)) {
+        if (authLoading) return;
+        if (!user) {
             router.push('/login');
+        } else if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
         }
     }, [user, authLoading, router]);
 
     useEffect(() => {
-        if (!user || !database) return;
+        if (!user || user.email !== ADMIN_EMAIL || !database) return;
 
         const ordersRef = ref(database, 'orders');
         setError(null);
@@ -88,9 +91,9 @@ export default function AdminOrdersPage() {
         }
     };
 
-    if (authLoading || loading) {
+    if (authLoading || loading || (user && user.email !== ADMIN_EMAIL)) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );

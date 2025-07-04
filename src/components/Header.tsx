@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, Download } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, Download, LayoutGrid } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +46,9 @@ export function Header() {
   const { cartCount, loading: cartLoading } = useCart();
   const { installPromptEvent, triggerInstallPrompt } = useInstallPrompt();
   const [isMounted, setIsMounted] = useState(false);
+  
+  // Hide header on dashboard pages
+  const isDashboardPage = pathname.startsWith('/dashboard');
 
   useEffect(() => {
     setIsMounted(true);
@@ -84,18 +87,6 @@ export function Header() {
             <span>Install App</span>
         </button>
       )}
-      {isAdmin && (
-         <Link
-            href="/dashboard/admin/operate-store"
-            className={cn(
-              "transition-colors hover:text-primary",
-              pathname === "/dashboard/admin/operate-store" ? "text-primary font-semibold" : "text-foreground/80",
-            )}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Add Product
-        </Link>
-      )}
     </nav>
   );
 
@@ -108,48 +99,18 @@ export function Header() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {isAdmin ? (
-          <>
-            <DropdownMenuLabel>Admin</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/admin"><Shield className="mr-2 h-4 w-4" />Dashboard</Link>
+         <DropdownMenuItem asChild>
+              <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/user"}><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</Link>
             </DropdownMenuItem>
-             <DropdownMenuItem asChild>
-               <Link href="/dashboard/admin"><ShoppingBag className="mr-2 h-4 w-4" />Manage Products</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/admin/orders"><Package className="mr-2 h-4 w-4" />Manage Orders</Link>
-            </DropdownMenuItem>
-             <DropdownMenuItem asChild>
-              <Link href="/dashboard/user">Admin profile</Link>
-            </DropdownMenuItem>
-          </>
-        ) : (
-          <>
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/user">Your profile</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/user/orders">Your orders</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/user/wishlist">Wishlist</Link>
-            </DropdownMenuItem>
-          </>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/notifications">Notifications</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings">Settings</Link>
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
+
+  if (isDashboardPage && isMounted) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
@@ -253,29 +214,14 @@ export function Header() {
                         </div>
                      ) : user ? (
                        <>
-                        {isAdmin ? (
-                          <>
-                            <Link href="/dashboard/admin" className="text-base" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>
-                            <Link href="/dashboard/admin" className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><ShoppingBag className="h-5 w-5"/>Manage Products</Link>
-                            <Link href="/dashboard/admin/orders" className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5"/>Manage Orders</Link>
-                            <Link href="/dashboard/user" className="text-base" onClick={() => setIsMenuOpen(false)}>Admin profile</Link>
-                          </>
-                        ) : (
-                          <>
-                            <Link href="/dashboard/user" className="text-base" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
-                            <Link href="/dashboard/user/orders" className="text-base" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
-                            {!isMounted || wishlistLoading ? (
-                              <Skeleton className="h-8 w-32" />
-                            ): (
-                              <Link href="/dashboard/user/wishlist" className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                                Wishlist ({wishlist.length})
-                              </Link>
-                            )}
-                          </>
-                        )}
-                        <Link href="/dashboard/notifications" className="text-base" onClick={() => setIsMenuOpen(false)}>Notifications</Link>
-                        <Link href="/dashboard/settings" className="text-base" onClick={() => setIsMenuOpen(false)}>Settings</Link>
-                        <button onClick={handleLogout} className="text-base text-left">Logout</button>
+                        <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/user"} className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                          <LayoutGrid className="h-5 w-5"/>
+                          Dashboard
+                        </Link>
+                        <button onClick={handleLogout} className="text-base text-left flex items-center gap-2">
+                          <LogOut className="h-5 w-5"/>
+                          Logout
+                        </button>
                        </>
                      ) : (
                        <>
