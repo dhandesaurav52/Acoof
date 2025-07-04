@@ -115,12 +115,16 @@ export function Header() {
         <DropdownMenuItem asChild>
           <Link href="/dashboard/user"><LayoutGrid className="mr-2 h-4 w-4" />Profile</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/user/orders"><Package className="mr-2 h-4 w-4" />My Orders</Link>
-        </DropdownMenuItem>
-         <DropdownMenuItem asChild>
-          <Link href="/dashboard/user/wishlist"><Heart className="mr-2 h-4 w-4" />Wishlist</Link>
-        </DropdownMenuItem>
+        {!isAdmin && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/user/orders"><Package className="mr-2 h-4 w-4" />My Orders</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/user/wishlist"><Heart className="mr-2 h-4 w-4" />Wishlist</Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
         </DropdownMenuItem>
@@ -234,8 +238,12 @@ export function Header() {
                        <>
                          <DropdownMenuLabel className="px-0 font-normal">My Account</DropdownMenuLabel>
                          <Link href="/dashboard/user" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><LayoutGrid className="h-5 w-5" />Profile</Link>
-                         <Link href="/dashboard/user/orders" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5" />My Orders</Link>
-                         <Link href="/dashboard/user/wishlist" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Heart className="h-5 w-5" />Wishlist</Link>
+                         {!isAdmin && (
+                          <>
+                            <Link href="/dashboard/user/orders" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5" />My Orders</Link>
+                            <Link href="/dashboard/user/wishlist" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Heart className="h-5 w-5" />Wishlist</Link>
+                          </>
+                         )}
                          <Link href="/dashboard/settings" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Settings className="h-5 w-5" />Settings</Link>
                          
                          {isAdmin && (
