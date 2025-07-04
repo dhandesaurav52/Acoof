@@ -58,8 +58,8 @@ export default function UserOrdersPage() {
             } catch (error: any) {
                 console.error('Failed to fetch user orders:', error);
                 let desc = 'An error occurred while fetching your orders.';
-                if (error.code === 'PERMISSION_DENIED') {
-                    desc = "Permission denied. Check your Firebase security rules."
+                if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                    desc = "Could not fetch orders due to a permissions issue. This usually means your Firebase security rules and database indexes are not set up correctly. For this query to work, you must add an index for the 'userId' field on your 'orders' data in the Firebase console.";
                 }
                 toast({
                     variant: 'destructive',
@@ -108,7 +108,7 @@ export default function UserOrdersPage() {
         } catch (error: any) {
             console.error('Failed to cancel order:', error);
             let desc = 'An error occurred while cancelling your order.';
-            if (error.code === 'PERMISSION_DENIED') {
+            if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
                 desc = "Permission denied. Please check your Firebase security rules."
             }
             toast({
@@ -261,3 +261,5 @@ export default function UserOrdersPage() {
     </div>
   );
 }
+
+    
