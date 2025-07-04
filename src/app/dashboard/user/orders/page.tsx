@@ -119,16 +119,18 @@ export default function UserOrdersPage() {
             );
             toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
         } catch (error: any) {
-            console.error('Failed to cancel order:', error);
-            let desc = 'An error occurred while cancelling your order.';
-            if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-                desc = "Permission denied. Please check your Firebase security rules."
+            // Silently ignore permission errors, which likely happen if the user logs out
+            // during the cancellation process.
+            if (error.code === 'PERMISSION_DENIED') {
+                console.warn("Order cancellation permission denied, likely due to logout.");
+            } else {
+                console.error('Failed to cancel order:', error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Cancellation Failed',
+                    description: 'An unexpected error occurred while cancelling the order.',
+                });
             }
-            toast({
-                variant: 'destructive',
-                title: 'Cancellation Failed',
-                description: desc,
-            });
         } finally {
             setIsCancelling(false);
             setOrderToCancel(null);

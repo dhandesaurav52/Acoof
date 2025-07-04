@@ -89,15 +89,20 @@ export default function AdminOrdersPage() {
                 description: `Order #${orderId} has been updated to ${newStatus}.`
             });
         } catch (error: any) {
-            console.error("Failed to update order status:", error);
-            let desc = 'An error occurred while updating the order status.';
+            // If a permission error occurs, it's likely due to the user logging out
+            // immediately after triggering the update. We can safely ignore it to
+            // prevent showing an error toast after logout.
             if (error.code === 'PERMISSION_DENIED') {
-                desc = "Permission denied. Check your Firebase security rules."
+                console.warn("Order update permission denied, likely due to logout.");
+                return; // Exit silently
             }
+
+            // For any other errors, show a toast.
+            console.error("Failed to update order status:", error);
             toast({
                 variant: 'destructive',
                 title: 'Update Failed',
-                description: desc,
+                description: 'An unexpected error occurred while updating the order status.',
             });
         }
     };
