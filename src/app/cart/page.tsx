@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { Order, OrderItem } from '@/types';
 import { database } from '@/lib/firebase';
-import { ref as dbRef, set, push } from "firebase/database";
+import { ref as dbRef, update, push } from "firebase/database";
 
 
 async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
@@ -39,12 +39,17 @@ async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boole
     const finalOrderData: Order = { ...orderData, id: newId };
     
     try {
-        await set(newOrderRef, finalOrderData);
+        // Use a multi-path update to save the order and the user's order reference atomically
+        const updates: { [key: string]: any } = {};
+        updates[`/orders/${newId}`] = finalOrderData;
+        updates[`/users/${orderData.userId}/orders/${newId}`] = true;
+
+        await update(dbRef(database), updates);
         return { success: true, orderId: newId };
     } catch (error: any) {
         let errorMessage = 'An unexpected error occurred while saving the order.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders' path.";
+            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders' and their own 'users' data path.";
         }
         console.error("Firebase saveOrder error:", error);
         return { success: false, error: errorMessage };

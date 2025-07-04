@@ -12,7 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import type { Order, OrderStatus } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { database } from '@/lib/firebase';
-import { ref, query, orderByChild, equalTo, get, update } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -43,26 +43,40 @@ export default function UserOrdersPage() {
 
             setLoading(true);
             setError(null);
-            const ordersRef = ref(database, 'orders');
-            const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(user.uid));
             
             try {
-                const snapshot = await get(userOrdersQuery);
-                if (snapshot.exists()) {
-                    const ordersData = snapshot.val();
-                    const ordersList: Order[] = Object.keys(ordersData)
-                        .map(key => ({ id: key, ...ordersData[key] }))
-                        .reverse();
-                    setOrders(ordersList);
-                } else {
+                // 1. Get the list of order IDs from the user's profile
+                const userOrdersRef = ref(database, `users/${user.uid}/orders`);
+                const orderIdsSnapshot = await get(userOrdersRef);
+
+                if (!orderIdsSnapshot.exists()) {
                     setOrders([]);
+                    setLoading(false);
+                    return;
                 }
-            } catch (error: any)
-                {
+
+                const orderIds = Object.keys(orderIdsSnapshot.val());
+
+                // 2. Fetch each order individually
+                const orderPromises = orderIds.map(orderId => {
+                    const orderRef = ref(database, `orders/${orderId}`);
+                    return get(orderRef);
+                });
+                
+                const orderSnapshots = await Promise.all(orderPromises);
+                
+                const ordersList: Order[] = orderSnapshots
+                    .map(snapshot => snapshot.exists() ? snapshot.val() as Order : null)
+                    .filter((order): order is Order => order !== null)
+                    .reverse(); // Show most recent first
+                
+                setOrders(ordersList);
+
+            } catch (error: any) {
                 console.error('Failed to fetch user orders:', error);
                 let desc = 'An error occurred while fetching your orders.';
                 if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-                    desc = "Action Required: Your Firebase security rules are blocking access. This is not an app bug. To fix this, please go to your Firebase project's Realtime Database 'Rules' tab and ensure the rules allow users to read their own orders and that an index is set on 'userId'.";
+                    desc = "Permission Denied: Could not fetch order data. This is a Firebase security rule issue. To fix, please go to your Firebase project's Realtime Database rules and ensure authenticated users can read their own data under '/users/[their-id]' and can read individual orders from '/orders/[order-id]'.";
                 }
                 setError(desc);
             }
@@ -276,5 +290,3 @@ export default function UserOrdersPage() {
     </div>
   );
 }
-
-    
