@@ -4,12 +4,16 @@
 import { useState, useMemo, type ChangeEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/ProductCard';
-import { ListFilter, Search } from 'lucide-react';
+import { ListFilter, Search, SlidersHorizontal } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProducts } from '@/hooks/use-products';
 import { categories, alphaSizes, numericSizes } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '@/components/ui/sheet';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 export default function ProductsPage() {
   const { products } = useProducts();
@@ -73,6 +77,15 @@ export default function ProductsPage() {
 
     return sorted;
   }, [searchQuery, products, selectedCategory, selectedColor, selectedAlphaSize, selectedNumericSize, sortOption]);
+  
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('All');
+    setSelectedColor('All');
+    setSelectedAlphaSize('All');
+    setSelectedNumericSize('All');
+    setSortOption('default');
+  };
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -94,7 +107,87 @@ export default function ProductsPage() {
             className="pl-10"
           />
         </div>
-        <div className="flex flex-col sm:flex-row gap-4">
+
+        {/* --- MOBILE FILTERS --- */}
+        <div className="sm:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                        <SlidersHorizontal className="mr-2 h-4 w-4" />
+                        Filter & Sort
+                    </Button>
+                </SheetTrigger>
+                <SheetContent className="flex flex-col">
+                    <SheetHeader>
+                        <SheetTitle>Filters</SheetTitle>
+                        <SheetDescription>Refine your results</SheetDescription>
+                    </SheetHeader>
+                    <ScrollArea className="flex-1 -mx-6">
+                        <div className="px-6 space-y-6 py-4">
+                            <div className="space-y-2">
+                                <Label>Sort by</Label>
+                                <Select value={sortOption} onValueChange={setSortOption}>
+                                    <SelectTrigger><SelectValue placeholder="Default" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="default">Default</SelectItem>
+                                        <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                                        <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Separator />
+                            <div className="space-y-2">
+                                <Label>Category</Label>
+                                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                    <SelectTrigger><SelectValue placeholder="All Categories" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Categories</SelectItem>
+                                        {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Color</Label>
+                                <Select value={selectedColor} onValueChange={setSelectedColor}>
+                                    <SelectTrigger><SelectValue placeholder="All Colors" /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableColors.map(color => <SelectItem key={color} value={color}>{color === 'All' ? 'All Colors' : color}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Size (Alpha)</Label>
+                                <Select value={selectedAlphaSize} onValueChange={setSelectedAlphaSize}>
+                                    <SelectTrigger><SelectValue placeholder="All Alpha Sizes" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Alpha Sizes</SelectItem>
+                                        {alphaSizes.map(size => <SelectItem key={size} value={size}>{size}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Size (Numeric)</Label>
+                                <Select value={selectedNumericSize} onValueChange={setSelectedNumericSize}>
+                                    <SelectTrigger><SelectValue placeholder="All Numeric Sizes" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Numeric Sizes</SelectItem>
+                                        {numericSizes.map(size => <SelectItem key={size} value={size}>{size}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </ScrollArea>
+                    <SheetFooter className="pt-4 border-t flex-row gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => { clearFilters(); }}>Clear</Button>
+                        <SheetClose asChild><Button className="flex-1">Done</Button></SheetClose>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
+        </div>
+
+
+        {/* --- DESKTOP FILTERS --- */}
+        <div className="hidden sm:flex flex-row gap-4">
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All Categories" />
