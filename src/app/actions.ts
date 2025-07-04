@@ -4,6 +4,8 @@
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
+import { database } from '@/lib/firebase';
+import { ref, remove, get, update } from 'firebase/database';
 
 export async function getAiSuggestions(browsingHistory: string, photoDataUri?: string) {
   if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
@@ -107,4 +109,43 @@ export async function verifyRazorpayPayment(data: {
   }
   
   return { success: false, error: "Payment verification failed. This means the response from Razorpay could not be trusted. This is often caused by an incorrect 'RAZORPAY_KEY_SECRET'. Please re-verify your secret key for any typos or extra spaces and ensure it matches your account's mode (Test vs. Live)." };
+}
+
+export async function clearAllOrders(): Promise<{ success: boolean; error?: string }> {
+    if (!database) {
+        return { success: false, error: 'Firebase is not configured.' };
+    }
+    try {
+        const usersRef = ref(database, 'users');
+        const usersSnapshot = await get(usersRef);
+
+        const updates: { [key: string]: null } = {};
+        
+        // Stage 1: Mark the entire '/orders' node for deletion.
+        updates['/orders'] = null;
+
+        // Stage 2: Mark all '/users/*/orders' nodes for deletion.
+        if (usersSnapshot.exists()) {
+            const usersData = usersSnapshot.val();
+            for (const userId in usersData) {
+                if (usersData[userId].orders) {
+                    updates[`/users/${userId}/orders`] = null;
+                }
+            }
+        }
+        
+        // Stage 3: Execute the single atomic multi-path update.
+        await update(ref(database), updates);
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to clear all orders:", error);
+        let errorMessage = 'An unexpected error occurred while clearing orders.';
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            errorMessage = "Permission Denied: Could not clear orders. Please ensure your Firebase security rules grant the admin user write permissions for the root of '/orders' and for each user's '/orders' path.";
+        } else {
+             errorMessage = error.message || errorMessage;
+        }
+        return { success: false, error: errorMessage };
+    }
 }

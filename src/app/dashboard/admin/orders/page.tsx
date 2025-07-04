@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, Package } from 'lucide-react';
+import { Loader2, AlertCircle, Package, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +12,9 @@ import { auth, database } from '@/lib/firebase';
 import { ref, onValue, off, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { clearAllOrders } from '@/app/actions';
 
 export default function AdminOrdersPage() {
     const { toast } = useToast();
@@ -19,6 +22,8 @@ export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+    const [isClearing, setIsClearing] = useState(false);
 
     // The AdminLayout now handles auth checks and redirection.
     // This page will only render if the user is a confirmed admin.
@@ -96,6 +101,18 @@ export default function AdminOrdersPage() {
             });
         }
     };
+
+    const handleClearOrders = async () => {
+        setIsClearing(true);
+        const result = await clearAllOrders();
+        if (result.success) {
+            toast({ title: 'Success', description: 'All orders have been deleted.' });
+        } else {
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: result.error });
+        }
+        setIsClearing(false);
+        setIsClearConfirmOpen(false);
+    };
     
     if (loadingData) {
         return (
@@ -130,8 +147,16 @@ export default function AdminOrdersPage() {
                 ) : (
                     <Card>
                         <CardHeader>
-                            <CardTitle>All Orders</CardTitle>
-                            <CardDescription>A list of all orders placed in your store.</CardDescription>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle>All Orders</CardTitle>
+                                    <CardDescription>A list of all orders placed in your store.</CardDescription>
+                                </div>
+                                <Button variant="destructive" onClick={() => setIsClearConfirmOpen(true)} disabled={orders.length === 0 || isClearing}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Clear All Orders
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                              <div className="border rounded-lg overflow-hidden">
@@ -204,6 +229,28 @@ export default function AdminOrdersPage() {
                     </Card>
                 )}
             </div>
+
+            <AlertDialog open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete all {orders.length} orders and their references from all user profiles. This is intended for testing and development purposes.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isClearing}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleClearOrders} 
+                            disabled={isClearing} 
+                            className={buttonVariants({ variant: "destructive" })}
+                        >
+                            {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Yes, delete all orders
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
