@@ -53,7 +53,7 @@ export default function AdminOrdersPage() {
         }, (err: any) => {
             console.error("Firebase read failed: ", err);
             if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
-                setError("Permission Denied. Could not fetch orders. This is a common issue caused by Firebase security rules. Please ensure your rules grant the admin user (admin@example.com) read access to the '/orders' path.");
+                setError("Permission Denied. This is a Firebase security rule issue. To fix this, go to your Firebase project's Realtime Database rules and ensure the admin user (admin@example.com) has read access to the entire '/orders' path.");
             } else {
                 setError("An error occurred while fetching orders data.");
             }
