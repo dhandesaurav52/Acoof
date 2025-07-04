@@ -23,23 +23,34 @@ export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [authStatus, setAuthStatus] = useState<'loading' | 'unauthorized' | 'authorized'>('loading');
 
+    // Stage 1: Authorize User
     useEffect(() => {
         if (authLoading) {
-            return; // Wait until we know who the user is
+            setAuthStatus('loading');
+            return;
         }
-
         if (!user) {
+            setAuthStatus('unauthorized');
             router.push('/login');
             return;
         }
-
         if (user.email !== ADMIN_EMAIL) {
+            setAuthStatus('unauthorized');
             router.push('/dashboard/user');
             return;
         }
+        setAuthStatus('authorized');
+    }, [user, authLoading, router]);
+
+    // Stage 2: Fetch Data (only if authorized)
+    useEffect(() => {
+        if (authStatus !== 'authorized') {
+            setLoadingData(false);
+            return;
+        }
         
-        // If we reach here, the user IS the admin. It is safe to fetch data.
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -75,7 +86,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [user, authLoading, router]);
+    }, [authStatus]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -100,8 +111,8 @@ export default function AdminOrdersPage() {
             });
         }
     };
-
-    if (authLoading || loadingData) {
+    
+    if (authStatus !== 'authorized') {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -109,9 +120,8 @@ export default function AdminOrdersPage() {
         );
     }
     
-    // This case covers the brief moment before redirection for non-admins
-    if (!user || user.email !== ADMIN_EMAIL) {
-         return (
+    if (loadingData) {
+        return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>

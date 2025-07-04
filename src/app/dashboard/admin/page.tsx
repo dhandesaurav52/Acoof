@@ -46,23 +46,34 @@ export default function AdminDashboardPage() {
     const [categorySalesData, setCategorySalesData] = useState<{ name: string; sales: number }[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [authStatus, setAuthStatus] = useState<'loading' | 'unauthorized' | 'authorized'>('loading');
 
+    // Stage 1: Authorize User
     useEffect(() => {
-        if (authLoading || productsLoading) {
-            return; // Wait for both auth and products to be ready
+        if (authLoading) {
+            setAuthStatus('loading');
+            return;
         }
-
         if (!user) {
+            setAuthStatus('unauthorized');
             router.push('/login');
             return;
         }
-
         if (user.email !== ADMIN_EMAIL) {
+            setAuthStatus('unauthorized');
             router.push('/dashboard/user');
             return;
         }
+        setAuthStatus('authorized');
+    }, [user, authLoading, router]);
+
+    // Stage 2: Fetch Data (only if authorized)
+    useEffect(() => {
+        if (authStatus !== 'authorized' || productsLoading) {
+            setLoadingData(false);
+            return;
+        }
         
-        // User is admin, products are loaded. It's safe to fetch admin data.
         async function fetchAdminData() {
             setLoadingData(true);
             try {
@@ -150,9 +161,9 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [user, authLoading, productsLoading, allProducts, router]);
+    }, [authStatus, productsLoading, allProducts]);
     
-    if (authLoading || productsLoading || loadingData) {
+    if (authStatus !== 'authorized') {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -160,7 +171,7 @@ export default function AdminDashboardPage() {
         );
     }
 
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (productsLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
