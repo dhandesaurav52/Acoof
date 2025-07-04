@@ -138,18 +138,18 @@ export default function UserOrdersPage() {
                         <Accordion type="single" collapsible className="w-full">
                             {orders.map((order) => (
                                 <AccordionItem value={order.id} key={order.id}>
-                                    <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 transition-colors text-left">
-                                        <div className="flex items-center gap-4 w-full">
+                                    <AccordionTrigger className="px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors text-left">
+                                        <div className="flex items-center gap-2 sm:gap-4 w-full">
                                             <div className="hidden sm:block">
                                                {getStatusIcon(order.status)}
                                             </div>
                                             <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
                                                 <div>
-                                                    <div className="font-bold truncate max-w-24 sm:max-w-full">{order.id}</div>
+                                                    <div className="text-sm font-semibold truncate max-w-24 sm:max-w-full">{order.id}</div>
                                                     <div className="text-xs text-muted-foreground">{order.date}</div>
                                                 </div>
-                                                <div className="hidden sm:block text-right sm:text-left">₹{order.total.toFixed(2)}</div>
-                                                <div className="col-span-2 sm:col-span-1 flex justify-end sm:justify-start">
+                                                <div className="hidden sm:block text-right sm:text-left font-medium">₹{order.total.toFixed(2)}</div>
+                                                <div className="col-span-1 flex justify-end sm:justify-start">
                                                    <Badge 
                                                         variant={
                                                             order.status === 'Pending' ? 'destructive' :

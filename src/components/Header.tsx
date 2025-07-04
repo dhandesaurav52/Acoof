@@ -228,14 +228,14 @@ export function Header() {
                   <SheetTitle>Menu</SheetTitle>
                   <SheetDescription>Main navigation and account links</SheetDescription>
                 </SheetHeader>
-                <div className="p-6">
+                <div className="p-4">
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
                     <Logo className="h-10 w-auto" />
                   </Link>
-                  <div className="flex flex-col items-start gap-4 text-base">
-                    <NavLinks className="flex-col items-start gap-4 text-base"/>
+                  <div className="flex flex-col items-start gap-3 text-base">
+                    <NavLinks className="flex-col items-start gap-3 text-base"/>
                   </div>
-                   <div className="mt-8 pt-4 border-t">
+                   <div className="mt-6 pt-4 border-t">
                     {!isMounted || cartLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (

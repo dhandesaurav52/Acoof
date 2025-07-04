@@ -59,17 +59,17 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
             <div className="flex flex-col items-center">
-              <ShoppingBag className="h-12 w-12 text-primary mb-4" />
+              <ShoppingBag className="h-10 w-10 sm:h-12 sm:w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold font-headline">Exclusive Designs</h3>
               <p className="text-muted-foreground mt-2">Curated pieces you won't find anywhere else.</p>
             </div>
             <div className="flex flex-col items-center">
-              <Shirt className="h-12 w-12 text-primary mb-4" />
+              <Shirt className="h-10 w-10 sm:h-12 sm:w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold font-headline">Premium Quality</h3>
               <p className="text-muted-foreground mt-2">Crafted from the finest materials for lasting comfort.</p>
             </div>
             <div className="flex flex-col items-center">
-              <Truck className="h-12 w-12 text-primary mb-4" />
+              <Truck className="h-10 w-10 sm:h-12 sm:w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold font-headline">Fast Shipping</h3>
               <p className="text-muted-foreground mt-2">Get your new look delivered to your door in days.</p>
             </div>
@@ -147,5 +147,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

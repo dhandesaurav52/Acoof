@@ -254,7 +254,7 @@ export default function ProductDetailPage() {
 
     return (
         <div className="container mx-auto py-12 px-4">
-            <div className="grid md:grid-cols-2 gap-12 items-start">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
                 {/* Image Carousel */}
                 <div>
                     <Carousel className="w-full group">
@@ -285,7 +285,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 {/* Product Details */}
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                     <div>
                         <div className="flex justify-between items-start">
                             <div className="flex-1">

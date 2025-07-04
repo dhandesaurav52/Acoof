@@ -233,7 +233,7 @@ export default function UserDashboardPage() {
         <Card>
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               <div className="relative group">
-                  <Avatar className="h-24 w-24 border">
+                  <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border">
                   <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
                   <AvatarFallback>{userProfile.initials}</AvatarFallback>
                   </Avatar>
@@ -333,44 +333,58 @@ export default function UserDashboardPage() {
                   </DialogContent>
               </Dialog>
           </CardHeader>
-          <CardContent className="space-y-6 border-t pt-6 mt-6">
-              <div className="flex items-center gap-4">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Name</span>
-                  <span className="text-foreground font-medium">{userProfile.name}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Email</span>
-                  <span className="text-foreground font-medium">{userProfile.email}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Phone Number</span>
-                  <span className="text-foreground font-medium">{userProfile.phone}</span>
-              </div>
-              <div className="flex items-start gap-4">
-                  <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
-                  <span className="w-32 text-muted-foreground">Address</span>
-                  <span className="text-foreground font-medium flex-1">
-                    {userProfile.address}
-                  </span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Building className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">City</span>
-                  <span className="text-foreground font-medium">{userProfile.city}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Map className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">State</span>
-                  <span className="text-foreground font-medium">{userProfile.state}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                  <Mailbox className="h-5 w-5 text-muted-foreground" />
-                  <span className="w-32 text-muted-foreground">Pincode</span>
-                  <span className="text-foreground font-medium">{userProfile.pincode}</span>
-              </div>
+          <CardContent className="border-t pt-6 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6 text-sm">
+                <div className="flex gap-4">
+                    <User className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-muted-foreground">Name</p>
+                        <p className="font-medium">{userProfile.name}</p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <Mail className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-muted-foreground">Email</p>
+                        <p className="font-medium">{userProfile.email}</p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <Phone className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-muted-foreground">Phone Number</p>
+                        <p className="font-medium">{userProfile.phone || 'Not provided'}</p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-muted-foreground">Address</p>
+                        <p className="font-medium">{userProfile.address || 'Not provided'}</p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <Building className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-muted-foreground">City</p>
+                        <p className="font-medium">{userProfile.city || 'Not provided'}</p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <Map className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-muted-foreground">State</p>
+                        <p className="font-medium">{userProfile.state || 'Not provided'}</p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <Mailbox className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-muted-foreground">Pincode</p>
+                        <p className="font-medium">{userProfile.pincode || 'Not provided'}</p>
+                    </div>
+                </div>
+            </div>
           </CardContent>
         </Card>
       </div>
