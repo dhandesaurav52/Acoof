@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCart } from "@/hooks/use-cart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -43,6 +44,7 @@ export function Header() {
   const { user, loading: authLoading, logout } = useAuth();
   const { wishlist, loading: wishlistLoading } = useWishlist();
   const { cartCount, loading: cartLoading } = useCart();
+  const { installPromptEvent, triggerInstallPrompt } = useInstallPrompt();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -51,6 +53,11 @@ export function Header() {
 
   const handleLogout = () => {
     logout();
+    setIsMenuOpen(false);
+  };
+  
+  const handleInstallClick = () => {
+    triggerInstallPrompt();
     setIsMenuOpen(false);
   };
   
@@ -138,6 +145,13 @@ export function Header() {
     </DropdownMenu>
   );
 
+  const InstallButton = () => (
+    <Button variant="ghost" size="icon" onClick={triggerInstallPrompt}>
+      <Download className="h-5 w-5" />
+      <span className="sr-only">Install App</span>
+    </Button>
+  );
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container flex h-20 items-center">
@@ -151,6 +165,7 @@ export function Header() {
 
         <div className="flex flex-1 items-center justify-end gap-2">
            <div className="hidden md:flex items-center gap-2">
+            {installPromptEvent && <InstallButton />}
             {!isMounted || cartLoading ? (
               <Skeleton className="h-10 w-10 rounded-full" />
             ) : (
@@ -221,6 +236,12 @@ export function Header() {
                   </Link>
                   <NavLinks className="flex-col items-start gap-4 text-lg"/>
                    <div className="mt-8 pt-4 border-t">
+                    {installPromptEvent && (
+                      <button onClick={handleInstallClick} className="text-lg flex items-center gap-2 mb-4">
+                          <Download className="h-5 w-5" />
+                          <span>Install App</span>
+                      </button>
+                    )}
                     {!isMounted || cartLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (

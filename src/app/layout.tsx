@@ -11,6 +11,7 @@ import { ProductsProvider } from '@/hooks/use-products';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { CartProvider } from '@/hooks/use-cart';
 import { useEffect } from 'react';
+import { InstallPromptProvider } from '@/hooks/use-install-prompt';
 
 export default function RootLayout({
   children,
@@ -54,12 +55,14 @@ export default function RootLayout({
           <AuthProvider>
             <ProductsProvider>
               <WishlistProvider>
-                <CartProvider>
-                  <Header />
-                  <main className="flex-grow">{children}</main>
-                  <Footer />
-                  <Toaster />
-                </CartProvider>
+                <InstallPromptProvider>
+                  <CartProvider>
+                    <Header />
+                    <main className="flex-grow">{children}</main>
+                    <Footer />
+                    <Toaster />
+                  </CartProvider>
+                </InstallPromptProvider>
               </WishlistProvider>
             </ProductsProvider>
           </AuthProvider>
