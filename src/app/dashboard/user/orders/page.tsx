@@ -62,7 +62,7 @@ export default function UserOrdersPage() {
                 console.error('Failed to fetch user orders:', error);
                 let desc = 'An error occurred while fetching your orders.';
                 if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-                    desc = "Could not fetch your orders. This is likely a Firebase configuration issue. For this feature to work, your database needs two things: 1) A security rule that allows users to read their own orders. 2) A database index on the 'userId' field in your 'orders' data. Please check these settings in your Firebase console.";
+                    desc = "Action Required: Your Firebase security rules are blocking access. This is not an app bug. To fix this, please go to your Firebase project's Realtime Database 'Rules' tab and ensure the rules allow users to read their own orders and that an index is set on 'userId'.";
                 }
                 setError(desc);
             }
