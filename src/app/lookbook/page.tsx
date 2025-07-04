@@ -1,7 +1,17 @@
+
 import { OutfitCard } from "@/components/OutfitCard";
-import { AiStylist } from "@/components/AiStylist";
 import { looks, lookCategories } from "@/lib/data";
 import type { LookCategory } from "@/types";
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
+
+const AiStylist = dynamic(
+  () => import("@/components/AiStylist").then((mod) => mod.AiStylist),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="w-full min-h-[500px] rounded-lg bg-secondary/50" />,
+  }
+);
 
 export default function LookbookPage() {
   const looksByCategory = lookCategories.map(category => ({

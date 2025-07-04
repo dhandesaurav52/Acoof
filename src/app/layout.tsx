@@ -13,6 +13,21 @@ import { CartProvider } from '@/hooks/use-cart';
 import { useEffect } from 'react';
 import { InstallPromptProvider } from '@/hooks/use-install-prompt';
 import { IosInstallBanner } from '@/components/IosInstallBanner';
+import { Inter, Montserrat } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['800', '900'],
+  display: 'swap',
+  variable: '--font-montserrat',
+});
+
 
 export default function RootLayout({
   children,
@@ -33,7 +48,7 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${montserrat.variable} h-full`} suppressHydrationWarning>
       <head>
         <title>Acoof</title>
         <meta name="description" content="A new app built in Firebase Studio." />
@@ -42,10 +57,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="https://placehold.co/192x192.png"></link>
         <link rel="icon" type="image/png" sizes="192x192" href="https://placehold.co/192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="https://placehold.co/512x512.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet" />
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background overflow-x-hidden">
