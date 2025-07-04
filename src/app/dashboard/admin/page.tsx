@@ -146,7 +146,7 @@ export default function AdminDashboardPage() {
     
     // The AdminLayout handles the primary auth check, but we still show a loader
     // while waiting for all necessary data (auth, products, and stats).
-    if (authLoading || productsLoading || loadingData) {
+    if (productsLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
