@@ -44,24 +44,27 @@ export default function AdminDashboardPage() {
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
     const [categorySalesData, setCategorySalesData] = useState<{ name: string; sales: number }[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAuthorized, setIsAuthorized] = useState(false);
 
+    // Effect for authorization
     useEffect(() => {
-        if (authLoading || productsLoading) return;
-        
+        if (authLoading) return;
         if (!user) {
             router.push('/login');
-            return;
-        }
-        if (user.email !== ADMIN_EMAIL) {
+        } else if (user.email !== ADMIN_EMAIL) {
             router.push('/dashboard/user');
-            return;
+        } else {
+            setIsAuthorized(true);
         }
+    }, [user, authLoading, router]);
+
+    // Effect for data fetching
+    useEffect(() => {
+        if (!isAuthorized || productsLoading) return;
 
         async function fetchAdminData() {
-            setError(null);
-            
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
@@ -142,14 +145,14 @@ export default function AdminDashboardPage() {
                     setError("An error occurred while processing the dashboard data.");
                 }
             } finally {
-                setLoading(false);
+                setLoadingData(false);
             }
         }
 
         fetchAdminData();
-    }, [user, authLoading, productsLoading, router, allProducts]);
+    }, [isAuthorized, productsLoading, allProducts]);
     
-    if (loading || authLoading || productsLoading) {
+    if (!isAuthorized || productsLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

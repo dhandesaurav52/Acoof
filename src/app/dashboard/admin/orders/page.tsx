@@ -21,30 +21,34 @@ export default function AdminOrdersPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAuthorized, setIsAuthorized] = useState(false);
 
+    // Effect 1: Handle Authentication and Authorization
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/login');
-            return;
-        }
-        if (user.email !== ADMIN_EMAIL) {
+        } else if (user.email !== ADMIN_EMAIL) {
             router.push('/dashboard/user');
-            return;
+        } else {
+            setIsAuthorized(true);
         }
+    }, [user, authLoading, router]);
+
+    // Effect 2: Fetch data ONLY if user is confirmed as admin
+    useEffect(() => {
+        if (!isAuthorized) return;
 
         if (!database) {
             setError("Firebase is not configured correctly.");
-            setLoading(false);
+            setLoadingData(false);
             return;
         }
 
         const ordersRef = ref(database, 'orders');
-        setError(null);
-
         const listener = onValue(ordersRef, (snapshot) => {
             if (snapshot.exists()) {
                 const ordersData = snapshot.val();
@@ -55,7 +59,8 @@ export default function AdminOrdersPage() {
             } else {
                 setOrders([]);
             }
-            setLoading(false);
+            setError(null);
+            setLoadingData(false);
         }, (err: any) => {
             console.error("Firebase read failed: ", err);
             if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
@@ -63,7 +68,7 @@ export default function AdminOrdersPage() {
             } else {
                 setError("An error occurred while fetching orders data.");
             }
-            setLoading(false);
+            setLoadingData(false);
         });
 
         return () => {
@@ -71,7 +76,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [user, authLoading, router, toast]);
+    }, [isAuthorized]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -97,7 +102,7 @@ export default function AdminOrdersPage() {
         }
     };
 
-    if (authLoading || loading) {
+    if (!isAuthorized || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
