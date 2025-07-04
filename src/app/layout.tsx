@@ -39,13 +39,15 @@ export default function RootLayout({
         <meta name="theme-color" content="#F44336" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="https://placehold.co/192x192.png"></link>
+        <link rel="icon" type="image/png" sizes="192x192" href="https://placehold.co/192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="https://placehold.co/512x512.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet" />
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
-      <body className="font-body antialiased flex flex-col min-h-screen bg-background">
+      <body className="font-body antialiased flex flex-col min-h-screen bg-background overflow-x-hidden">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
