@@ -4,8 +4,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, FileText, Package, Truck, CheckCircle, XCircle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, FileText, Package, Truck, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -24,6 +24,7 @@ export default function UserOrdersPage() {
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
     const [isCancelling, setIsCancelling] = useState(false);
 
@@ -41,6 +42,7 @@ export default function UserOrdersPage() {
             };
 
             setLoading(true);
+            setError(null);
             const ordersRef = ref(database, 'orders');
             const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(user.uid));
             
@@ -55,17 +57,14 @@ export default function UserOrdersPage() {
                 } else {
                     setOrders([]);
                 }
-            } catch (error: any) {
+            } catch (error: any)
+                {
                 console.error('Failed to fetch user orders:', error);
                 let desc = 'An error occurred while fetching your orders.';
                 if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
                     desc = "Could not fetch your orders. This is likely a Firebase configuration issue. For this feature to work, your database needs two things: 1) A security rule that allows users to read their own orders. 2) A database index on the 'userId' field in your 'orders' data. Please check these settings in your Firebase console.";
                 }
-                toast({
-                    variant: 'destructive',
-                    title: 'Failed to fetch orders',
-                    description: desc,
-                });
+                setError(desc);
             }
             setLoading(false);
         }
@@ -73,7 +72,7 @@ export default function UserOrdersPage() {
         if (user) {
             fetchUserOrders();
         }
-    }, [user, toast]);
+    }, [user]);
     
     if (authLoading || loading || !user) {
         return (
@@ -132,9 +131,23 @@ export default function UserOrdersPage() {
                 </p>
             </div>
 
+            {error && (
+                <Card className="border-destructive">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-6 w-6" />
+                            Failed to fetch orders
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-destructive">{error}</p>
+                    </CardContent>
+                </Card>
+            )}
+
             <Card>
                 <CardContent className="p-0">
-                    {orders.length > 0 ? (
+                    {!error && orders.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full">
                             {orders.map((order) => (
                                 <AccordionItem value={order.id} key={order.id}>
@@ -229,9 +242,11 @@ export default function UserOrdersPage() {
                             ))}
                         </Accordion>
                     ) : (
-                        <div className="text-center p-12 text-muted-foreground">
-                            You have not placed any orders yet.
-                        </div>
+                        !error && (
+                            <div className="text-center p-12 text-muted-foreground">
+                                You have not placed any orders yet.
+                            </div>
+                        )
                     )}
                 </CardContent>
             </Card>
