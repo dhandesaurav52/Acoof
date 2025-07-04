@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, Download, LayoutGrid, LogOut } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, Download, LayoutGrid, LogOut, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,6 +121,9 @@ export function Header() {
          <DropdownMenuItem asChild>
           <Link href="/dashboard/user/wishlist"><Heart className="mr-2 h-4 w-4" />Wishlist</Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
       </DropdownMenuContent>
@@ -233,6 +236,7 @@ export function Header() {
                          <Link href="/dashboard/user" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><LayoutGrid className="h-5 w-5" />Profile</Link>
                          <Link href="/dashboard/user/orders" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5" />My Orders</Link>
                          <Link href="/dashboard/user/wishlist" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Heart className="h-5 w-5" />Wishlist</Link>
+                         <Link href="/dashboard/settings" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Settings className="h-5 w-5" />Settings</Link>
                          
                          {isAdmin && (
                            <>
@@ -270,5 +274,3 @@ export function Header() {
     </header>
   );
 }
-
-    
