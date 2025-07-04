@@ -2,8 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
 import { Loader2, AlertCircle, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,32 +12,15 @@ import { database } from '@/lib/firebase';
 import { ref, onValue, off, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 
-const ADMIN_EMAIL = "admin@example.com";
-
 export default function AdminOrdersPage() {
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Effect for redirection
+    // The AdminLayout now handles auth checks and redirection.
+    // This page will only render if the user is a confirmed admin.
     useEffect(() => {
-        if (authLoading) return; // Don't do anything while loading
-        if (!user) {
-            router.push('/login');
-        } else if (user.email !== ADMIN_EMAIL) {
-            router.push('/dashboard/user');
-        }
-    }, [user, authLoading, router]);
-
-    // Effect for data fetching, only runs when the user is confirmed to be an admin
-    useEffect(() => {
-        if (authLoading || !user || user.email !== ADMIN_EMAIL) {
-            return;
-        }
-
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -75,7 +56,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [user, authLoading]); // Depend directly on user and auth state
+    }, []);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -101,16 +82,6 @@ export default function AdminOrdersPage() {
         }
     };
     
-    // Render a loading spinner while auth is resolving or if user is not an admin (and is being redirected)
-    if (authLoading || !user || user.email !== ADMIN_EMAIL) {
-        return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    // Render a loading spinner specifically for the data fetching part
     if (loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -119,7 +90,6 @@ export default function AdminOrdersPage() {
         );
     }
     
-    // The main content for the authorized admin
     return (
         <div className="container mx-auto py-12 px-4">
             <div className="max-w-7xl mx-auto space-y-8">

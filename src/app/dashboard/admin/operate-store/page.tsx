@@ -4,11 +4,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useAuth } from '@/hooks/use-auth';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, PlusCircle, UploadCloud, X } from 'lucide-react';
+import { Loader2, PlusCircle, UploadCloud } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -21,8 +20,6 @@ import { categories } from '@/lib/data';
 import { database, storage } from '@/lib/firebase';
 import { ref as dbRef, push, set } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-const ADMIN_EMAIL = "admin@example.com";
 
 const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long"),
@@ -39,7 +36,6 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 export default function AddProductPage() {
-    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,14 +57,7 @@ export default function AddProductPage() {
         setImagePreviews([]);
     }, [watchedImages]);
 
-    useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            router.push('/login');
-        } else if (user.email !== ADMIN_EMAIL) {
-            router.push('/dashboard/user');
-        }
-    }, [user, authLoading, router]);
+    // Auth is now handled by the AdminLayout. This page only renders for admins.
 
     const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
         if (!database || !storage) {
@@ -121,14 +110,6 @@ export default function AddProductPage() {
         }
     };
     
-    if (authLoading || (user && user.email !== ADMIN_EMAIL)) {
-        return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
     return (
         <div className="container mx-auto py-12 px-4">
             <Card className="max-w-4xl mx-auto">

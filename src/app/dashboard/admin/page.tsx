@@ -2,9 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
-import { useProducts } from '@/hooks/use-products';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Users, CreditCard, Loader2, AlertCircle, Package, TrendingUp, LayoutGrid } from 'lucide-react';
 import { ref, get } from 'firebase/database';
@@ -12,7 +9,8 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { database } from '@/lib/firebase';
 import type { OrderItem } from '@/types';
-
+import { useAuth } from '@/hooks/use-auth';
+import { useProducts } from '@/hooks/use-products';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -38,8 +36,7 @@ const categoryChartConfig = {
 
 
 export default function AdminDashboardPage() {
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
+    const { user } = useAuth();
     const { products: allProducts, loading: productsLoading } = useProducts();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
@@ -47,20 +44,11 @@ export default function AdminDashboardPage() {
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // Effect for redirection
+    // The AdminLayout now handles auth checks and redirection.
+    // This page will only render if the user is a confirmed admin.
     useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            router.push('/login');
-        } else if (user.email !== ADMIN_EMAIL) {
-            router.push('/dashboard/user');
-        }
-    }, [user, authLoading, router]);
-
-    // Effect for data fetching
-    useEffect(() => {
-        // Only fetch data if auth is resolved, user is admin, and products are loaded
-        if (authLoading || productsLoading || !user || user.email !== ADMIN_EMAIL) {
+        // Don't fetch data until products are also loaded
+        if (productsLoading || !user) {
             return;
         }
         
@@ -151,18 +139,8 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [user, authLoading, productsLoading, allProducts]);
+    }, [user, productsLoading, allProducts]);
     
-    // Render guard: show loader until auth is resolved and user is verified as admin
-    if (authLoading || !user || user.email !== ADMIN_EMAIL) {
-        return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    // Also show loader while products or admin data are loading
     if (productsLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -171,7 +149,6 @@ export default function AdminDashboardPage() {
         );
     }
     
-    // Main render for authorized admin
     return (
         <div className="container mx-auto py-12 px-4">
             <div className="max-w-7xl mx-auto space-y-8">
