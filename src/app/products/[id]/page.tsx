@@ -290,7 +290,7 @@ export default function ProductDetailPage() {
                         <div className="flex justify-between items-start">
                             <div className="flex-1">
                                 <Badge variant="secondary">{product.category}</Badge>
-                                <h1 className="text-4xl font-bold tracking-tighter mt-2 font-headline">{product.name}</h1>
+                                <h1 className="text-3xl md:text-4xl font-bold tracking-tighter mt-2 font-headline">{product.name}</h1>
                             </div>
                              <Button
                                 size="icon"
@@ -302,7 +302,7 @@ export default function ProductDetailPage() {
                                 <Heart className={cn("h-6 w-6", isFavorited && "fill-primary text-primary")} />
                             </Button>
                         </div>
-                        <p className="text-3xl font-semibold text-primary mt-4">₹{product.price.toFixed(2)}</p>
+                        <p className="text-2xl md:text-3xl font-semibold text-primary mt-4">₹{product.price.toFixed(2)}</p>
                         <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                             <div className="flex items-center gap-0.5">
                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />

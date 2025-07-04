@@ -78,6 +78,12 @@ export function Header() {
           {link.label}
         </Link>
       ))}
+      {isMounted && installPromptEvent && (
+        <button onClick={handleInstallClick} className={cn("transition-colors hover:text-primary flex items-center gap-2", className?.includes('flex-col') ? '' : 'text-foreground/80')}>
+            <Download className="h-4 w-4" />
+            <span>Install App</span>
+        </button>
+      )}
       {isAdmin && (
          <Link
             href="/dashboard/admin/operate-store"
@@ -145,13 +151,6 @@ export function Header() {
     </DropdownMenu>
   );
 
-  const InstallButton = () => (
-    <Button variant="outline" size="sm" onClick={triggerInstallPrompt}>
-      <Download className="mr-2 h-4 w-4" />
-      Install App
-    </Button>
-  );
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container flex h-20 items-center">
@@ -161,7 +160,6 @@ export function Header() {
 
         <div className="hidden md:flex flex-1 items-center justify-start gap-6">
           <NavLinks />
-          {isMounted && installPromptEvent && <InstallButton />}
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-2">
@@ -234,26 +232,20 @@ export function Header() {
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
                     <Logo className="h-10 w-auto" />
                   </Link>
-                  <div className="flex flex-col items-start gap-4 text-lg">
-                    <NavLinks className="flex-col items-start gap-4 text-lg"/>
-                    {isMounted && installPromptEvent && (
-                      <button onClick={handleInstallClick} className="text-lg flex items-center gap-2">
-                          <Download className="h-5 w-5" />
-                          <span>Install App</span>
-                      </button>
-                    )}
+                  <div className="flex flex-col items-start gap-4 text-base">
+                    <NavLinks className="flex-col items-start gap-4 text-base"/>
                   </div>
                    <div className="mt-8 pt-4 border-t">
                     {!isMounted || cartLoading ? (
                       <Skeleton className="h-8 w-24" />
                     ) : (
-                      <Link href="/cart" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                      <Link href="/cart" className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
                           <ShoppingCart className="h-5 w-5" />
                           <span>Cart ({cartCount})</span>
                       </Link>
                     )}
                   </div>
-                  <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
+                  <div className="flex flex-col gap-4 mt-4 pt-4 border-t text-base">
                      {!isMounted || authLoading ? (
                         <div className="space-y-4">
                           <Skeleton className="h-8 w-3/4" />
@@ -263,34 +255,34 @@ export function Header() {
                        <>
                         {isAdmin ? (
                           <>
-                            <Link href="/dashboard/admin" className="text-lg" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>
-                            <Link href="/dashboard/admin" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><ShoppingBag className="h-5 w-5"/>Manage Products</Link>
-                            <Link href="/dashboard/admin/orders" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5"/>Manage Orders</Link>
-                            <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Admin profile</Link>
+                            <Link href="/dashboard/admin" className="text-base" onClick={() => setIsMenuOpen(false)}><Shield className="mr-2 h-4 w-4 inline-block"/>Admin Dashboard</Link>
+                            <Link href="/dashboard/admin" className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><ShoppingBag className="h-5 w-5"/>Manage Products</Link>
+                            <Link href="/dashboard/admin/orders" className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5"/>Manage Orders</Link>
+                            <Link href="/dashboard/user" className="text-base" onClick={() => setIsMenuOpen(false)}>Admin profile</Link>
                           </>
                         ) : (
                           <>
-                            <Link href="/dashboard/user" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
-                            <Link href="/dashboard/user/orders" className="text-lg" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
+                            <Link href="/dashboard/user" className="text-base" onClick={() => setIsMenuOpen(false)}>Your profile</Link>
+                            <Link href="/dashboard/user/orders" className="text-base" onClick={() => setIsMenuOpen(false)}>Your orders</Link>
                             {!isMounted || wishlistLoading ? (
                               <Skeleton className="h-8 w-32" />
                             ): (
-                              <Link href="/dashboard/user/wishlist" className="text-lg flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                              <Link href="/dashboard/user/wishlist" className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
                                 Wishlist ({wishlist.length})
                               </Link>
                             )}
                           </>
                         )}
-                        <Link href="/dashboard/notifications" className="text-lg" onClick={() => setIsMenuOpen(false)}>Notifications</Link>
-                        <Link href="/dashboard/settings" className="text-lg" onClick={() => setIsMenuOpen(false)}>Settings</Link>
-                        <button onClick={handleLogout} className="text-lg text-left">Logout</button>
+                        <Link href="/dashboard/notifications" className="text-base" onClick={() => setIsMenuOpen(false)}>Notifications</Link>
+                        <Link href="/dashboard/settings" className="text-base" onClick={() => setIsMenuOpen(false)}>Settings</Link>
+                        <button onClick={handleLogout} className="text-base text-left">Logout</button>
                        </>
                      ) : (
                        <>
-                        <Button variant="ghost" asChild className="w-full justify-start text-lg">
+                        <Button variant="ghost" asChild className="w-full justify-start text-base">
                             <Link href="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
                         </Button>
-                        <Button asChild className="w-full justify-start text-lg">
+                        <Button asChild className="w-full justify-start text-base">
                             <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
                         </Button>
                        </>

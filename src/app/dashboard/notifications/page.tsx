@@ -59,7 +59,7 @@ export default function NotificationsPage() {
     <div className="container mx-auto py-12 px-4">
         <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-left">
-                <h1 className="text-4xl font-bold tracking-tighter font-headline">{pageTitle}</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">{pageTitle}</h1>
                 <p className="text-muted-foreground mt-2">
                     {pageDescription}
                 </p>

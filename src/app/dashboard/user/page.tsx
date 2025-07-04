@@ -259,7 +259,7 @@ export default function UserDashboardPage() {
                   />
               </div>
               <div className="flex-grow">
-                  <CardTitle className="text-3xl">{userProfile.name}</CardTitle>
+                  <CardTitle className="text-2xl sm:text-3xl">{userProfile.name}</CardTitle>
                   <CardDescription>View and manage your personal information.</CardDescription>
               </div>
               <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if(open) setEditedUser(userProfile); setIsEditDialogOpen(open); }}>
