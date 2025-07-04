@@ -86,111 +86,112 @@ function AdminOrdersView() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+            <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
     
-    return (
-        <div className="container mx-auto py-12 px-4">
+    if (error) {
+        return (
             <div className="max-w-7xl mx-auto space-y-8">
-                <div className="text-left">
-                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Manage Orders</h1>
-                    <p className="text-muted-foreground mt-2">
-                        View and update the status of all customer orders.
-                    </p>
-                </div>
-
-                {error && (
-                    <Card className="border-destructive">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-destructive">
-                                <AlertCircle className="h-6 w-6" />
-                                Data Fetching Error
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-destructive">{error}</p>
-                        </CardContent>
-                    </Card>
-                )}
-
-                <Card>
+                <Card className="border-destructive">
                     <CardHeader>
-                        <CardTitle>All Orders</CardTitle>
-                        <CardDescription>A list of all orders placed in your store.</CardDescription>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-6 w-6" />
+                            Data Fetching Error
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
-                         <div className="border rounded-lg overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Order ID</TableHead>
-                                        <TableHead>Customer</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead className="text-right">Total</TableHead>
-                                        <TableHead className="text-center">Status</TableHead>
-                                        <TableHead className="text-center">Action</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {orders.length > 0 ? orders.map((order) => (
-                                        <TableRow key={order.id}>
-                                            <TableCell>
-                                                <div className="font-medium truncate max-w-[120px]">{order.id}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="font-medium">{order.user}</div>
-                                                <div className="text-xs text-muted-foreground">{order.userEmail}</div>
-                                            </TableCell>
-                                            <TableCell>{order.date}</TableCell>
-                                            <TableCell className="text-right">₹{order.total.toFixed(2)}</TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge
-                                                    variant={
-                                                        order.status === 'Pending' ? 'destructive' :
-                                                        order.status === 'Shipped' ? 'default' :
-                                                        order.status === 'Delivered' ? 'secondary' :
-                                                        'outline'
-                                                    }
-                                                >
-                                                    {order.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Select
-                                                    value={order.status}
-                                                    onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}
-                                                >
-                                                    <SelectTrigger className="w-[120px] h-8">
-                                                        <SelectValue placeholder="Update Status" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="Pending">Pending</SelectItem>
-                                                        <SelectItem value="Shipped">Shipped</SelectItem>
-                                                        <SelectItem value="Delivered">Delivered</SelectItem>
-                                                        <SelectItem value="Cancelled">Cancelled</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </TableCell>
-                                        </TableRow>
-                                    )) : (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center h-24">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    <Package className="h-8 w-8 text-muted-foreground" />
-                                                    <span>No orders found.</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                        <p className="text-destructive">{error}</p>
                     </CardContent>
                 </Card>
             </div>
+        );
+    }
+
+    return (
+        <div className="max-w-7xl mx-auto space-y-8">
+            <div className="text-left">
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Manage Orders</h1>
+                <p className="text-muted-foreground mt-2">
+                    View and update the status of all customer orders.
+                </p>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>All Orders</CardTitle>
+                    <CardDescription>A list of all orders placed in your store.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Order ID</TableHead>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Total</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
+                                    <TableHead className="text-center">Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {orders.length > 0 ? orders.map((order) => (
+                                    <TableRow key={order.id}>
+                                        <TableCell>
+                                            <div className="font-medium truncate max-w-[120px]">{order.id}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="font-medium">{order.user}</div>
+                                            <div className="text-xs text-muted-foreground">{order.userEmail}</div>
+                                        </TableCell>
+                                        <TableCell>{order.date}</TableCell>
+                                        <TableCell className="text-right">₹{order.total.toFixed(2)}</TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge
+                                                variant={
+                                                    order.status === 'Pending' ? 'destructive' :
+                                                    order.status === 'Shipped' ? 'default' :
+                                                    order.status === 'Delivered' ? 'secondary' :
+                                                    'outline'
+                                                }
+                                            >
+                                                {order.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Select
+                                                value={order.status}
+                                                onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}
+                                            >
+                                                <SelectTrigger className="w-[120px] h-8">
+                                                    <SelectValue placeholder="Update Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Pending">Pending</SelectItem>
+                                                    <SelectItem value="Shipped">Shipped</SelectItem>
+                                                    <SelectItem value="Delivered">Delivered</SelectItem>
+                                                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-24">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Package className="h-8 w-8 text-muted-foreground" />
+                                                <span>No orders found.</span>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
@@ -216,5 +217,9 @@ export default function AdminOrdersPage() {
         );
     }
     
-    return <AdminOrdersView />;
+    return (
+        <div className="container mx-auto py-12 px-4">
+            <AdminOrdersView />
+        </div>
+    );
 }

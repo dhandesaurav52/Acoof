@@ -174,10 +174,34 @@ function AdminDashboardView() {
     
     const isLoading = loadingStats || productsLoading;
 
-    if (isLoading && !error) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
+    if (error) {
+         return (
+            <div className="max-w-7xl mx-auto space-y-8">
+                <div className="text-left">
+                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Admin Dashboard</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Here's an overview of your store.
+                    </p>
+                </div>
+                <Card className="border-destructive">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-6 w-6" />
+                            Dashboard Error
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-destructive">{error}</p>
+                    </CardContent>
+                </Card>
             </div>
         );
     }
@@ -190,20 +214,6 @@ function AdminDashboardView() {
                     Here's an overview of your store.
                 </p>
             </div>
-
-            {error && (
-                <Card className="border-destructive">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-destructive">
-                            <AlertCircle className="h-6 w-6" />
-                            Dashboard Error
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-destructive">{error}</p>
-                    </CardContent>
-                </Card>
-            )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -254,11 +264,7 @@ function AdminDashboardView() {
                         <CardDescription>Number of sales for the last 12 months.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loadingStats ? (
-                            <div className="flex items-center justify-center h-[300px]">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : salesData.some(d => d.sales > 0) ? (
+                        {salesData.some(d => d.sales > 0) ? (
                             <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
                                 <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
                                     <CartesianGrid vertical={false} />
@@ -301,11 +307,7 @@ function AdminDashboardView() {
                         <CardDescription>Total items sold per category.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loadingStats ? (
-                            <div className="flex items-center justify-center h-[300px]">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : categorySalesData.length > 0 ? (
+                        {categorySalesData.length > 0 ? (
                             <ChartContainer config={categoryChartConfig} className="h-[300px] w-full">
                                 <BarChart data={categorySalesData} layout="vertical" margin={{ left: 10, right: 20 }}>
                                     <CartesianGrid horizontal={false} />
