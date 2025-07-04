@@ -47,9 +47,6 @@ export function Header() {
   const { installPromptEvent, triggerInstallPrompt } = useInstallPrompt();
   const [isMounted, setIsMounted] = useState(false);
   
-  // Hide header on dashboard pages
-  const isDashboardPage = pathname.startsWith('/dashboard');
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -99,18 +96,36 @@ export function Header() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-         <DropdownMenuItem asChild>
-              <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/user"}><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</Link>
+        {isAdmin && (
+          <>
+            <DropdownMenuLabel>Admin</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/admin"><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/admin/orders"><Package className="mr-2 h-4 w-4" />Orders</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/admin/operate-store"><ShoppingBag className="mr-2 h-4 w-4" />Store</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user"><LayoutGrid className="mr-2 h-4 w-4" />Profile</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/user/orders"><Package className="mr-2 h-4 w-4" />My Orders</Link>
+        </DropdownMenuItem>
+         <DropdownMenuItem asChild>
+          <Link href="/dashboard/user/wishlist"><Heart className="mr-2 h-4 w-4" />Wishlist</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
+        <DropdownMenuItem onSelect={handleLogout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
-
-  if (isDashboardPage && isMounted) {
-    return null;
-  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
@@ -214,14 +229,26 @@ export function Header() {
                         </div>
                      ) : user ? (
                        <>
-                        <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/user"} className="text-base flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                          <LayoutGrid className="h-5 w-5"/>
-                          Dashboard
-                        </Link>
-                        <button onClick={handleLogout} className="text-base text-left flex items-center gap-2">
-                          <LogOut className="h-5 w-5"/>
-                          Logout
-                        </button>
+                         <DropdownMenuLabel className="px-0 font-normal">My Account</DropdownMenuLabel>
+                         <Link href="/dashboard/user" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><LayoutGrid className="h-5 w-5" />Profile</Link>
+                         <Link href="/dashboard/user/orders" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5" />My Orders</Link>
+                         <Link href="/dashboard/user/wishlist" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Heart className="h-5 w-5" />Wishlist</Link>
+                         
+                         {isAdmin && (
+                           <>
+                             <DropdownMenuLabel className="px-0 font-normal pt-2 border-t">Admin</DropdownMenuLabel>
+                             <Link href="/dashboard/admin" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><LayoutGrid className="h-5 w-5" />Dashboard</Link>
+                             <Link href="/dashboard/admin/orders" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><Package className="h-5 w-5" />Orders</Link>
+                             <Link href="/dashboard/admin/operate-store" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}><ShoppingBag className="h-5 w-5" />Store</Link>
+                           </>
+                         )}
+
+                         <div className="mt-2 pt-2 border-t">
+                            <button onClick={handleLogout} className="text-left w-full flex items-center gap-2">
+                                <LogOut className="h-5 w-5"/>
+                                Logout
+                            </button>
+                         </div>
                        </>
                      ) : (
                        <>
@@ -243,3 +270,5 @@ export function Header() {
     </header>
   );
 }
+
+    
