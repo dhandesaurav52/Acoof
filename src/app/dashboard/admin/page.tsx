@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useProducts } from '@/hooks/use-products';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Users, CreditCard, Loader2, AlertCircle, Package, TrendingUp, LayoutGrid } from 'lucide-react';
-import { ref, get, type DataSnapshot } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { database } from '@/lib/firebase';
@@ -36,21 +36,32 @@ const categoryChartConfig = {
     },
 } satisfies ChartConfig;
 
-function AdminDashboardView() {
+
+export default function AdminDashboardPage() {
+    const { user, loading: authLoading } = useAuth();
+    const router = useRouter();
     const { products: allProducts, loading: productsLoading } = useProducts();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
     const [categorySalesData, setCategorySalesData] = useState<{ name: string; sales: number }[]>([]);
-    const [loadingStats, setLoadingStats] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (authLoading || productsLoading) return;
+        
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+        if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
+            return;
+        }
+
         async function fetchAdminData() {
-            if (productsLoading) return;
-
-            setLoadingStats(true);
             setError(null);
-
+            
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
@@ -71,8 +82,6 @@ function AdminDashboardView() {
                         const totalUsers = Object.keys(usersData).length;
                         const hasAdmin = Object.values(usersData).some((u: any) => u && typeof u === 'object' && u.email === ADMIN_EMAIL);
                         usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
-                    } else {
-                        console.warn("Expected '/users' to be an object, but it was not. Data:", usersData);
                     }
                 }
                 
@@ -82,53 +91,29 @@ function AdminDashboardView() {
                     const ordersData = ordersSnapshot.val();
                     if (typeof ordersData === 'object' && ordersData !== null) {
                         const deliveredOrders = Object.values(ordersData).filter((order: any) => order?.status === 'Delivered');
-
                         salesCount = deliveredOrders.length;
-                        
-                        totalRevenue = deliveredOrders.reduce((acc: number, order: any) => {
-                            if (order && typeof order.total === 'number') {
-                                return acc + order.total;
-                            }
-                            return acc;
-                        }, 0);
+                        totalRevenue = deliveredOrders.reduce((acc: number, order: any) => acc + (order?.total || 0), 0);
 
-                        // Process data for sales chart
                         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                        
                         const monthlySalesData = Array.from({ length: 12 }, (_, i) => {
                             const d = new Date();
                             d.setMonth(d.getMonth() - i);
-                            return {
-                                key: `${d.getFullYear()}-${d.getMonth()}`,
-                                name: monthNames[d.getMonth()],
-                                sales: 0,
-                            };
+                            return { key: `${d.getFullYear()}-${d.getMonth()}`, name: monthNames[d.getMonth()], sales: 0 };
                         });
 
                         deliveredOrders.forEach((order: any) => {
                             if (!order.date) return;
-                            try {
-                                const orderDate = new Date(order.date);
-                                if (isNaN(orderDate.getTime())) return;
-                                
-                                const orderKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
-                                const monthData = monthlySalesData.find(d => d.key === orderKey);
-                                
-                                if (monthData) {
-                                    monthData.sales++;
-                                }
-                            } catch (e) {
-                                console.warn(`Could not parse date for order`);
-                            }
+                            const orderDate = new Date(order.date);
+                            if (isNaN(orderDate.getTime())) return;
+                            const orderKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
+                            const monthData = monthlySalesData.find(d => d.key === orderKey);
+                            if (monthData) monthData.sales++;
                         });
-                        
                         setSalesData(monthlySalesData.reverse().map(d => ({ name: d.name, sales: d.sales })));
                         
                         const salesByCategory: { [category: string]: number } = {};
-    
                         deliveredOrders.forEach((order: any) => {
                             if (!order.items || !Array.isArray(order.items)) return;
-
                             order.items.forEach((item: OrderItem) => {
                                 if (!item.productId) return;
                                 const product = allProducts.find(p => p.id === item.productId);
@@ -143,19 +128,11 @@ function AdminDashboardView() {
                             name: category,
                             sales: salesByCategory[category]
                         })).sort((a, b) => b.sales - a.sales); 
-
                         setCategorySalesData(categoryData);
-
-                    } else {
-                        console.warn("Expected '/orders' to be an object, but it was not. Data:", ordersData);
                     }
                 }
 
-                setStats({
-                    totalRevenue,
-                    salesCount,
-                    usersCount,
-                });
+                setStats({ totalRevenue, salesCount, usersCount });
 
             } catch (e: any) {
                 console.error("Failed to fetch admin data:", e);
@@ -165,16 +142,14 @@ function AdminDashboardView() {
                     setError("An error occurred while processing the dashboard data.");
                 }
             } finally {
-                setLoadingStats(false);
+                setLoading(false);
             }
         }
 
         fetchAdminData();
-    }, [allProducts, productsLoading]);
+    }, [user, authLoading, productsLoading, router, allProducts]);
     
-    const isLoading = loadingStats || productsLoading;
-
-    if (isLoading) {
+    if (loading || authLoading || productsLoading) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -182,8 +157,8 @@ function AdminDashboardView() {
         );
     }
     
-    if (error) {
-         return (
+    return (
+        <div className="container mx-auto py-12 px-4">
             <div className="max-w-7xl mx-auto space-y-8">
                 <div className="text-left">
                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Admin Dashboard</h1>
@@ -191,189 +166,155 @@ function AdminDashboardView() {
                         Here's an overview of your store.
                     </p>
                 </div>
-                <Card className="border-destructive">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-destructive">
-                            <AlertCircle className="h-6 w-6" />
-                            Dashboard Error
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-destructive">{error}</p>
-                    </CardContent>
-                </Card>
+
+                {error ? (
+                    <Card className="border-destructive">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-destructive">
+                                <AlertCircle className="h-6 w-6" />
+                                Dashboard Error
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-destructive">{error}</p>
+                        </CardContent>
+                    </Card>
+                ) : (
+                <>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</div>
+                            </CardContent>
+                        </Card>
+                            <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Sales</CardTitle>
+                                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">+{stats?.salesCount || 0}</div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Unique Customers</CardTitle>
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats?.usersCount || 0}</div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{allProducts.length}</div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <TrendingUp className="h-6 w-6" />
+                                    Sales Overview
+                                </CardTitle>
+                                <CardDescription>Number of sales for the last 12 months.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {salesData.some(d => d.sales > 0) ? (
+                                    <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
+                                        <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
+                                            <CartesianGrid vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                tickLine={false}
+                                                tickMargin={10}
+                                                axisLine={false}
+                                                stroke="hsl(var(--muted-foreground))"
+                                                fontSize={12}
+                                            />
+                                            <YAxis
+                                                stroke="hsl(var(--muted-foreground))"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                allowDecimals={false}
+                                            />
+                                            <Tooltip
+                                                cursor={false}
+                                                content={<ChartTooltipContent indicator="dot" />}
+                                            />
+                                            <Bar dataKey="sales" fill="hsl(var(--primary))" radius={4} />
+                                        </BarChart>
+                                    </ChartContainer>
+                                ) : (
+                                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                        No sales data available for the last 12 months.
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <LayoutGrid className="h-6 w-6" />
+                                    Top Selling Categories
+                                </CardTitle>
+                                <CardDescription>Total items sold per category.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {categorySalesData.length > 0 ? (
+                                    <ChartContainer config={categoryChartConfig} className="h-[300px] w-full">
+                                        <BarChart data={categorySalesData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                                            <CartesianGrid horizontal={false} />
+                                            <YAxis
+                                                dataKey="name"
+                                                type="category"
+                                                tickLine={false}
+                                                tickMargin={10}
+                                                axisLine={false}
+                                                stroke="hsl(var(--muted-foreground))"
+                                                fontSize={12}
+                                                width={80}
+                                                interval={0}
+                                            />
+                                            <XAxis
+                                                dataKey="sales"
+                                                type="number"
+                                                stroke="hsl(var(--muted-foreground))"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                allowDecimals={false}
+                                            />
+                                            <Tooltip
+                                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                                content={<ChartTooltipContent indicator="dot" />}
+                                            />
+                                            <Bar dataKey="sales" layout="vertical" fill="hsl(var(--primary))" radius={4} />
+                                        </BarChart>
+                                    </ChartContainer>
+                                ) : (
+                                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                        No category sales data available.
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </>
+                )}
             </div>
-        );
-    }
-
-    return (
-        <div className="max-w-7xl mx-auto space-y-8">
-            <div className="text-left">
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Admin Dashboard</h1>
-                <p className="text-muted-foreground mt-2">
-                    Here's an overview of your store.
-                </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</div>
-                    </CardContent>
-                </Card>
-                    <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">+{stats?.salesCount || 0}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Unique Customers</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats?.usersCount || 0}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{allProducts.length}</div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid gap-8 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-6 w-6" />
-                            Sales Overview
-                        </CardTitle>
-                        <CardDescription>Number of sales for the last 12 months.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {salesData.some(d => d.sales > 0) ? (
-                            <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
-                                <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
-                                    <CartesianGrid vertical={false} />
-                                    <XAxis
-                                        dataKey="name"
-                                        tickLine={false}
-                                        tickMargin={10}
-                                        axisLine={false}
-                                        stroke="hsl(var(--muted-foreground))"
-                                        fontSize={12}
-                                    />
-                                    <YAxis
-                                        stroke="hsl(var(--muted-foreground))"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        allowDecimals={false}
-                                    />
-                                    <Tooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent indicator="dot" />}
-                                    />
-                                    <Bar dataKey="sales" fill="hsl(var(--primary))" radius={4} />
-                                </BarChart>
-                            </ChartContainer>
-                        ) : (
-                            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                                No sales data available for the last 12 months.
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <LayoutGrid className="h-6 w-6" />
-                            Top Selling Categories
-                        </CardTitle>
-                        <CardDescription>Total items sold per category.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {categorySalesData.length > 0 ? (
-                            <ChartContainer config={categoryChartConfig} className="h-[300px] w-full">
-                                <BarChart data={categorySalesData} layout="vertical" margin={{ left: 10, right: 20 }}>
-                                    <CartesianGrid horizontal={false} />
-                                    <YAxis
-                                        dataKey="name"
-                                        type="category"
-                                        tickLine={false}
-                                        tickMargin={10}
-                                        axisLine={false}
-                                        stroke="hsl(var(--muted-foreground))"
-                                        fontSize={12}
-                                        width={80}
-                                        interval={0}
-                                    />
-                                    <XAxis
-                                        dataKey="sales"
-                                        type="number"
-                                        stroke="hsl(var(--muted-foreground))"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        allowDecimals={false}
-                                    />
-                                    <Tooltip
-                                        cursor={{ fill: 'hsl(var(--muted))' }}
-                                        content={<ChartTooltipContent indicator="dot" />}
-                                    />
-                                    <Bar dataKey="sales" layout="vertical" fill="hsl(var(--primary))" radius={4} />
-                                </BarChart>
-                            </ChartContainer>
-                        ) : (
-                            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                                No category sales data available.
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
-}
-
-export default function AdminDashboardPage() {
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            router.push('/login');
-        } else if (user.email !== ADMIN_EMAIL) {
-            router.push('/dashboard/user');
-        }
-    }, [user, authLoading, router]);
-    
-    if (authLoading || !user || user.email !== ADMIN_EMAIL) {
-        return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    return (
-        <div className="container mx-auto py-12 px-4">
-            <AdminDashboardView />
         </div>
     );
 }
