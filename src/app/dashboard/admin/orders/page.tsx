@@ -23,34 +23,23 @@ export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [authStatus, setAuthStatus] = useState<'loading' | 'unauthorized' | 'authorized'>('loading');
 
-    // Stage 1: Authorize User
+    // Effect for redirection
     useEffect(() => {
-        if (authLoading) {
-            setAuthStatus('loading');
-            return;
-        }
+        if (authLoading) return; // Don't do anything while loading
         if (!user) {
-            setAuthStatus('unauthorized');
             router.push('/login');
-            return;
-        }
-        if (user.email !== ADMIN_EMAIL) {
-            setAuthStatus('unauthorized');
+        } else if (user.email !== ADMIN_EMAIL) {
             router.push('/dashboard/user');
-            return;
         }
-        setAuthStatus('authorized');
     }, [user, authLoading, router]);
 
-    // Stage 2: Fetch Data (only if authorized)
+    // Effect for data fetching, only runs when the user is confirmed to be an admin
     useEffect(() => {
-        if (authStatus !== 'authorized') {
-            setLoadingData(false);
+        if (authLoading || !user || user.email !== ADMIN_EMAIL) {
             return;
         }
-        
+
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -82,11 +71,11 @@ export default function AdminOrdersPage() {
 
         // Cleanup function for the listener
         return () => {
-            if (database) {
+            if (database && ordersRef) {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [authStatus]);
+    }, [user, authLoading]); // Depend directly on user and auth state
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -112,7 +101,8 @@ export default function AdminOrdersPage() {
         }
     };
     
-    if (authStatus !== 'authorized') {
+    // Render a loading spinner while auth is resolving or if user is not an admin (and is being redirected)
+    if (authLoading || !user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -120,6 +110,7 @@ export default function AdminOrdersPage() {
         );
     }
     
+    // Render a loading spinner specifically for the data fetching part
     if (loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -127,7 +118,8 @@ export default function AdminOrdersPage() {
             </div>
         );
     }
-
+    
+    // The main content for the authorized admin
     return (
         <div className="container mx-auto py-12 px-4">
             <div className="max-w-7xl mx-auto space-y-8">

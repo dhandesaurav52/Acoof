@@ -46,31 +46,21 @@ export default function AdminDashboardPage() {
     const [categorySalesData, setCategorySalesData] = useState<{ name: string; sales: number }[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [authStatus, setAuthStatus] = useState<'loading' | 'unauthorized' | 'authorized'>('loading');
-
-    // Stage 1: Authorize User
+    
+    // Effect for redirection
     useEffect(() => {
-        if (authLoading) {
-            setAuthStatus('loading');
-            return;
-        }
+        if (authLoading) return;
         if (!user) {
-            setAuthStatus('unauthorized');
             router.push('/login');
-            return;
-        }
-        if (user.email !== ADMIN_EMAIL) {
-            setAuthStatus('unauthorized');
+        } else if (user.email !== ADMIN_EMAIL) {
             router.push('/dashboard/user');
-            return;
         }
-        setAuthStatus('authorized');
     }, [user, authLoading, router]);
 
-    // Stage 2: Fetch Data (only if authorized)
+    // Effect for data fetching
     useEffect(() => {
-        if (authStatus !== 'authorized' || productsLoading) {
-            setLoadingData(false);
+        // Only fetch data if auth is resolved, user is admin, and products are loaded
+        if (authLoading || productsLoading || !user || user.email !== ADMIN_EMAIL) {
             return;
         }
         
@@ -147,7 +137,7 @@ export default function AdminDashboardPage() {
                 }
 
                 setStats({ totalRevenue, salesCount, usersCount });
-
+                setError(null);
             } catch (e: any) {
                 console.error("Failed to fetch admin data:", e);
                 if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
@@ -161,16 +151,18 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [authStatus, productsLoading, allProducts]);
+    }, [user, authLoading, productsLoading, allProducts]);
     
-    if (authStatus !== 'authorized') {
+    // Render guard: show loader until auth is resolved and user is verified as admin
+    if (authLoading || !user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
-
+    
+    // Also show loader while products or admin data are loading
     if (productsLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -179,6 +171,7 @@ export default function AdminDashboardPage() {
         );
     }
     
+    // Main render for authorized admin
     return (
         <div className="container mx-auto py-12 px-4">
             <div className="max-w-7xl mx-auto space-y-8">
