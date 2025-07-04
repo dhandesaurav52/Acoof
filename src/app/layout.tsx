@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { InstallPromptProvider } from '@/hooks/use-install-prompt';
 import { IosInstallBanner } from '@/components/IosInstallBanner';
 import { Inter, Montserrat } from 'next/font/google';
+import Script from 'next/script';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -57,9 +58,13 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="https://placehold.co/192x192.png"></link>
         <link rel="icon" type="image/png" sizes="192x192" href="https://placehold.co/192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="https://placehold.co/512x512.png" />
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background overflow-x-hidden">
+        <Script
+          id="razorpay-checkout-js"
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="beforeInteractive"
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
