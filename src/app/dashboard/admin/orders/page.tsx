@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import type { Order, OrderStatus } from '@/types';
-import { database } from '@/lib/firebase';
+import { auth, database } from '@/lib/firebase';
 import { ref, onValue, off, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
@@ -78,10 +78,16 @@ export default function AdminOrdersPage() {
                 description: `Order #${orderId} has been updated to ${newStatus}.`
             });
         } catch (error: any) {
-            if (error.code === 'PERMISSION_DENIED') {
-                console.warn("Order update permission denied, likely due to logout.");
-                return;
+            // This is a special check to handle a "race condition" where the user
+            // logs out immediately after changing a status. The update fails with
+            // a permission error, but we don't want to show a confusing error
+            // toast on the login screen. We check the live auth state.
+            if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
+                console.warn("Order update permission denied, user has logged out.");
+                return; // Silently ignore the error
             }
+
+            // If we are here, it's a genuine error.
             console.error("Failed to update order status:", error);
             toast({
                 variant: 'destructive',

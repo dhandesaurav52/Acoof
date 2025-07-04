@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { Order, OrderStatus } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { database } from '@/lib/firebase';
+import { auth, database } from '@/lib/firebase';
 import { ref, get, update } from 'firebase/database';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -119,11 +119,14 @@ export default function UserOrdersPage() {
             );
             toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
         } catch (error: any) {
-            // Silently ignore permission errors, which likely happen if the user logs out
-            // during the cancellation process.
-            if (error.code === 'PERMISSION_DENIED') {
-                console.warn("Order cancellation permission denied, likely due to logout.");
+            // This is a special check to handle a "race condition" where the user
+            // logs out immediately after cancelling. The update fails with a
+            // permission error, but we don't want to show a confusing error
+            // toast on the login screen. We check the live auth state.
+            if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
+                console.warn("Order cancellation permission denied, user has logged out.");
             } else {
+                // If we are here, it's a genuine error.
                 console.error('Failed to cancel order:', error);
                 toast({
                     variant: 'destructive',
