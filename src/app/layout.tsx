@@ -10,18 +10,33 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ProductsProvider } from '@/hooks/use-products';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { CartProvider } from '@/hooks/use-cart';
+import { useEffect } from 'react';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+  }, []);
+
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <title>Acoof</title>
         <meta name="description" content="A new app built in Firebase Studio." />
-        <meta name="theme-color" content="#E53935" />
+        <meta name="theme-color" content="#F44336" />
+        <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/icon-192x192.png"></link>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

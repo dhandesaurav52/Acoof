@@ -1,0 +1,23 @@
+
+{
+  "name": "Acoof",
+  "short_name": "Acoof",
+  "description": "Acoof - Modern men's clothing and style.",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#F44336",
+  "background_color": "#F44336",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}
