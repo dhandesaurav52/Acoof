@@ -1,3 +1,4 @@
+'use client';
 
 import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
