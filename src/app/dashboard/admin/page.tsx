@@ -36,7 +36,7 @@ const categoryChartConfig = {
 
 
 export default function AdminDashboardPage() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { products: allProducts, loading: productsLoading } = useProducts();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
@@ -47,8 +47,11 @@ export default function AdminDashboardPage() {
     // The AdminLayout now handles auth checks and redirection.
     // This page will only render if the user is a confirmed admin.
     useEffect(() => {
-        // Don't fetch data until products are also loaded
-        if (productsLoading || !user) {
+        // This effect now explicitly waits for both auth and products to be loaded.
+        if (authLoading || productsLoading || !user) {
+            if (!authLoading && !productsLoading) {
+                setLoadingData(false);
+            }
             return;
         }
         
@@ -139,9 +142,11 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [user, productsLoading, allProducts]);
+    }, [user, authLoading, productsLoading, allProducts]);
     
-    if (productsLoading || loadingData) {
+    // The AdminLayout handles the primary auth check, but we still show a loader
+    // while waiting for all necessary data (auth, products, and stats).
+    if (authLoading || productsLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -11,9 +11,11 @@ import type { Order, OrderStatus } from '@/types';
 import { database } from '@/lib/firebase';
 import { ref, onValue, off, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function AdminOrdersPage() {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,6 +23,13 @@ export default function AdminOrdersPage() {
     // The AdminLayout now handles auth checks and redirection.
     // This page will only render if the user is a confirmed admin.
     useEffect(() => {
+        // This effect is now dependent on the user object.
+        // It will not run until auth state is resolved and a user is present.
+        if (!user) {
+          setLoadingData(false);
+          return;
+        }
+
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -56,7 +65,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, []);
+    }, [user]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
