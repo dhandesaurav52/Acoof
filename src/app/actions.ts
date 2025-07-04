@@ -116,33 +116,37 @@ export async function clearAllOrders(): Promise<{ success: boolean; error?: stri
         return { success: false, error: 'Firebase is not configured.' };
     }
     try {
+        // Step 1: Delete the primary /orders collection.
+        // This requires admin write permission at '/orders', which the rules grant.
+        const ordersRef = ref(database, 'orders');
+        await remove(ordersRef);
+
+        // Step 2: Delete the order references from each user's profile.
+        // This requires iterating and performing a separate write for each user.
         const usersRef = ref(database, 'users');
         const usersSnapshot = await get(usersRef);
 
-        const updates: { [key: string]: null } = {};
-        
-        // Stage 1: Mark the entire '/orders' node for deletion.
-        updates['/orders'] = null;
-
-        // Stage 2: Mark all '/users/*/orders' nodes for deletion.
         if (usersSnapshot.exists()) {
             const usersData = usersSnapshot.val();
+            const userUpdatePromises = [];
             for (const userId in usersData) {
-                if (usersData[userId].orders) {
-                    updates[`/users/${userId}/orders`] = null;
+                // We only need to delete if the 'orders' node exists for this user.
+                if (usersData[userId] && usersData[userId].orders) {
+                    const userOrdersRef = ref(database, `users/${userId}/orders`);
+                    // This write is to '/users/$uid/orders', which the rules allow for the admin.
+                    userUpdatePromises.push(remove(userOrdersRef));
                 }
             }
+            // Wait for all individual user updates to complete.
+            await Promise.all(userUpdatePromises);
         }
-        
-        // Stage 3: Execute the single atomic multi-path update.
-        await update(ref(database), updates);
 
         return { success: true };
     } catch (error: any) {
         console.error("Failed to clear all orders:", error);
         let errorMessage = 'An unexpected error occurred while clearing orders.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = `Permission Denied: Could not clear all orders. This is a Firebase security rule issue. For this operation to succeed, the admin account must have explicit write permission for the root '/orders' path, for every individual order path ('/orders/$orderId'), AND for each user's orders path ('/users/$uid/orders'). Please check your rules in the Firebase console. The specific path that failed was likely: ${error.message}`;
+            errorMessage = `Permission Denied: Could not clear all orders. Please ensure your Firebase rules grant the admin account write access to both the '/orders' path and to each '/users/$uid/orders' path. The error was: ${error.message}`;
         } else {
              errorMessage = error.message || errorMessage;
         }
