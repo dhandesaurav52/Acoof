@@ -146,9 +146,9 @@ export function Header() {
   );
 
   const InstallButton = () => (
-    <Button variant="ghost" size="icon" onClick={triggerInstallPrompt}>
-      <Download className="h-5 w-5" />
-      <span className="sr-only">Install App</span>
+    <Button variant="outline" size="sm" onClick={triggerInstallPrompt}>
+      <Download className="mr-2 h-4 w-4" />
+      Install App
     </Button>
   );
 
