@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -15,25 +16,18 @@ import { useToast } from '@/hooks/use-toast';
 
 const ADMIN_EMAIL = "admin@example.com";
 
-export default function AdminOrdersPage() {
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
+function AdminOrdersView() {
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    
     useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            router.push('/login');
-        } else if (user.email !== ADMIN_EMAIL) {
-            router.push('/dashboard/user');
+        if (!database) {
+            setError("Firebase is not configured correctly.");
+            setLoading(false);
+            return;
         }
-    }, [user, authLoading, router]);
-
-    useEffect(() => {
-        if (!user || user.email !== ADMIN_EMAIL || !database) return;
 
         const ordersRef = ref(database, 'orders');
         setError(null);
@@ -64,7 +58,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [user]);
+    }, [toast]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -90,7 +84,7 @@ export default function AdminOrdersPage() {
         }
     };
 
-    if (authLoading || loading || (user && user.email !== ADMIN_EMAIL)) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -199,4 +193,28 @@ export default function AdminOrdersPage() {
             </div>
         </div>
     );
+}
+
+export default function AdminOrdersPage() {
+    const { user, loading: authLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            router.push('/login');
+        } else if (user.email !== ADMIN_EMAIL) {
+            router.push('/dashboard/user');
+        }
+    }, [user, authLoading, router]);
+
+    if (authLoading || !user || user.email !== ADMIN_EMAIL) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
+    return <AdminOrdersView />;
 }
