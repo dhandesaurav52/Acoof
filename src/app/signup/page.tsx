@@ -80,7 +80,7 @@ export default function SignupPage() {
         <AuthBackground />
         <Card className="relative z-10 mx-auto max-w-sm w-full bg-card/80 backdrop-blur-sm">
           <CardHeader className="space-y-4 text-center">
-            <Logo className="w-32 h-32 mx-auto" />
+            <Logo width={128} height={39} className="mx-auto" />
             <CardTitle className="text-2xl font-headline">Sign Up</CardTitle>
             <CardDescription>
               Enter your information to create an account

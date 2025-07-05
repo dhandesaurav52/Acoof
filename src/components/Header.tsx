@@ -138,7 +138,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container flex h-20 items-center">
         <Link href="/" className="mr-6 flex items-center">
-          <Logo className="h-10 w-10" />
+          <Logo width={130} height={40} />
         </Link>
 
         <div className="hidden md:flex flex-1 items-center justify-start gap-6">
@@ -213,7 +213,7 @@ export function Header() {
                 </SheetHeader>
                 <div className="p-4">
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
-                    <Logo className="h-10 w-10" />
+                    <Logo width={130} height={40} />
                   </Link>
                   <div className="flex flex-col items-start gap-3 text-base">
                     <NavLinks className="flex-col items-start gap-3 text-base"/>
