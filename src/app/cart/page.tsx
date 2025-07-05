@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, ShoppingBag, Plus, Minus, Loader2, Edit } from 'lucide-react';
+import { Trash2, ShoppingBag, Plus, Minus, Loader2, Edit, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -68,6 +68,7 @@ export default function CartPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isCodProcessing, setIsCodProcessing] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
+    const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
     const [shippingAddressOption, setShippingAddressOption] = useState<'default' | 'new'>('default');
     const [newAddress, setNewAddress] = useState({
@@ -82,15 +83,104 @@ export default function CartPage() {
     }, [newAddress]);
     
     const isCheckoutDisabled = useMemo(() => {
-        if (isProcessing || isCodProcessing) return true;
+        if (isProcessing || isCodProcessing || isFetchingLocation) return true;
         if (shippingAddressOption === 'default') return !user?.address;
         if (shippingAddressOption === 'new') return !isNewAddressValid;
         return true;
-    }, [isProcessing, isCodProcessing, shippingAddressOption, user?.address, isNewAddressValid]);
+    }, [isProcessing, isCodProcessing, shippingAddressOption, user?.address, isNewAddressValid, isFetchingLocation]);
 
     const handleNewAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
         setNewAddress(prev => ({ ...prev, [id]: value }));
+    };
+
+    const handleCurrentLocation = () => {
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (!apiKey) {
+            toast({
+                variant: 'destructive',
+                title: 'Configuration Error',
+                description: 'The Google Maps API key is missing. Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env file.',
+            });
+            return;
+        }
+        if (!navigator.geolocation) {
+          toast({
+            variant: 'destructive',
+            title: 'Geolocation Not Supported',
+            description: 'Your browser does not support this feature.',
+          });
+          return;
+        }
+        setIsFetchingLocation(true);
+        toast({
+          title: 'Fetching Location',
+          description: 'Please grant permission to access your location.',
+        });
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+              const response = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+              );
+              const data = await response.json();
+              if (data.status === 'OK' && data.results[0]) {
+                const address = data.results[0].formatted_address;
+                const addressComponents = data.results[0].address_components;
+                const getAddressComponent = (type: string) => addressComponents.find((c: any) => c.types.includes(type))?.long_name || '';
+                setNewAddress({
+                  address: address,
+                  city: getAddressComponent('locality'),
+                  state: getAddressComponent('administrative_area_level_1'),
+                  pincode: getAddressComponent('postal_code'),
+                });
+                toast({
+                  title: 'Location Updated',
+                  description: 'Your address has been populated.',
+                });
+              } else {
+                  let errorMessage = `Geocoding failed: ${data.status}`;
+                  if (data.error_message) {
+                      errorMessage = `Geocoding API error: "${data.error_message}". Please check your API key and Google Cloud project settings.`;
+                  }
+                  toast({
+                    variant: 'destructive',
+                    title: 'Could Not Fetch Address',
+                    description: errorMessage,
+                  });
+              }
+            } catch (error: any) {
+              toast({
+                variant: 'destructive',
+                title: 'Network Error',
+                description: 'Could not connect to the Geocoding service.',
+              });
+            } finally {
+                setIsFetchingLocation(false);
+            }
+          },
+          (error) => {
+            let message = 'An unknown error occurred.';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                message = 'You denied the request for Geolocation.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                message = 'Location information is unavailable.';
+                break;
+              case error.TIMEOUT:
+                message = 'The request to get user location timed out.';
+                break;
+            }
+            toast({
+              variant: 'destructive',
+              title: 'Geolocation Error',
+              description: message,
+            });
+            setIsFetchingLocation(false);
+          }
+        );
     };
 
     const QuantityControl = ({ itemId, quantity }: { itemId: string, quantity: number }) => (
@@ -454,6 +544,21 @@ export default function CartPage() {
                                                                 <Input id="state" placeholder="State" value={newAddress.state} onChange={handleNewAddressChange} />
                                                             </div>
                                                             <Input id="pincode" placeholder="Pincode" value={newAddress.pincode} onChange={handleNewAddressChange} />
+                                                            <div className="flex justify-end pt-1">
+                                                                <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary" disabled={isFetchingLocation}>
+                                                                    {isFetchingLocation ? (
+                                                                        <>
+                                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                        Fetching...
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                        <MapPin className="mr-2 h-4 w-4" />
+                                                                        Use current location
+                                                                        </>
+                                                                    )}
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>

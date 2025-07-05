@@ -100,7 +100,7 @@ export default function UserDashboardPage() {
         toast({
             variant: 'destructive',
             title: 'Configuration Error',
-            description: 'The Google Maps API key is missing. Please add it to your .env file.',
+            description: 'The Google Maps API key is missing. Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env file.',
         });
         return;
     }
