@@ -94,10 +94,6 @@ export function AdminOrdersManager() {
         const orderRef = ref(database, `orders/${orderId}`);
         try {
             await update(orderRef, { status: newStatus });
-            toast({
-                title: "Status Updated",
-                description: `Order #${orderId} has been updated to ${newStatus}.`
-            });
         } catch (error: any) {
             if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
                 console.warn("Order update permission denied, user may have logged out.");
