@@ -1,29 +1,6 @@
 import * as React from 'react';
 
 export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
-  // Define styles as objects for better readability
-  const logoTextStyle: React.CSSProperties = {
-    fontFamily: "'Montserrat', sans-serif",
-    fontWeight: 900,
-    fontSize: '300px',
-    fill: 'white',
-    letterSpacing: '-0.02em',
-  };
-
-  const swazTextStyle: React.CSSProperties = {
-    fontFamily: "'Montserrat', sans-serif",
-    fontWeight: 600,
-    fontSize: '50px',
-    fill: 'white',
-  };
-  
-  const inTextStyle: React.CSSProperties = {
-    fontFamily: "'Montserrat', sans-serif",
-    fontWeight: 800,
-    fontSize: '110px',
-    fill: 'black',
-  };
-
   return (
     <svg
       viewBox="0 0 1024 538"
@@ -33,15 +10,39 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
     >
       <rect width="1024" height="538" fill="#D83E34" />
 
-      <g style={logoTextStyle}>
+      <g
+        fontFamily="'Montserrat', sans-serif"
+        fontWeight={900}
+        fontSize="300px"
+        fill="white"
+        letterSpacing="-0.02em"
+      >
         <text x="40" y="410">A</text>
         <text x="210" y="410">C</text>
         <text x="700" y="410">F</text>
       </g>
       
-      <text x="265" y="345" style={swazTextStyle}>SWAZ</text>
+      <text
+        x="265"
+        y="345"
+        fontFamily="'Montserrat', sans-serif"
+        fontWeight={600}
+        fontSize="50px"
+        fill="white"
+      >
+        SWAZ
+      </text>
       
-      <text x="830" y="410" style={inTextStyle}>.in</text>
+      <text
+        x="830"
+        y="410"
+        fontFamily="'Montserrat', sans-serif"
+        fontWeight={800}
+        fontSize="110px"
+        fill="black"
+      >
+        .in
+      </text>
 
       <g>
         {/* Bag Body */}
