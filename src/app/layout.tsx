@@ -15,6 +15,7 @@ import { InstallPromptProvider } from '@/hooks/use-install-prompt';
 import { IosInstallBanner } from '@/components/IosInstallBanner';
 import { Inter, Montserrat } from 'next/font/google';
 import Script from 'next/script';
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -35,6 +36,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const showHeaderFooter = !pathname.startsWith('/dashboard');
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -76,9 +79,9 @@ export default function RootLayout({
               <WishlistProvider>
                 <InstallPromptProvider>
                   <CartProvider>
-                    <Header />
+                    {showHeaderFooter && <Header />}
                     <main className="flex-grow">{children}</main>
-                    <Footer />
+                    {showHeaderFooter && <Footer />}
                     <Toaster />
                     <IosInstallBanner />
                   </CartProvider>
