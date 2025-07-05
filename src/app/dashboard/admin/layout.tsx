@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -15,31 +15,40 @@ export default function AdminLayout({
 }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    // Wait until the authentication state is fully loaded
+    // Don't do anything until auth state is resolved.
     if (authLoading) {
       return;
     }
-    // If loading is finished, check the user's status
+
+    // If loading is done and there's no user, redirect to login.
     if (!user) {
       router.replace('/login');
-    } else if (user.email !== ADMIN_EMAIL) {
+      return; // Stop execution
+    }
+
+    // If there is a user, check if they are the admin.
+    if (user.email === ADMIN_EMAIL) {
+      setIsAuthorized(true);
+    } else {
+      // If not an admin, redirect them away.
       router.replace('/dashboard/user');
     }
   }, [user, authLoading, router]);
 
-  // While loading auth state OR if the user is not the verified admin,
-  // show a loader and prevent the child components from rendering.
-  // This is the crucial step that prevents race conditions.
-  if (authLoading || !user || user.email !== ADMIN_EMAIL) {
+  // While we are waiting for authorization, show a loader.
+  // The children (admin pages) will not be rendered until `isAuthorized` is true.
+  // This prevents any data fetching from starting prematurely.
+  if (!isAuthorized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-
-  // Only if the user is fully authenticated as an admin, render the children.
+  
+  // Only when authorized, render the admin page.
   return <>{children}</>;
 }
