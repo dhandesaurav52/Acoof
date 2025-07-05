@@ -10,11 +10,11 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
 
   return (
     <svg
-      viewBox="0 0 280 60"
+      viewBox="0 0 480 60"
       className={className}
       {...props}
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Acoof Logo"
+      aria-label="White Wolf Logo"
     >
       {isMounted && (
         <text
@@ -22,7 +22,7 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
           y="50"
           className="logo-wordmark"
         >
-          ACOOF
+          WHITE WOLF
         </text>
       )}
     </svg>

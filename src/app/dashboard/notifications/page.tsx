@@ -28,7 +28,7 @@ const userNotifications = [
         id: 3,
         icon: Bell,
         color: 'text-blue-500',
-        text: 'Welcome to Acoof! Complete your profile to get personalized recommendations.',
+        text: 'Welcome to White Wolf! Complete your profile to get personalized recommendations.',
         time: '1 week ago',
       },
 ];

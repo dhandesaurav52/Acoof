@@ -16,7 +16,7 @@ export function LocationMap({ position }: LocationMapProps) {
             <Map
                 defaultCenter={position}
                 defaultZoom={14}
-                mapId="acoof-user-location-map"
+                mapId="whitewolf-user-location-map"
                 className="w-full h-full"
             >
                 <AdvancedMarker position={position} />

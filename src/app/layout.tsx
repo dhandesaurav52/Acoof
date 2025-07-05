@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${montserrat.variable} h-full`} suppressHydrationWarning>
       <head>
-        <title>Acoof</title>
+        <title>White Wolf</title>
         <meta name="description" content="A new app built in Firebase Studio." />
         <meta name="theme-color" content="#F44336" />
         <link rel="manifest" href="/manifest.webmanifest" />

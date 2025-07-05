@@ -26,7 +26,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const { user, loading: authLoading } = useAuth();
 
     const getCartKey = useCallback((user: any) => {
-        return user ? `acoof-cart-${user.uid}` : 'acoof-cart-guest';
+        return user ? `whitewolf-cart-${user.uid}` : 'whitewolf-cart-guest';
     }, []);
 
     // Effect to load cart from localStorage on initial load and when user changes
@@ -40,7 +40,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         try {
             // Handle user login: merge guest cart with user cart
             if (user) {
-                const guestCartKey = 'acoof-cart-guest';
+                const guestCartKey = 'whitewolf-cart-guest';
                 const guestCartRaw = localStorage.getItem(guestCartKey);
                 const guestCart: CartItem[] = guestCartRaw ? JSON.parse(guestCartRaw) : [];
 
