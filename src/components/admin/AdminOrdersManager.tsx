@@ -16,6 +16,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
+const ADMIN_EMAIL = "admin@example.com";
+
 export function AdminOrdersManager() {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
@@ -25,15 +27,20 @@ export function AdminOrdersManager() {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        // This is the explicit guard. Do not fetch data until auth is resolved and we have a user.
+        // Guard 1: Wait until authentication is resolved.
         if (authLoading) {
             return;
         }
-        if (!user) { // If auth is done but there's no user, stop. The layout will redirect.
+
+        // Guard 2: If auth is done, but the user is not the admin, stop immediately.
+        // The AdminLayout will handle the redirect. This prevents any data fetch attempt.
+        if (!user || user.email !== ADMIN_EMAIL) {
             setLoadingData(false);
             return;
         }
 
+        // At this point, we are certain the user is an authenticated admin.
+        // It is now safe to set up the Firebase listener.
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -56,13 +63,14 @@ export function AdminOrdersManager() {
         }, (err: any) => {
             console.error("Firebase read failed: ", err);
             if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
-                setError("Permission Denied: Could not fetch orders. Please ensure your Firebase rules grant admin read access to '/orders'.");
+                setError("Permission Denied: Could not fetch orders. Please check that your Firebase Database rules grant read access to the '/orders' path for the admin email.");
             } else {
                 setError("An error occurred while fetching orders data.");
             }
             setLoadingData(false);
         });
 
+        // Cleanup: remove the listener when the component unmounts.
         return () => {
             if (database && ordersRef) {
                 off(ordersRef, 'value', listener);
@@ -114,7 +122,7 @@ export function AdminOrdersManager() {
         }
     }
     
-    if (authLoading || loadingData) {
+    if (loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

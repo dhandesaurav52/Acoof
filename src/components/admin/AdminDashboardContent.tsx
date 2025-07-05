@@ -44,17 +44,21 @@ export function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
-        // This effect will not run until auth is resolved and the user is confirmed.
+        // Guard 1: Wait until authentication is resolved.
         if (authLoading) {
             return;
         }
-        if (!user) {
+
+        // Guard 2: If auth is done, but the user is not the admin, stop immediately.
+        // The AdminLayout will handle the redirect. This prevents any data fetch attempt.
+        if (!user || user.email !== ADMIN_EMAIL) {
             setLoadingData(false);
             return;
         }
         
         async function fetchAdminData() {
-            setLoadingData(true);
+            // At this point, we are certain the user is an authenticated admin.
+            // It is now safe to fetch data.
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
@@ -142,7 +146,7 @@ export function AdminDashboardContent() {
         fetchAdminData();
     }, [user, authLoading, allProducts]);
     
-    if (authLoading || loadingData) {
+    if (loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-400px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
