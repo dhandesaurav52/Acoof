@@ -10,13 +10,7 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
     >
       <rect width="1024" height="538" fill="#D83E34" />
 
-      <g
-        fontFamily="'Montserrat', sans-serif"
-        fontWeight={900}
-        fontSize="300px"
-        fill="white"
-        letterSpacing="-0.02em"
-      >
+      <g className="logo-main-text">
         <text x="40" y="410">A</text>
         <text x="210" y="410">C</text>
         <text x="700" y="410">F</text>
@@ -25,10 +19,7 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       <text
         x="265"
         y="345"
-        fontFamily="'Montserrat', sans-serif"
-        fontWeight={600}
-        fontSize="50px"
-        fill="white"
+        className="logo-sub-text"
       >
         SWAZ
       </text>
@@ -36,10 +27,7 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       <text
         x="830"
         y="410"
-        fontFamily="'Montserrat', sans-serif"
-        fontWeight={800}
-        fontSize="110px"
-        fill="black"
+        className="logo-domain-text"
       >
         .in
       </text>
