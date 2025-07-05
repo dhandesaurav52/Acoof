@@ -14,8 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function AdminOrdersPage() {
+    const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
@@ -23,6 +25,18 @@ export default function AdminOrdersPage() {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
+        // Wait until auth state is determined.
+        if (authLoading) {
+            setLoadingData(true);
+            return;
+        }
+        // If auth is resolved but there's no user or the user is not an admin, stop.
+        // The layout should have redirected, but this is a failsafe.
+        if (!user || user.email !== 'admin@example.com') {
+            setLoadingData(false);
+            return;
+        }
+
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -57,7 +71,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, []);
+    }, [user, authLoading]);
     
     const filteredOrders = useMemo(() => {
         if (!searchQuery) return orders;
@@ -103,6 +117,8 @@ export default function AdminOrdersPage() {
         }
     }
     
+    // The AdminLayout handles the primary loading/auth check.
+    // This component's loading state is for its own data fetching.
     if (loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">

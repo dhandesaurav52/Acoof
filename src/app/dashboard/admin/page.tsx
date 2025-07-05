@@ -10,6 +10,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { database } from '@/lib/firebase';
 import type { OrderItem } from '@/types';
 import { useProducts } from '@/hooks/use-products';
+import { useAuth } from '@/hooks/use-auth';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -35,6 +36,7 @@ const categoryChartConfig = {
 
 
 export default function AdminDashboardPage() {
+    const { user, loading: authLoading } = useAuth();
     const { products: allProducts, loading: productsLoading } = useProducts();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
@@ -42,10 +44,15 @@ export default function AdminDashboardPage() {
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // The AdminLayout handles auth checks. This component will only render for admins.
-    // We only need to wait for product data to finish loading.
     useEffect(() => {
-        if (productsLoading) {
+        // Wait for all data dependencies to be ready
+        if (productsLoading || authLoading) {
+            return;
+        }
+
+        // Failsafe: if not an admin, don't fetch data. Layout should redirect.
+        if (!user || user.email !== ADMIN_EMAIL) {
+            setLoadingData(false);
             return;
         }
         
@@ -136,9 +143,10 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [productsLoading, allProducts]);
+    }, [productsLoading, allProducts, user, authLoading]);
     
-    if (productsLoading || loadingData) {
+    // The AdminLayout handles the primary auth check. This just ensures all data is ready.
+    if (productsLoading || authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
