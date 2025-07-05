@@ -118,136 +118,134 @@ export function AdminOrdersManager() {
     }
 
     return (
-        <div className="container mx-auto py-12 px-4">
-            <div className="max-w-7xl mx-auto space-y-8">
-                <div className="text-left">
-                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Manage Orders</h1>
-                    <p className="text-muted-foreground mt-2">
-                        View, search, and update the status of all customer orders.
-                    </p>
-                </div>
-                
-                {error ? (
-                    <Card className="border-destructive">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-destructive">
-                                <AlertCircle className="h-6 w-6" />
-                                Data Fetching Error
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-destructive">{error}</p>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                                <div className="flex-1">
-                                    <CardTitle>All Orders ({filteredOrders.length})</CardTitle>
-                                    <CardDescription>A list of all orders placed in your store.</CardDescription>
-                                </div>
-                            </div>
-                            <div className="relative mt-4">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <Input 
-                                    placeholder="Search by Order ID, Name, or Email..." 
-                                    className="pl-10"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="border rounded-lg overflow-hidden">
-                                {filteredOrders.length > 0 ? (
-                                    <Accordion type="single" collapsible className="w-full">
-                                        {filteredOrders.map((order) => (
-                                            <AccordionItem value={order.id} key={order.id} className="last:border-b-0">
-                                                <AccordionTrigger className="px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors text-left">
-                                                    <div className="flex items-center gap-2 sm:gap-4 w-full">
-                                                        <div className="hidden sm:block">
-                                                            {getStatusIcon(order.status)}
-                                                        </div>
-                                                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
-                                                            <div>
-                                                                <div className="text-sm font-semibold truncate max-w-24 sm:max-w-full" title={order.id}>{order.id}</div>
-                                                                <div className="text-xs text-muted-foreground">{order.date}</div>
-                                                            </div>
-                                                            <div className="hidden sm:block">
-                                                                <div className="font-medium">{order.user}</div>
-                                                                <div className="text-xs text-muted-foreground truncate">{order.userEmail}</div>
-                                                            </div>
-                                                            <div className="col-span-1 flex justify-end sm:justify-start">
-                                                                <Badge variant={order.status === 'Pending' ? 'destructive' : order.status === 'Shipped' ? 'default' : order.status === 'Delivered' ? 'secondary' : 'outline'} className="w-24 justify-center">{order.status}</Badge>
-                                                            </div>
-                                                            <div className="hidden sm:block text-right font-medium text-lg">₹{order.total.toFixed(2)}</div>
-                                                        </div>
-                                                    </div>
-                                                </AccordionTrigger>
-                                                <AccordionContent className="bg-secondary/20">
-                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        <div>
-                                                            <h4 className="font-semibold mb-2">Order Items ({order.items.length})</h4>
-                                                            <Table>
-                                                                <TableHeader>
-                                                                    <TableRow>
-                                                                        <TableHead>Product</TableHead>
-                                                                        <TableHead className="text-center">Qty</TableHead>
-                                                                        <TableHead className="text-right">Subtotal</TableHead>
-                                                                    </TableRow>
-                                                                </TableHeader>
-                                                                <TableBody>
-                                                                    {order.items.map((item, idx) => (
-                                                                        <TableRow key={idx}>
-                                                                            <TableCell>{item.productName}</TableCell>
-                                                                            <TableCell className="text-center">{item.quantity}</TableCell>
-                                                                            <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
-                                                                        </TableRow>
-                                                                    ))}
-                                                                </TableBody>
-                                                            </Table>
-                                                        </div>
-                                                        <div className="space-y-4">
-                                                            <div>
-                                                                <h4 className="font-semibold mb-1">Shipping & Payment</h4>
-                                                                <p className="text-sm text-muted-foreground">{order.shippingAddress}</p>
-                                                                <p className="text-sm mt-1">Payment Method: <span className="font-medium">{order.paymentMethod}</span></p>
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-semibold mb-2">Actions</h4>
-                                                                <div className="flex items-center gap-2">
-                                                                    <Select value={order.status} onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}>
-                                                                        <SelectTrigger className="w-full">
-                                                                            <SelectValue placeholder="Update Status" />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent>
-                                                                            <SelectItem value="Pending">Pending</SelectItem>
-                                                                            <SelectItem value="Shipped">Shipped</SelectItem>
-                                                                            <SelectItem value="Delivered">Delivered</SelectItem>
-                                                                            <SelectItem value="Cancelled">Cancelled</SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        ))}
-                                    </Accordion>
-                                ) : (
-                                    <div className="text-center h-48 flex flex-col items-center justify-center gap-2">
-                                        <Package className="h-10 w-10 text-muted-foreground" />
-                                        <p className="font-semibold">{orders.length > 0 ? "No orders match your search." : "No orders found."}</p>
-                                        {orders.length > 0 && <Button variant="outline" onClick={() => setSearchQuery('')}>Clear Search</Button>}
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+        <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+            <div className="text-left">
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Manage Orders</h1>
+                <p className="text-muted-foreground mt-2">
+                    View, search, and update the status of all customer orders.
+                </p>
             </div>
+            
+            {error ? (
+                <Card className="border-destructive">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-6 w-6" />
+                            Data Fetching Error
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-destructive">{error}</p>
+                    </CardContent>
+                </Card>
+            ) : (
+                <Card>
+                    <CardHeader>
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                            <div className="flex-1">
+                                <CardTitle>All Orders ({filteredOrders.length})</CardTitle>
+                                <CardDescription>A list of all orders placed in your store.</CardDescription>
+                            </div>
+                        </div>
+                        <div className="relative mt-4">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search by Order ID, Name, or Email..." 
+                                className="pl-10"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="border rounded-lg overflow-hidden">
+                            {filteredOrders.length > 0 ? (
+                                <Accordion type="single" collapsible className="w-full">
+                                    {filteredOrders.map((order) => (
+                                        <AccordionItem value={order.id} key={order.id} className="last:border-b-0">
+                                            <AccordionTrigger className="px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors text-left">
+                                                <div className="flex items-center gap-2 sm:gap-4 w-full">
+                                                    <div className="hidden sm:block">
+                                                        {getStatusIcon(order.status)}
+                                                    </div>
+                                                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
+                                                        <div>
+                                                            <div className="text-sm font-semibold truncate max-w-24 sm:max-w-full" title={order.id}>{order.id}</div>
+                                                            <div className="text-xs text-muted-foreground">{order.date}</div>
+                                                        </div>
+                                                        <div className="hidden sm:block">
+                                                            <div className="font-medium">{order.user}</div>
+                                                            <div className="text-xs text-muted-foreground truncate">{order.userEmail}</div>
+                                                        </div>
+                                                        <div className="col-span-1 flex justify-end sm:justify-start">
+                                                            <Badge variant={order.status === 'Pending' ? 'destructive' : order.status === 'Shipped' ? 'default' : order.status === 'Delivered' ? 'secondary' : 'outline'} className="w-24 justify-center">{order.status}</Badge>
+                                                        </div>
+                                                        <div className="hidden sm:block text-right font-medium text-lg">₹{order.total.toFixed(2)}</div>
+                                                    </div>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="bg-secondary/20">
+                                                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <h4 className="font-semibold mb-2">Order Items ({order.items.length})</h4>
+                                                        <Table>
+                                                            <TableHeader>
+                                                                <TableRow>
+                                                                    <TableHead>Product</TableHead>
+                                                                    <TableHead className="text-center">Qty</TableHead>
+                                                                    <TableHead className="text-right">Subtotal</TableHead>
+                                                                </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                {order.items.map((item, idx) => (
+                                                                    <TableRow key={idx}>
+                                                                        <TableCell>{item.productName}</TableCell>
+                                                                        <TableCell className="text-center">{item.quantity}</TableCell>
+                                                                        <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <h4 className="font-semibold mb-1">Shipping & Payment</h4>
+                                                            <p className="text-sm text-muted-foreground">{order.shippingAddress}</p>
+                                                            <p className="text-sm mt-1">Payment Method: <span className="font-medium">{order.paymentMethod}</span></p>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-semibold mb-2">Actions</h4>
+                                                            <div className="flex items-center gap-2">
+                                                                <Select value={order.status} onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}>
+                                                                    <SelectTrigger className="w-full">
+                                                                        <SelectValue placeholder="Update Status" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="Pending">Pending</SelectItem>
+                                                                        <SelectItem value="Shipped">Shipped</SelectItem>
+                                                                        <SelectItem value="Delivered">Delivered</SelectItem>
+                                                                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            ) : (
+                                <div className="text-center h-48 flex flex-col items-center justify-center gap-2">
+                                    <Package className="h-10 w-10 text-muted-foreground" />
+                                    <p className="font-semibold">{orders.length > 0 ? "No orders match your search." : "No orders found."}</p>
+                                    {orders.length > 0 && <Button variant="outline" onClick={() => setSearchQuery('')}>Clear Search</Button>}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }

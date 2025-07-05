@@ -141,7 +141,7 @@ export default function UserOrdersPage() {
     };
 
   return (
-    <div className="container mx-auto py-12 px-4">
+    <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-4xl mx-auto space-y-8">
             <div className="text-left">
                 <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">My Orders</h1>

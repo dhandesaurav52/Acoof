@@ -37,7 +37,7 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg bg-secondary border-secondary group">
+    <Card className="flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg bg-card border-border group">
       <CardHeader className="p-0">
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-lg">
           <Image

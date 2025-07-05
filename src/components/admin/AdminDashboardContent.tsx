@@ -148,170 +148,168 @@ export function AdminDashboardContent() {
     
     if (loadingData) {
         return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-400px)]">
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
     
     return (
-        <div className="container mx-auto py-12 px-4">
-            <div className="max-w-7xl mx-auto space-y-8">
-                <div className="text-left">
-                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Admin Dashboard</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Here's an overview of your store.
-                    </p>
-                </div>
+        <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+            <div className="text-left">
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Admin Dashboard</h1>
+                <p className="text-muted-foreground mt-2">
+                    Here's an overview of your store.
+                </p>
+            </div>
 
-                {error ? (
-                    <Card className="border-destructive">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-destructive">
-                                <AlertCircle className="h-6 w-6" />
-                                Dashboard Error
-                            </CardTitle>
+            {error ? (
+                <Card className="border-destructive">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-6 w-6" />
+                            Dashboard Error
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-destructive">{error}</p>
+                    </CardContent>
+                </Card>
+            ) : (
+            <>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <p className="text-destructive">{error}</p>
+                            <div className="text-2xl font-bold">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</div>
                         </CardContent>
                     </Card>
-                ) : (
-                <>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</div>
-                            </CardContent>
-                        </Card>
-                            <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">+{stats?.salesCount || 0}</div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Unique Customers</CardTitle>
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stats?.usersCount || 0}</div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                                <Package className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{allProducts.length}</div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Sales</CardTitle>
+                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">+{stats?.salesCount || 0}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Unique Customers</CardTitle>
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats?.usersCount || 0}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{allProducts.length}</div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                    <div className="grid gap-8 md:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <TrendingUp className="h-6 w-6" />
-                                    Sales Overview
-                                </CardTitle>
-                                <CardDescription>Number of sales for the last 12 months.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {salesData.some(d => d.sales > 0) ? (
-                                    <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
-                                        <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
-                                            <CartesianGrid vertical={false} />
-                                            <XAxis
-                                                dataKey="name"
-                                                tickLine={false}
-                                                tickMargin={10}
-                                                axisLine={false}
-                                                stroke="hsl(var(--muted-foreground))"
-                                                fontSize={12}
-                                            />
-                                            <YAxis
-                                                stroke="hsl(var(--muted-foreground))"
-                                                fontSize={12}
-                                                tickLine={false}
-                                                axisLine={false}
-                                                allowDecimals={false}
-                                            />
-                                            <Tooltip
-                                                cursor={false}
-                                                content={<ChartTooltipContent indicator="dot" />}
-                                            />
-                                            <Bar dataKey="sales" fill="hsl(var(--primary))" radius={4} />
-                                        </BarChart>
-                                    </ChartContainer>
-                                ) : (
-                                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                                        No sales data available for the last 12 months.
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                <div className="grid gap-8 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <TrendingUp className="h-6 w-6" />
+                                Sales Overview
+                            </CardTitle>
+                            <CardDescription>Number of sales for the last 12 months.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {salesData.some(d => d.sales > 0) ? (
+                                <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
+                                    <BarChart data={salesData} margin={{ left: -20, top: 5 }}>
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis
+                                            dataKey="name"
+                                            tickLine={false}
+                                            tickMargin={10}
+                                            axisLine={false}
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                        />
+                                        <YAxis
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            allowDecimals={false}
+                                        />
+                                        <Tooltip
+                                            cursor={false}
+                                            content={<ChartTooltipContent indicator="dot" />}
+                                        />
+                                        <Bar dataKey="sales" fill="hsl(var(--primary))" radius={4} />
+                                    </BarChart>
+                                </ChartContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                    No sales data available for the last 12 months.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <LayoutGrid className="h-6 w-6" />
-                                    Top Selling Categories
-                                </CardTitle>
-                                <CardDescription>Total items sold per category.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {categorySalesData.length > 0 ? (
-                                    <ChartContainer config={categoryChartConfig} className="h-[300px] w-full">
-                                        <BarChart data={categorySalesData} layout="vertical" margin={{ left: 10, right: 20 }}>
-                                            <CartesianGrid horizontal={false} />
-                                            <YAxis
-                                                dataKey="name"
-                                                type="category"
-                                                tickLine={false}
-                                                tickMargin={10}
-                                                axisLine={false}
-                                                stroke="hsl(var(--muted-foreground))"
-                                                fontSize={12}
-                                                width={80}
-                                                interval={0}
-                                            />
-                                            <XAxis
-                                                dataKey="sales"
-                                                type="number"
-                                                stroke="hsl(var(--muted-foreground))"
-                                                fontSize={12}
-                                                tickLine={false}
-                                                axisLine={false}
-                                                allowDecimals={false}
-                                            />
-                                            <Tooltip
-                                                cursor={{ fill: 'hsl(var(--muted))' }}
-                                                content={<ChartTooltipContent indicator="dot" />}
-                                            />
-                                            <Bar dataKey="sales" layout="vertical" fill="hsl(var(--primary))" radius={4} />
-                                        </BarChart>
-                                    </ChartContainer>
-                                ) : (
-                                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                                        No category sales data available.
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </>
-                )}
-            </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <LayoutGrid className="h-6 w-6" />
+                                Top Selling Categories
+                            </CardTitle>
+                            <CardDescription>Total items sold per category.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {categorySalesData.length > 0 ? (
+                                <ChartContainer config={categoryChartConfig} className="h-[300px] w-full">
+                                    <BarChart data={categorySalesData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                                        <CartesianGrid horizontal={false} />
+                                        <YAxis
+                                            dataKey="name"
+                                            type="category"
+                                            tickLine={false}
+                                            tickMargin={10}
+                                            axisLine={false}
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                            width={80}
+                                            interval={0}
+                                        />
+                                        <XAxis
+                                            dataKey="sales"
+                                            type="number"
+                                            stroke="hsl(var(--muted-foreground))"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            allowDecimals={false}
+                                        />
+                                        <Tooltip
+                                            cursor={{ fill: 'hsl(var(--muted))' }}
+                                            content={<ChartTooltipContent indicator="dot" />}
+                                        />
+                                        <Bar dataKey="sales" layout="vertical" fill="hsl(var(--primary))" radius={4} />
+                                    </BarChart>
+                                </ChartContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                    No category sales data available.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </>
+            )}
         </div>
     );
 }

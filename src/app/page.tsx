@@ -13,9 +13,9 @@ export default function Home() {
   const { products } = useProducts();
   
   const featuredStyles = [
-    { name: 'HipHop', image: 'https://images.pexels.com/photos/7957440/pexels-photo-7957440.jpeg' },
-    { name: 'Casual', image: 'https://images.pexels.com/photos/32796238/pexels-photo-32796238.jpeg' },
-    { name: 'Party Wear', image: 'https://images.pexels.com/photos/532220/pexels-photo-532220.jpeg' },
+    { name: 'Streetwear', image: 'https://images.pexels.com/photos/1040173/pexels-photo-1040173.jpeg' },
+    { name: 'Smart Casual', image: 'https://images.pexels.com/photos/842811/pexels-photo-842811.jpeg' },
+    { name: 'Night Life', image: 'https://images.pexels.com/photos/1102874/pexels-photo-1102874.jpeg' },
   ];
   
   const newArrivals = products.filter(p => p.isNew).slice(0, 8);
@@ -26,7 +26,7 @@ export default function Home() {
       <section className="relative h-[90vh] min-h-[600px] flex items-center">
         <div className="absolute inset-0">
             <Image 
-                src="https://images.pexels.com/photos/6626999/pexels-photo-6626999.jpeg" 
+                src="https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg" 
                 alt="Hero background" 
                 fill
                 className="object-cover object-center"
@@ -37,10 +37,10 @@ export default function Home() {
         <div className="container relative mx-auto px-4 text-white">
           <div className="max-w-2xl text-left">
             <h1 className="text-5xl font-bold tracking-tighter sm:text-6xl lg:text-7xl font-headline">
-              Own Your Style
+              Style Is A Way To Say Who You Are
             </h1>
             <p className="mt-6 max-w-lg text-lg md:text-xl text-foreground/80">
-              Discover curated collections and find your unique look with Acoof. Premium quality, modern designs, and a style for every story.
+              Forget trends. We deal in timeless threads and iconic looks. Find your uniform with Acoof.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Button asChild size="lg" className="text-lg">

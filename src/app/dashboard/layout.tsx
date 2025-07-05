@@ -1,10 +1,10 @@
 'use client';
+import { DashboardLayout as NewDashboardLayout } from '@/components/DashboardLayout';
 
-// This file is being reset to a passthrough to revert dashboard UI changes.
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <NewDashboardLayout>{children}</NewDashboardLayout>;
 }
