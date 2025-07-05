@@ -33,7 +33,7 @@ export default function Home() {
                 className="object-cover object-center"
                 priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent md:bg-gradient-to-r md:from-black/60 md:to-transparent" />
         </div>
         <div className="container relative mx-auto px-4 text-white">
           <div className="max-w-2xl text-left">
