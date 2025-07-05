@@ -1,0 +1,248 @@
+
+'use client';
+
+import { useEffect, useState, useMemo } from 'react';
+import { Loader2, AlertCircle, Package, Search, FileText, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import type { Order, OrderStatus } from '@/types';
+import { auth, database } from '@/lib/firebase';
+import { ref, onValue, off, update } from 'firebase/database';
+import { useToast } from '@/hooks/use-toast';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+
+export function AdminOrdersManager() {
+    const { toast } = useToast();
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loadingData, setLoadingData] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        // This effect will only run for a confirmed admin because the parent component handles the check.
+        if (!database) {
+            setError("Firebase is not configured correctly.");
+            setLoadingData(false);
+            return;
+        }
+
+        const ordersRef = ref(database, 'orders');
+        const listener = onValue(ordersRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const ordersData = snapshot.val();
+                const ordersList: Order[] = Object.keys(ordersData)
+                    .map(key => ({ id: key, ...ordersData[key] }))
+                    .reverse();
+                setOrders(ordersList);
+            } else {
+                setOrders([]);
+            }
+            setError(null);
+            setLoadingData(false);
+        }, (err: any) => {
+            console.error("Firebase read failed: ", err);
+            if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
+                setError("Permission Denied: Could not fetch orders. Please ensure your Firebase rules grant admin read access to '/orders'.");
+            } else {
+                setError("An error occurred while fetching orders data.");
+            }
+            setLoadingData(false);
+        });
+
+        return () => {
+            if (database && ordersRef) {
+                off(ordersRef, 'value', listener);
+            }
+        };
+    }, []);
+    
+    const filteredOrders = useMemo(() => {
+        if (!searchQuery) return orders;
+        const lowercasedQuery = searchQuery.toLowerCase();
+        return orders.filter(order => 
+            order.id.toLowerCase().includes(lowercasedQuery) ||
+            order.user.toLowerCase().includes(lowercasedQuery) ||
+            order.userEmail.toLowerCase().includes(lowercasedQuery)
+        );
+    }, [orders, searchQuery]);
+
+    const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+        if (!database) return;
+
+        const orderRef = ref(database, `orders/${orderId}`);
+        try {
+            await update(orderRef, { status: newStatus });
+            toast({
+                title: "Status Updated",
+                description: `Order #${orderId} has been updated to ${newStatus}.`
+            });
+        } catch (error: any) {
+            if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
+                console.warn("Order update permission denied, user may have logged out.");
+                return;
+            }
+            console.error("Failed to update order status:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Update Failed',
+                description: 'An unexpected error occurred while updating the order status.',
+            });
+        }
+    };
+
+    const getStatusIcon = (status: Order['status']) => {
+        switch (status) {
+            case 'Pending': return <Package className="h-5 w-5 text-yellow-500" />;
+            case 'Shipped': return <Truck className="h-5 w-5 text-blue-500" />;
+            case 'Delivered': return <CheckCircle className="h-5 w-5 text-green-500" />;
+            case 'Cancelled': return <XCircle className="h-5 w-5 text-red-500" />;
+            default: return <FileText className="h-5 w-5 text-muted-foreground" />;
+        }
+    }
+    
+    if (loadingData) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="container mx-auto py-12 px-4">
+            <div className="max-w-7xl mx-auto space-y-8">
+                <div className="text-left">
+                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Manage Orders</h1>
+                    <p className="text-muted-foreground mt-2">
+                        View, search, and update the status of all customer orders.
+                    </p>
+                </div>
+                
+                {error ? (
+                    <Card className="border-destructive">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-destructive">
+                                <AlertCircle className="h-6 w-6" />
+                                Data Fetching Error
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-destructive">{error}</p>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <CardTitle>All Orders ({filteredOrders.length})</CardTitle>
+                                    <CardDescription>A list of all orders placed in your store.</CardDescription>
+                                </div>
+                            </div>
+                            <div className="relative mt-4">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search by Order ID, Name, or Email..." 
+                                    className="pl-10"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="border rounded-lg overflow-hidden">
+                                {filteredOrders.length > 0 ? (
+                                    <Accordion type="single" collapsible className="w-full">
+                                        {filteredOrders.map((order) => (
+                                            <AccordionItem value={order.id} key={order.id} className="last:border-b-0">
+                                                <AccordionTrigger className="px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors text-left">
+                                                    <div className="flex items-center gap-2 sm:gap-4 w-full">
+                                                        <div className="hidden sm:block">
+                                                            {getStatusIcon(order.status)}
+                                                        </div>
+                                                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
+                                                            <div>
+                                                                <div className="text-sm font-semibold truncate max-w-24 sm:max-w-full" title={order.id}>{order.id}</div>
+                                                                <div className="text-xs text-muted-foreground">{order.date}</div>
+                                                            </div>
+                                                            <div className="hidden sm:block">
+                                                                <div className="font-medium">{order.user}</div>
+                                                                <div className="text-xs text-muted-foreground truncate">{order.userEmail}</div>
+                                                            </div>
+                                                            <div className="col-span-1 flex justify-end sm:justify-start">
+                                                                <Badge variant={order.status === 'Pending' ? 'destructive' : order.status === 'Shipped' ? 'default' : order.status === 'Delivered' ? 'secondary' : 'outline'} className="w-24 justify-center">{order.status}</Badge>
+                                                            </div>
+                                                            <div className="hidden sm:block text-right font-medium text-lg">₹{order.total.toFixed(2)}</div>
+                                                        </div>
+                                                    </div>
+                                                </AccordionTrigger>
+                                                <AccordionContent className="bg-secondary/20">
+                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <h4 className="font-semibold mb-2">Order Items ({order.items.length})</h4>
+                                                            <Table>
+                                                                <TableHeader>
+                                                                    <TableRow>
+                                                                        <TableHead>Product</TableHead>
+                                                                        <TableHead className="text-center">Qty</TableHead>
+                                                                        <TableHead className="text-right">Subtotal</TableHead>
+                                                                    </TableRow>
+                                                                </TableHeader>
+                                                                <TableBody>
+                                                                    {order.items.map((item, idx) => (
+                                                                        <TableRow key={idx}>
+                                                                            <TableCell>{item.productName}</TableCell>
+                                                                            <TableCell className="text-center">{item.quantity}</TableCell>
+                                                                            <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
+                                                                        </TableRow>
+                                                                    ))}
+                                                                </TableBody>
+                                                            </Table>
+                                                        </div>
+                                                        <div className="space-y-4">
+                                                            <div>
+                                                                <h4 className="font-semibold mb-1">Shipping & Payment</h4>
+                                                                <p className="text-sm text-muted-foreground">{order.shippingAddress}</p>
+                                                                <p className="text-sm mt-1">Payment Method: <span className="font-medium">{order.paymentMethod}</span></p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-semibold mb-2">Actions</h4>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Select value={order.status} onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}>
+                                                                        <SelectTrigger className="w-full">
+                                                                            <SelectValue placeholder="Update Status" />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="Pending">Pending</SelectItem>
+                                                                            <SelectItem value="Shipped">Shipped</SelectItem>
+                                                                            <SelectItem value="Delivered">Delivered</SelectItem>
+                                                                            <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                ) : (
+                                    <div className="text-center h-48 flex flex-col items-center justify-center gap-2">
+                                        <Package className="h-10 w-10 text-muted-foreground" />
+                                        <p className="font-semibold">{orders.length > 0 ? "No orders match your search." : "No orders found."}</p>
+                                        {orders.length > 0 && <Button variant="outline" onClick={() => setSearchQuery('')}>Clear Search</Button>}
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+        </div>
+    );
+}
