@@ -21,7 +21,7 @@ const ADMIN_EMAIL = "admin@example.com";
 
 export default function AdminOrdersPage() {
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -31,20 +31,10 @@ export default function AdminOrdersPage() {
     const [isDeleting, setIsDeleting] = useState(false);
 
 
-    // The AdminLayout now handles auth checks and redirection.
-    // This page will only render if the user is a confirmed admin.
     useEffect(() => {
-        // This effect is now dependent on the user object.
-        // It will not run until auth state is resolved and a user is present.
-        if (!user) {
+        if (authLoading || !user || user.email !== ADMIN_EMAIL) {
           setLoadingData(false);
           return;
-        }
-
-        // Failsafe: Double-check admin status to prevent race conditions.
-        if (user.email !== ADMIN_EMAIL) {
-            setLoadingData(false);
-            return;
         }
 
         if (!database) {
@@ -53,6 +43,7 @@ export default function AdminOrdersPage() {
             return;
         }
 
+        setLoadingData(true);
         const ordersRef = ref(database, 'orders');
         const listener = onValue(ordersRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -82,7 +73,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [user]);
+    }, [user, authLoading]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -95,16 +86,10 @@ export default function AdminOrdersPage() {
                 description: `Order #${orderId} has been updated to ${newStatus}.`
             });
         } catch (error: any) {
-            // This is a special check to handle a "race condition" where the user
-            // logs out immediately after changing a status. The update fails with
-            // a permission error, but we don't want to show a confusing error
-            // toast on the login screen. We check the live auth state.
             if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
                 console.warn("Order update permission denied, user has logged out.");
-                return; // Silently ignore the error
+                return;
             }
-
-            // If we are here, it's a genuine error.
             console.error("Failed to update order status:", error);
             toast({
                 variant: 'destructive',
@@ -139,7 +124,7 @@ export default function AdminOrdersPage() {
         setOrderToDelete(null);
     };
     
-    if (loadingData) {
+    if (authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -147,6 +132,15 @@ export default function AdminOrdersPage() {
         );
     }
     
+    // Failsafe. The layout handles redirection, but this prevents render attempts before it does.
+    if (!user || user.email !== ADMIN_EMAIL) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto py-12 px-4">
             <div className="max-w-7xl mx-auto space-y-8">

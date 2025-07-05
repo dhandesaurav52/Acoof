@@ -44,20 +44,11 @@ export default function AdminDashboardPage() {
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // The AdminLayout now handles auth checks and redirection.
-    // This page will only render if the user is a confirmed admin.
     useEffect(() => {
-        // This effect now explicitly waits for both auth and products to be loaded.
-        if (authLoading || productsLoading || !user) {
+        if (authLoading || productsLoading || !user || user.email !== ADMIN_EMAIL) {
             if (!authLoading && !productsLoading) {
                 setLoadingData(false);
             }
-            return;
-        }
-
-        // Failsafe: Double-check admin status to prevent race conditions.
-        if (user.email !== ADMIN_EMAIL) {
-            setLoadingData(false);
             return;
         }
         
@@ -150,9 +141,15 @@ export default function AdminDashboardPage() {
         fetchAdminData();
     }, [user, authLoading, productsLoading, allProducts]);
     
-    // The AdminLayout handles the primary auth check, but we still show a loader
-    // while waiting for all necessary data (auth, products, and stats).
-    if (productsLoading || loadingData) {
+    if (authLoading || productsLoading || loadingData) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
