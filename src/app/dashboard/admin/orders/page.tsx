@@ -14,7 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { clearAllOrders } from '@/app/actions';
+import { clearAllOrders, deleteOrder } from '@/app/actions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -26,6 +27,9 @@ export default function AdminOrdersPage() {
     const [error, setError] = useState<string | null>(null);
     const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
     const [isClearing, setIsClearing] = useState(false);
+    const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
 
     // The AdminLayout now handles auth checks and redirection.
     // This page will only render if the user is a confirmed admin.
@@ -121,6 +125,19 @@ export default function AdminOrdersPage() {
         setIsClearing(false);
         setIsClearConfirmOpen(false);
     };
+
+    const handleConfirmDelete = async () => {
+        if (!orderToDelete) return;
+        setIsDeleting(true);
+        const result = await deleteOrder(orderToDelete);
+        if (result.success) {
+            toast({ title: 'Success', description: 'Order has been deleted.' });
+        } else {
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: result.error });
+        }
+        setIsDeleting(false);
+        setOrderToDelete(null);
+    };
     
     if (loadingData) {
         return (
@@ -203,21 +220,53 @@ export default function AdminOrdersPage() {
                                                         {order.status}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="text-center">
-                                                    <Select
-                                                        value={order.status}
-                                                        onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}
-                                                    >
-                                                        <SelectTrigger className="w-[120px] h-8">
-                                                            <SelectValue placeholder="Update Status" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="Pending">Pending</SelectItem>
-                                                            <SelectItem value="Shipped">Shipped</SelectItem>
-                                                            <SelectItem value="Delivered">Delivered</SelectItem>
-                                                            <SelectItem value="Cancelled">Cancelled</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
+                                                <TableCell>
+                                                    <div className="flex justify-center items-center gap-2">
+                                                        <Select
+                                                            value={order.status}
+                                                            onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}
+                                                        >
+                                                            <SelectTrigger className="w-[120px] h-8">
+                                                                <SelectValue placeholder="Update Status" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="Pending">Pending</SelectItem>
+                                                                <SelectItem value="Shipped">Shipped</SelectItem>
+                                                                <SelectItem value="Delivered">Delivered</SelectItem>
+                                                                <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        
+                                                        {order.status === 'Pending' ? (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" onClick={() => setOrderToDelete(order)}>
+                                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>Delete Order</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        ) : (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <span tabIndex={0}>
+                                                                            <Button variant="ghost" size="icon" disabled className="pointer-events-none">
+                                                                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                                                            </Button>
+                                                                        </span>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>Only 'Pending' orders can be deleted.</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         )) : (
@@ -255,6 +304,28 @@ export default function AdminOrdersPage() {
                         >
                             {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Yes, delete all orders
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!orderToDelete} onOpenChange={(open) => !open && setOrderToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete order #{orderToDelete?.id}.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDelete}
+                            disabled={isDeleting}
+                            className={buttonVariants({ variant: "destructive" })}
+                        >
+                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Yes, delete order
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

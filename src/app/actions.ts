@@ -5,7 +5,8 @@ import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestion
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 import { database } from '@/lib/firebase';
-import { ref, remove, get } from 'firebase/database';
+import { ref, remove, get, update } from 'firebase/database';
+import type { Order } from '@/types';
 
 export async function getAiSuggestions(browsingHistory: string, photoDataUri?: string) {
   if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
@@ -116,31 +117,21 @@ export async function clearAllOrders(): Promise<{ success: boolean; error?: stri
         return { success: false, error: 'Firebase is not configured.' };
     }
     try {
-        // Step 1: Delete the entire /orders collection.
-        // This requires the admin to have .write permission on /orders.
-        await remove(ref(database, 'orders'));
-
-        // Step 2: Get all user IDs.
+        const updates: { [key: string]: any } = {};
         const usersRef = ref(database, 'users');
         const usersSnapshot = await get(usersRef);
 
         if (usersSnapshot.exists()) {
             const usersData = usersSnapshot.val();
             const userIds = Object.keys(usersData);
-
-            // Step 3: Create a list of promises to remove order history for each user.
-            const removalPromises = userIds.map(userId => {
-                const userOrdersRef = ref(database, `users/${userId}/orders`);
-                // This requires admin to have write permission on /users/{any_user_id}/orders
-                return remove(userOrdersRef).catch(err => {
-                    // If a specific user deletion fails, log it but don't stop the whole process.
-                    console.error(`Failed to delete orders for user ${userId}:`, err.message);
-                });
+            userIds.forEach(userId => {
+                updates[`/users/${userId}/orders`] = null;
             });
-            
-            // Wait for all removal operations to complete.
-            await Promise.all(removalPromises);
         }
+        
+        updates['/orders'] = null;
+
+        await update(ref(database), updates);
 
         return { success: true };
     } catch (error: any) {
@@ -148,6 +139,31 @@ export async function clearAllOrders(): Promise<{ success: boolean; error?: stri
         let errorMessage = 'An unexpected error occurred while clearing orders.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
             errorMessage = `Permission Denied: Could not clear orders. This indicates a Firebase security rule issue. Please ensure your rules grant 'admin@example.com' full write permission on BOTH the '/orders' path AND the '/users' path. The exact error was: ${error.message}`;
+        } else {
+             errorMessage = error.message || errorMessage;
+        }
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function deleteOrder(order: Order): Promise<{ success: boolean; error?: string }> {
+    if (!database) {
+        return { success: false, error: 'Firebase is not configured.' };
+    }
+    try {
+        const updates: { [key: string]: any } = {};
+        updates[`/orders/${order.id}`] = null;
+        if (order.userId) {
+            updates[`/users/${order.userId}/orders/${order.id}`] = null;
+        }
+
+        await update(ref(database), updates);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete order:", error);
+        let errorMessage = 'An unexpected error occurred while deleting the order.';
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            errorMessage = `Permission Denied: Could not delete order. Ensure your Firebase rules grant the admin write permission on '/orders/${order.id}' and '/users/${order.userId}/orders'. The exact error was: ${error.message}`;
         } else {
              errorMessage = error.message || errorMessage;
         }
