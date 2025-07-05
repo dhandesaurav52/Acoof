@@ -16,6 +16,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { clearAllOrders } from '@/app/actions';
 
+const ADMIN_EMAIL = "admin@example.com";
+
 export default function AdminOrdersPage() {
     const { toast } = useToast();
     const { user } = useAuth();
@@ -33,6 +35,12 @@ export default function AdminOrdersPage() {
         if (!user) {
           setLoadingData(false);
           return;
+        }
+
+        // Failsafe: Double-check admin status to prevent race conditions.
+        if (user.email !== ADMIN_EMAIL) {
+            setLoadingData(false);
+            return;
         }
 
         if (!database) {

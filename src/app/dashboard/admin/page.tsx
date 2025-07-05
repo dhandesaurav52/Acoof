@@ -54,6 +54,12 @@ export default function AdminDashboardPage() {
             }
             return;
         }
+
+        // Failsafe: Double-check admin status to prevent race conditions.
+        if (user.email !== ADMIN_EMAIL) {
+            setLoadingData(false);
+            return;
+        }
         
         async function fetchAdminData() {
             setLoadingData(true);
