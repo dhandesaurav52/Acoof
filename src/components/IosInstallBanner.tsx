@@ -30,9 +30,9 @@ export function IosInstallBanner() {
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border p-4 shadow-lg animate-in slide-in-from-bottom-full">
             <div className="container mx-auto flex items-center justify-between gap-4">
-                <Logo className="h-12 w-auto flex-shrink-0 hidden sm:block" />
+                <Logo width={104} height={32} className="flex-shrink-0 hidden sm:block" />
                 <div className="flex-grow text-sm">
-                    <p className="font-semibold">Install the White Wolf App!</p>
+                    <p className="font-semibold">Install the Acoof App!</p>
                     <p className="text-muted-foreground">
                         Tap the <ArrowUpSquare className="inline-block h-4 w-4 align-text-bottom" /> icon and then 'Add to Home Screen'.
                     </p>

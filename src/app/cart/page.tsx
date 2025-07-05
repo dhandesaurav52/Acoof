@@ -257,7 +257,7 @@ export default function CartPage() {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
             amount: orderResponse.amount,
             currency: orderResponse.currency,
-            name: 'White Wolf',
+            name: 'Acoof',
             description: 'Order Payment',
             order_id: orderResponse.id,
             handler: async function (response: any) {
