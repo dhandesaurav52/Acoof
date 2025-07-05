@@ -14,11 +14,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { createRazorpayOrder, verifyRazorpayPayment } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Order, OrderItem } from '@/types';
 import { database } from '@/lib/firebase';
 import { ref as dbRef, update, push } from "firebase/database";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 
 async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
@@ -67,6 +69,30 @@ export default function CartPage() {
     const [isCodProcessing, setIsCodProcessing] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
 
+    const [shippingAddressOption, setShippingAddressOption] = useState<'default' | 'new'>('default');
+    const [newAddress, setNewAddress] = useState({
+        address: '',
+        city: '',
+        state: '',
+        pincode: ''
+    });
+
+    const isNewAddressValid = useMemo(() => {
+        return newAddress.address.trim() && newAddress.city.trim() && newAddress.state.trim() && newAddress.pincode.trim();
+    }, [newAddress]);
+    
+    const isCheckoutDisabled = useMemo(() => {
+        if (isProcessing || isCodProcessing) return true;
+        if (shippingAddressOption === 'default') return !user?.address;
+        if (shippingAddressOption === 'new') return !isNewAddressValid;
+        return true;
+    }, [isProcessing, isCodProcessing, shippingAddressOption, user?.address, isNewAddressValid]);
+
+    const handleNewAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setNewAddress(prev => ({ ...prev, [id]: value }));
+    };
+
     const QuantityControl = ({ itemId, quantity }: { itemId: string, quantity: number }) => (
         <div className="flex items-center justify-center gap-2">
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => updateQuantity(itemId, quantity - 1)}>
@@ -84,6 +110,22 @@ export default function CartPage() {
             </Button>
         </div>
     );
+
+    const getFinalShippingAddress = (): string | null => {
+        if (shippingAddressOption === 'new') {
+            if (!isNewAddressValid) {
+                toast({ variant: 'destructive', title: 'Address Incomplete', description: 'Please fill all fields for the new shipping address.' });
+                return null;
+            }
+            return `${newAddress.address}, ${newAddress.city}, ${newAddress.state} ${newAddress.pincode}`;
+        }
+        
+        if (!user?.address) {
+            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
+            return null;
+        }
+        return user.address;
+    };
     
     const handleCheckout = async () => {
         if (!user) {
@@ -97,10 +139,8 @@ export default function CartPage() {
             return;
         }
 
-        if (!user.address) {
-            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
-            return;
-        }
+        const finalShippingAddress = getFinalShippingAddress();
+        if (!finalShippingAddress) return;
 
         if (cartTotal < 1) {
             toast({ variant: 'destructive', title: 'Invalid Amount', description: 'The total amount must be at least ₹1.00 to proceed.' });
@@ -152,7 +192,7 @@ export default function CartPage() {
                         date: new Date().toISOString().split('T')[0],
                         total: cartTotal,
                         status: 'Pending',
-                        shippingAddress: user.address || 'Not provided',
+                        shippingAddress: finalShippingAddress,
                         items: orderItems,
                         paymentMethod: 'Razorpay',
                         orderId: response.razorpay_order_id,
@@ -204,10 +244,8 @@ export default function CartPage() {
             return;
         }
 
-        if (!user.address) {
-            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
-            return;
-        }
+        const finalShippingAddress = getFinalShippingAddress();
+        if (!finalShippingAddress) return;
     
         setIsCodProcessing(true);
     
@@ -225,7 +263,7 @@ export default function CartPage() {
             date: new Date().toISOString().split('T')[0],
             total: cartTotal,
             status: 'Pending',
-            shippingAddress: user.address || 'Not provided',
+            shippingAddress: finalShippingAddress,
             items: orderItems,
             paymentMethod: 'COD',
         };
@@ -373,32 +411,53 @@ export default function CartPage() {
                                         <DialogHeader>
                                             <DialogTitle>Confirm Order</DialogTitle>
                                             <DialogDescription>
-                                                Please confirm your shipping address and payment method.
+                                                Confirm your shipping details and payment method.
                                             </DialogDescription>
                                         </DialogHeader>
                                         
                                         <div className="space-y-4 py-4">
-                                            <div className="p-4 border rounded-lg space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <h4 className="font-semibold">Shipping to:</h4>
-                                                    <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/user')}>
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        Change
-                                                    </Button>
-                                                </div>
-                                                {user?.address ? (
-                                                    <address className="text-sm text-muted-foreground not-italic">
-                                                        <p className="font-medium text-foreground">{user.displayName}</p>
-                                                        <p>{user.address}</p>
-                                                        <p>{user.city}, {user.state} {user.pincode}</p>
-                                                        <p>{user.phone}</p>
-                                                    </address>
-                                                ) : (
-                                                    <div className="text-sm text-destructive">
-                                                        No address found. Please add a shipping address to your profile.
+                                            <RadioGroup value={shippingAddressOption} onValueChange={(value) => setShippingAddressOption(value as 'default' | 'new')} className="space-y-2">
+                                                <div className="p-4 border rounded-lg space-y-2 has-[:checked]:bg-secondary/50 has-[:checked]:border-primary">
+                                                    <div className="flex items-center justify-between">
+                                                        <Label htmlFor="default-address" className="font-semibold flex items-center gap-2 cursor-pointer">
+                                                            <RadioGroupItem value="default" id="default-address" />
+                                                            Use Default Address
+                                                        </Label>
+                                                        <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/user')}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Change
+                                                        </Button>
                                                     </div>
-                                                )}
-                                            </div>
+                                                    {user?.address ? (
+                                                        <address className="text-sm text-muted-foreground not-italic pl-6">
+                                                            <p className="font-medium text-foreground">{user.displayName}</p>
+                                                            <p>{user.address}</p>
+                                                            <p>{user.city}, {user.state} {user.pincode}</p>
+                                                            <p>{user.phone}</p>
+                                                        </address>
+                                                    ) : (
+                                                        <div className="text-sm text-destructive pl-6">
+                                                            No default address found. Please add one in your profile.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="p-4 border rounded-lg space-y-2 has-[:checked]:bg-secondary/50 has-[:checked]:border-primary">
+                                                     <Label htmlFor="new-address" className="font-semibold flex items-center gap-2 cursor-pointer">
+                                                        <RadioGroupItem value="new" id="new-address" />
+                                                        Ship to a New Address
+                                                    </Label>
+                                                    {shippingAddressOption === 'new' && (
+                                                        <div className="space-y-2 pl-6 pt-2">
+                                                            <Input id="address" placeholder="Street Address" value={newAddress.address} onChange={handleNewAddressChange} />
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <Input id="city" placeholder="City" value={newAddress.city} onChange={handleNewAddressChange} />
+                                                                <Input id="state" placeholder="State" value={newAddress.state} onChange={handleNewAddressChange} />
+                                                            </div>
+                                                            <Input id="pincode" placeholder="Pincode" value={newAddress.pincode} onChange={handleNewAddressChange} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </RadioGroup>
                                             <div className="flex justify-between items-center p-4 border rounded-lg">
                                                 <div>
                                                     <p className="font-semibold">Total Amount</p>
@@ -409,11 +468,11 @@ export default function CartPage() {
                                         </div>
                             
                                         <DialogFooter className="sm:justify-between gap-2">
-                                            <Button className="w-full sm:w-auto" onClick={handleCheckout} disabled={isProcessing || isCodProcessing || !user?.address}>
+                                            <Button className="w-full sm:w-auto" onClick={handleCheckout} disabled={isCheckoutDisabled}>
                                                 {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                                 {isProcessing ? 'Processing...' : 'Pay Online'}
                                             </Button>
-                                            <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCodCheckout} disabled={isProcessing || isCodProcessing || !user?.address}>
+                                            <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCodCheckout} disabled={isCheckoutDisabled}>
                                                 {isCodProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                                 {isCodProcessing ? 'Placing Order...' : 'Cash on Delivery'}
                                             </Button>
