@@ -74,7 +74,7 @@ export default function LoginPage() {
       <AuthBackground />
       <Card className="relative z-10 mx-auto max-w-sm w-full bg-card/80 backdrop-blur-sm">
         <CardHeader className="space-y-4 text-center">
-            <Logo className="w-32 mx-auto" />
+            <Logo className="w-32 h-32 mx-auto" />
             <CardTitle className="text-2xl font-headline">Login</CardTitle>
             <CardDescription>
                 Enter your email below to login to your account
