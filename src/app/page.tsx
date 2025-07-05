@@ -16,7 +16,7 @@ export default function Home() {
   const featuredStyles = [
     { name: 'Streetwear', image: 'https://images.pexels.com/photos/32872368/pexels-photo-32872368.jpeg' },
     { name: 'Smart Casual', image: 'https://images.pexels.com/photos/2897883/pexels-photo-2897883.jpeg' },
-    { name: 'Night Life', image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg' },
+    { name: 'Night Life', image: 'https://images.pexels.com/photos/32819862/pexels-photo-32819862.jpeg' },
   ];
   
   const newArrivals = products.filter(p => p.isNew).slice(0, 8);
