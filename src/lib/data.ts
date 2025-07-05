@@ -209,7 +209,7 @@ export const looks: Look[] = [
 export const lookCategories: LookCategory[] = ['Streetwear', 'Smart Casual', 'Weekend', 'Summer'];
 
 
-export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Bags', 'Belts', 'Socks', 'Wallets', 'Sweater', 'Sweatshirt', 'Jackets', 'Track pants'];
+export const categories: Product['category'][] = ['Shirts', 'Tshirts', 'Oversized T-shirt', 'Pants', 'Jeans', 'Trousers', 'Shoes', 'Bags', 'Belts', 'Socks', 'Wallets', 'Sweater', 'Sweatshirt', 'Jackets', 'Track pants'];
 
 export const alphaSizes: string[] = ['S', 'M', 'L', 'XL', 'XXL'];
 export const numericSizes: string[] = ['28', '30', '32', '34', '36'];
