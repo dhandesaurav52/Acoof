@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import type { Order, OrderStatus } from '@/types';
 import { auth, database } from '@/lib/firebase';
 import { ref, onValue, off, update } from 'firebase/database';
-import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,27 +19,20 @@ const ADMIN_EMAIL = "admin@example.com";
 
 export function AdminOrdersManager() {
     const { user, loading: authLoading } = useAuth();
-    const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        // Guard 1: Wait until authentication is resolved.
-        if (authLoading) {
+        // This effect will only run after the component has confirmed the user is an authenticated admin.
+        if (authLoading || !user || user.email !== ADMIN_EMAIL) {
+            // Do not fetch data if auth is loading or user is not an admin.
+            // The loading/redirect is handled by the component's return logic below.
+            if (!authLoading) setLoadingData(false);
             return;
         }
 
-        // Guard 2: If auth is done, but the user is not the admin, stop immediately.
-        // The AdminLayout will handle the redirect. This prevents any data fetch attempt.
-        if (!user || user.email !== ADMIN_EMAIL) {
-            setLoadingData(false);
-            return;
-        }
-
-        // At this point, we are certain the user is an authenticated admin.
-        // It is now safe to set up the Firebase listener.
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -94,17 +86,13 @@ export function AdminOrdersManager() {
         const orderRef = ref(database, `orders/${orderId}`);
         try {
             await update(orderRef, { status: newStatus });
+            // Status change notification for admin is removed.
         } catch (error: any) {
             if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
                 console.warn("Order update permission denied, user may have logged out.");
                 return;
             }
             console.error("Failed to update order status:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Update Failed',
-                description: 'An unexpected error occurred while updating the order status.',
-            });
         }
     };
 
@@ -118,7 +106,9 @@ export function AdminOrdersManager() {
         }
     }
     
-    if (loadingData) {
+    // This is the final client-side guard. It ensures nothing renders until auth is ready.
+    // The AdminLayout provides the primary redirect, this prevents premature data fetching.
+    if (authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
