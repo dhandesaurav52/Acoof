@@ -68,13 +68,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@layer components {
-  .logo-wordmark {
-    font-family: var(--font-montserrat), sans-serif;
-    font-weight: 900;
-    font-size: 50px;
-    fill: currentColor;
-    letter-spacing: 0.02em;
-  }
-}
