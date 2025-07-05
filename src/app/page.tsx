@@ -14,7 +14,7 @@ export default function Home() {
   const { products } = useProducts();
   
   const featuredStyles = [
-    { name: 'Streetwear', image: 'https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg' },
+    { name: 'Streetwear', image: 'https://images.pexels.com/photos/32872368/pexels-photo-32872368.jpeg' },
     { name: 'Smart Casual', image: 'https://images.pexels.com/photos/2897883/pexels-photo-2897883.jpeg' },
     { name: 'Night Life', image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg' },
   ];
