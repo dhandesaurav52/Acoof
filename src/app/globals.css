@@ -70,23 +70,11 @@
 }
 
 @layer components {
-  .logo-main-text {
+  .logo-wordmark {
     font-family: var(--font-montserrat), sans-serif;
     font-weight: 900;
-    font-size: 300px;
-    fill: white;
-    letter-spacing: -0.02em;
-  }
-  .logo-sub-text {
-    font-family: var(--font-montserrat), sans-serif;
-    font-weight: 600;
-    font-size: 50px;
-    fill: white;
-  }
-  .logo-domain-text {
-    font-family: var(--font-montserrat), sans-serif;
-    font-weight: 800;
-    font-size: 110px;
-    fill: black;
+    font-size: 56px;
+    fill: currentColor;
+    letter-spacing: 0.02em;
   }
 }

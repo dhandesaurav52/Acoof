@@ -3,50 +3,19 @@ import * as React from 'react';
 export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 1024 538"
+      viewBox="0 0 280 60"
       className={className}
       {...props}
       xmlns="http://www.w3.org/2000/svg"
+      aria-label="Acoof Logo"
     >
-      <rect width="1024" height="538" fill="#D83E34" />
-
-      <g className="logo-main-text">
-        <text x="40" y="410">A</text>
-        <text x="210" y="410">C</text>
-        <text x="700" y="410">F</text>
-      </g>
-      
       <text
-        x="265"
-        y="345"
-        className="logo-sub-text"
+        x="0"
+        y="50"
+        className="logo-wordmark"
       >
-        SWAZ
+        ACOOF
       </text>
-      
-      <text
-        x="830"
-        y="410"
-        className="logo-domain-text"
-      >
-        .in
-      </text>
-
-      <g>
-        {/* Bag Body */}
-        <path d="M435 150 L410 420 L680 420 L655 150 Z" fill="black"/>
-        
-        {/* Bag Handle */}
-        <path d="M490 100 C 490 40, 590 40, 590 100" stroke="black" strokeWidth="40" fill="none"/>
-        <path d="M490 100 C 490 55, 590 55, 590 100" stroke="#D83E34" strokeWidth="20" fill="none"/>
-        
-        {/* Eyes (OOs) */}
-        <circle cx="495" cy="280" r="60" fill="white"/>
-        <circle cx="595" cy="280" r="60" fill="white"/>
-        
-        {/* Smile */}
-        <path d="M500 370 Q545 410 590 370" stroke="white" strokeWidth="15" fill="none" strokeLinecap="round"/>
-      </g>
     </svg>
   );
 }
