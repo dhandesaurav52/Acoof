@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, Package, Trash2 } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Loader2, AlertCircle, Package, Trash2, Search, FileText, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +15,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { clearAllOrders, deleteOrder } from '@/app/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
 
 export default function AdminOrdersPage() {
     const { toast } = useToast();
@@ -25,9 +27,8 @@ export default function AdminOrdersPage() {
     const [isClearing, setIsClearing] = useState(false);
     const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // The AdminLayout handles auth checks, so this component will only render for admins.
-    // The data fetching can proceed without additional checks.
     useEffect(() => {
         if (!database) {
             setError("Firebase is not configured correctly.");
@@ -51,20 +52,29 @@ export default function AdminOrdersPage() {
         }, (err: any) => {
             console.error("Firebase read failed: ", err);
             if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
-                setError("Permission Denied: Could not fetch orders. This indicates a Firebase security rule issue. Please ensure you are logged in as admin and your Realtime Database rules grant read access to '/orders'.");
+                setError("Permission Denied: Could not fetch orders. Please ensure your Firebase rules grant admin read access to '/orders'.");
             } else {
                 setError("An error occurred while fetching orders data.");
             }
             setLoadingData(false);
         });
 
-        // Cleanup function for the listener
         return () => {
             if (database && ordersRef) {
                 off(ordersRef, 'value', listener);
             }
         };
     }, []);
+    
+    const filteredOrders = useMemo(() => {
+        if (!searchQuery) return orders;
+        const lowercasedQuery = searchQuery.toLowerCase();
+        return orders.filter(order => 
+            order.id.toLowerCase().includes(lowercasedQuery) ||
+            order.user.toLowerCase().includes(lowercasedQuery) ||
+            order.userEmail.toLowerCase().includes(lowercasedQuery)
+        );
+    }, [orders, searchQuery]);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -114,6 +124,16 @@ export default function AdminOrdersPage() {
         setIsDeleting(false);
         setOrderToDelete(null);
     };
+
+    const getStatusIcon = (status: Order['status']) => {
+        switch (status) {
+            case 'Pending': return <Package className="h-5 w-5 text-yellow-500" />;
+            case 'Shipped': return <Truck className="h-5 w-5 text-blue-500" />;
+            case 'Delivered': return <CheckCircle className="h-5 w-5 text-green-500" />;
+            case 'Cancelled': return <XCircle className="h-5 w-5 text-red-500" />;
+            default: return <FileText className="h-5 w-5 text-muted-foreground" />;
+        }
+    }
     
     if (loadingData) {
         return (
@@ -129,7 +149,7 @@ export default function AdminOrdersPage() {
                 <div className="text-left">
                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">Manage Orders</h1>
                     <p className="text-muted-foreground mt-2">
-                        View and update the status of all customer orders.
+                        View, search, and update the status of all customer orders.
                     </p>
                 </div>
                 
@@ -148,9 +168,9 @@ export default function AdminOrdersPage() {
                 ) : (
                     <Card>
                         <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle>All Orders</CardTitle>
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <CardTitle>All Orders ({filteredOrders.length})</CardTitle>
                                     <CardDescription>A list of all orders placed in your store.</CardDescription>
                                 </div>
                                 <Button variant="destructive" onClick={() => setIsClearConfirmOpen(true)} disabled={orders.length === 0 || isClearing}>
@@ -158,105 +178,116 @@ export default function AdminOrdersPage() {
                                     Clear All Orders
                                 </Button>
                             </div>
+                            <div className="relative mt-4">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search by Order ID, Name, or Email..." 
+                                    className="pl-10"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         </CardHeader>
                         <CardContent>
                              <div className="border rounded-lg overflow-hidden">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Order ID</TableHead>
-                                            <TableHead>Customer</TableHead>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead className="text-right">Total</TableHead>
-                                            <TableHead className="text-center">Status</TableHead>
-                                            <TableHead className="text-center">Action</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {orders.length > 0 ? orders.map((order) => (
-                                            <TableRow key={order.id}>
-                                                <TableCell>
-                                                    <div className="font-medium truncate max-w-[120px]">{order.id}</div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="font-medium">{order.user}</div>
-                                                    <div className="text-xs text-muted-foreground">{order.userEmail}</div>
-                                                </TableCell>
-                                                <TableCell>{order.date}</TableCell>
-                                                <TableCell className="text-right">₹{order.total.toFixed(2)}</TableCell>
-                                                <TableCell className="text-center">
-                                                    <Badge
-                                                        variant={
-                                                            order.status === 'Pending' ? 'destructive' :
-                                                            order.status === 'Shipped' ? 'default' :
-                                                            order.status === 'Delivered' ? 'secondary' :
-                                                            'outline'
-                                                        }
-                                                    >
-                                                        {order.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex justify-center items-center gap-2">
-                                                        <Select
-                                                            value={order.status}
-                                                            onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}
-                                                        >
-                                                            <SelectTrigger className="w-[120px] h-8">
-                                                                <SelectValue placeholder="Update Status" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="Pending">Pending</SelectItem>
-                                                                <SelectItem value="Shipped">Shipped</SelectItem>
-                                                                <SelectItem value="Delivered">Delivered</SelectItem>
-                                                                <SelectItem value="Cancelled">Cancelled</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                        
-                                                        {order.status === 'Pending' || order.status === 'Cancelled' ? (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Button variant="ghost" size="icon" onClick={() => setOrderToDelete(order)}>
-                                                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                                                        </Button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>
-                                                                        <p>Delete Order</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        ) : (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <span tabIndex={0}>
-                                                                            <Button variant="ghost" size="icon" disabled className="pointer-events-none">
-                                                                                <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                                                            </Button>
-                                                                        </span>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>
-                                                                        <p>Only 'Pending' or 'Cancelled' orders can be deleted.</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        )}
+                                {filteredOrders.length > 0 ? (
+                                    <Accordion type="single" collapsible className="w-full">
+                                        {filteredOrders.map((order) => (
+                                            <AccordionItem value={order.id} key={order.id} className="last:border-b-0">
+                                                <AccordionTrigger className="px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors text-left">
+                                                    <div className="flex items-center gap-2 sm:gap-4 w-full">
+                                                        <div className="hidden sm:block">
+                                                            {getStatusIcon(order.status)}
+                                                        </div>
+                                                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
+                                                            <div>
+                                                                <div className="text-sm font-semibold truncate max-w-24 sm:max-w-full" title={order.id}>{order.id}</div>
+                                                                <div className="text-xs text-muted-foreground">{order.date}</div>
+                                                            </div>
+                                                            <div className="hidden sm:block">
+                                                                <div className="font-medium">{order.user}</div>
+                                                                <div className="text-xs text-muted-foreground truncate">{order.userEmail}</div>
+                                                            </div>
+                                                            <div className="col-span-1 flex justify-end sm:justify-start">
+                                                                <Badge variant={order.status === 'Pending' ? 'destructive' : order.status === 'Shipped' ? 'default' : order.status === 'Delivered' ? 'secondary' : 'outline'} className="w-24 justify-center">{order.status}</Badge>
+                                                            </div>
+                                                            <div className="hidden sm:block text-right font-medium text-lg">₹{order.total.toFixed(2)}</div>
+                                                        </div>
                                                     </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )) : (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center h-24">
-                                                    <div className="flex flex-col items-center justify-center gap-2">
-                                                        <Package className="h-8 w-8 text-muted-foreground" />
-                                                        <span>No orders found.</span>
+                                                </AccordionTrigger>
+                                                <AccordionContent className="bg-secondary/20">
+                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <h4 className="font-semibold mb-2">Order Items ({order.items.length})</h4>
+                                                            <Table>
+                                                                <TableHeader>
+                                                                    <TableRow>
+                                                                        <TableHead>Product</TableHead>
+                                                                        <TableHead className="text-center">Qty</TableHead>
+                                                                        <TableHead className="text-right">Subtotal</TableHead>
+                                                                    </TableRow>
+                                                                </TableHeader>
+                                                                <TableBody>
+                                                                    {order.items.map((item, idx) => (
+                                                                        <TableRow key={idx}>
+                                                                            <TableCell>{item.productName}</TableCell>
+                                                                            <TableCell className="text-center">{item.quantity}</TableCell>
+                                                                            <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
+                                                                        </TableRow>
+                                                                    ))}
+                                                                </TableBody>
+                                                            </Table>
+                                                        </div>
+                                                        <div className="space-y-4">
+                                                            <div>
+                                                                <h4 className="font-semibold mb-1">Shipping & Payment</h4>
+                                                                <p className="text-sm text-muted-foreground">{order.shippingAddress}</p>
+                                                                <p className="text-sm mt-1">Payment Method: <span className="font-medium">{order.paymentMethod}</span></p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-semibold mb-2">Actions</h4>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Select value={order.status} onValueChange={(value: OrderStatus) => handleStatusChange(order.id, value)}>
+                                                                        <SelectTrigger className="w-full">
+                                                                            <SelectValue placeholder="Update Status" />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="Pending">Pending</SelectItem>
+                                                                            <SelectItem value="Shipped">Shipped</SelectItem>
+                                                                            <SelectItem value="Delivered">Delivered</SelectItem>
+                                                                            <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                    
+                                                                    <TooltipProvider>
+                                                                        <Tooltip>
+                                                                            <TooltipTrigger asChild>
+                                                                                <span tabIndex={0}>
+                                                                                    <Button variant="destructive" size="icon" onClick={() => setOrderToDelete(order)} disabled={order.status !== 'Pending' && order.status !== 'Cancelled'}>
+                                                                                        <Trash2 className="h-4 w-4" />
+                                                                                    </Button>
+                                                                                </span>
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent>
+                                                                                {order.status === 'Pending' || order.status === 'Cancelled' ? <p>Delete Order</p> : <p>Only 'Pending' or 'Cancelled' orders can be deleted.</p>}
+                                                                            </TooltipContent>
+                                                                        </Tooltip>
+                                                                    </TooltipProvider>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                ) : (
+                                    <div className="text-center h-48 flex flex-col items-center justify-center gap-2">
+                                        <Package className="h-10 w-10 text-muted-foreground" />
+                                        <p className="font-semibold">{orders.length > 0 ? "No orders match your search." : "No orders found."}</p>
+                                        {orders.length > 0 && <Button variant="outline" onClick={() => setSearchQuery('')}>Clear Search</Button>}
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -309,3 +340,5 @@ export default function AdminOrdersPage() {
         </div>
     );
 }
+
+    
