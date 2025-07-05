@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 
@@ -15,6 +16,7 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       {...props}
       xmlns="http://www.w3.org/2000/svg"
       aria-label="White Wolf Logo"
+      suppressHydrationWarning
     >
       {isMounted && (
         <text
