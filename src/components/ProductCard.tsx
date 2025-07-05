@@ -9,12 +9,13 @@ import { ShoppingCart, Heart } from "lucide-react";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface ProductCardProps {
   product: Product;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+const ProductCardComponent = ({ product }: ProductCardProps) => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
   const isFavorited = isInWishlist(product.id);
@@ -79,4 +80,6 @@ export function ProductCard({ product }: ProductCardProps) {
       </CardFooter>
     </Card>
   );
-}
+};
+
+export const ProductCard = React.memo(ProductCardComponent);
