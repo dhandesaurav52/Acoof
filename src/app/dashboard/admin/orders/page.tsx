@@ -237,7 +237,7 @@ export default function AdminOrdersPage() {
                                                             </SelectContent>
                                                         </Select>
                                                         
-                                                        {order.status === 'Pending' ? (
+                                                        {order.status === 'Pending' || order.status === 'Cancelled' ? (
                                                             <TooltipProvider>
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
@@ -261,7 +261,7 @@ export default function AdminOrdersPage() {
                                                                         </span>
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>
-                                                                        <p>Only 'Pending' orders can be deleted.</p>
+                                                                        <p>Only 'Pending' or 'Cancelled' orders can be deleted.</p>
                                                                     </TooltipContent>
                                                                 </Tooltip>
                                                             </TooltipProvider>
