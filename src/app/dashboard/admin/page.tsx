@@ -45,17 +45,8 @@ export default function AdminDashboardPage() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
-        // Wait for all data dependencies to be ready
-        if (productsLoading || authLoading) {
-            return;
-        }
-
-        // Failsafe: if not an admin, don't fetch data. Layout should redirect.
-        if (!user || user.email !== ADMIN_EMAIL) {
-            setLoadingData(false);
-            return;
-        }
-        
+        // Because of the component-level guard below, this effect will only run
+        // when auth and products are loaded, and the user is a confirmed admin.
         async function fetchAdminData() {
             setLoadingData(true);
             try {
@@ -143,10 +134,11 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [productsLoading, allProducts, user, authLoading]);
+    }, [allProducts]); // Effect only depends on product data now.
     
-    // The AdminLayout handles the primary auth check. This just ensures all data is ready.
-    if (productsLoading || authLoading || loadingData) {
+    // This is the definitive guard. It prevents the component from rendering anything,
+    // including the useEffect hook, until all permissions and data are verified.
+    if (authLoading || productsLoading || !user || user.email !== ADMIN_EMAIL) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -176,6 +168,10 @@ export default function AdminDashboardPage() {
                             <p className="text-destructive">{error}</p>
                         </CardContent>
                     </Card>
+                ) : loadingData ? (
+                    <div className="flex items-center justify-center min-h-[calc(100vh-400px)]">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
                 ) : (
                 <>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -24,19 +24,18 @@ export default function AdminOrdersPage() {
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        // Wait until auth state is determined.
-        if (authLoading) {
-            setLoadingData(true);
-            return;
-        }
-        // If auth is resolved but there's no user or the user is not an admin, stop.
-        // The layout should have redirected, but this is a failsafe.
-        if (!user || user.email !== 'admin@example.com') {
-            setLoadingData(false);
-            return;
-        }
+    // This is the definitive guard. It prevents the component from rendering anything,
+    // including the useEffect hook, until all permissions are verified.
+    if (authLoading || !user || user.email !== 'admin@example.com') {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
+    useEffect(() => {
+        // Because of the guard above, this effect will only run for a confirmed admin.
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -58,6 +57,7 @@ export default function AdminOrdersPage() {
             setLoadingData(false);
         }, (err: any) => {
             console.error("Firebase read failed: ", err);
+            // This error should ideally not be a permission error anymore due to the guard.
             if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
                 setError("Permission Denied: Could not fetch orders. Please ensure your Firebase rules grant admin read access to '/orders'.");
             } else {
@@ -71,7 +71,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [user, authLoading]);
+    }, []); // Effect runs once on mount, guarded by the component logic.
     
     const filteredOrders = useMemo(() => {
         if (!searchQuery) return orders;
@@ -117,8 +117,6 @@ export default function AdminOrdersPage() {
         }
     }
     
-    // The AdminLayout handles the primary loading/auth check.
-    // This component's loading state is for its own data fetching.
     if (loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
