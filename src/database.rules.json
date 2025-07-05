@@ -1,4 +1,3 @@
-
 {
   "rules": {
     "products": {
@@ -6,20 +5,23 @@
       ".write": "auth != null && auth.token.email === 'admin@example.com'"
     },
     "users": {
+      // Admin needs to read the list of all users
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
-      ".write": "auth != null && auth.token.email === 'admin@example.com'",
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        // User can R/W their own data. Admin can R/W any user's data.
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')"
       }
     },
     "orders": {
       ".indexOn": "userId",
+      // Admin needs to read the list of all orders
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
-      ".write": "auth != null && auth.token.email === 'admin@example.com'",
       "$orderId": {
-        ".read": "auth != null && data.child('userId').val() === auth.uid",
-        ".write": "auth != null && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
+        // User can R their own order. Admin can R any order.
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
+        // User can W their own order. Admin can W any order.
+        ".write": "auth != null && (auth.token.email === 'admin@example.com' || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
       }
     }
   }
