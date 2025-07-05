@@ -2,17 +2,16 @@
 "use client";
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/Logo"
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { AuthBackground } from "@/components/AuthBackground";
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -66,6 +65,7 @@ export default function SignupPage() {
   const handleGoogleSignup = async () => {
     try {
         await loginWithGoogle();
+        router.push('/dashboard/user');
     } catch (error: any) {
         toast({
             variant: 'destructive',
@@ -76,17 +76,16 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen bg-auth-background py-12 overflow-hidden">
-        <AuthBackground />
-        <Card className="relative z-10 mx-auto max-w-sm w-full bg-card/80 backdrop-blur-sm">
-          <CardHeader className="space-y-4 text-center">
-            <Logo width={128} height={39} className="mx-auto" />
-            <CardTitle className="text-2xl font-headline">Sign Up</CardTitle>
-            <CardDescription>
-              Enter your information to create an account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+       <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+            <div className="grid gap-2 text-center">
+              <Logo width={156} height={48} className="mx-auto mb-4" />
+              <h1 className="text-3xl font-bold">Sign Up</h1>
+              <p className="text-balance text-muted-foreground">
+                Enter your information to create an account
+              </p>
+            </div>
             <form onSubmit={handleSignup} className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -164,8 +163,17 @@ export default function SignupPage() {
                 Login
               </Link>
             </div>
-          </CardContent>
-        </Card>
+        </div>
+      </div>
+       <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://images.pexels.com/photos/3768165/pexels-photo-3768165.jpeg"
+          alt="Image"
+          width="1920"
+          height="1080"
+          className="h-full w-full object-cover dark:brightness-[0.4]"
+        />
+      </div>
     </div>
   )
 }

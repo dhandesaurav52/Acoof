@@ -37,8 +37,8 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-lg h-full flex flex-col">
-      <CardHeader className="p-0">
+    <Card className="group/card overflow-hidden transition-shadow duration-300 hover:shadow-lg h-full flex flex-col">
+       <CardHeader className="p-0">
         <Link href={`/products/${product.id}`} className="block relative group">
           <div className="aspect-[4/5] w-full overflow-hidden">
             <Image
@@ -53,9 +53,9 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
             <Badge className="absolute left-3 top-3">NEW</Badge>
           )}
            <Button 
-            variant="ghost" 
+            variant="secondary" 
             size="icon" 
-            className="absolute right-2 top-2 h-8 w-8 rounded-full bg-background/50 text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-background/60 backdrop-blur-sm text-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
             onClick={handleFavoriteClick}
             aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
            >
@@ -73,9 +73,9 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
         <p className="text-xl font-semibold text-primary">₹{product.price.toFixed(2)}</p>
-        <Button onClick={handleAddToCartClick}>
+        <Button onClick={handleAddToCartClick} size="sm" className="opacity-0 group-hover/card:opacity-100 transition-opacity">
             <ShoppingCart className="mr-2 h-4 w-4" />
-            Add to Cart
+            Add
         </Button>
       </CardFooter>
     </Card>

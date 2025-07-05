@@ -7,6 +7,8 @@ import { Facebook, Instagram } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 export function Footer() {
   const [year, setYear] = useState<number>();
@@ -18,23 +20,23 @@ export function Footer() {
   return (
     <footer className="border-t bg-secondary">
       <div className="container py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="flex flex-col gap-4 lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="flex flex-col gap-4 lg:col-span-4">
             <Logo width={156} height={48} />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground pr-8">
               Style Redefined. Dress with confidence.
             </p>
-            <div className="flex gap-4 mt-4">
-              <a href="https://m.facebook.com/acoof.in/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="https://www.instagram.com/acoof/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                <Instagram className="h-5 w-5" />
-              </a>
+             <div className="space-y-2">
+                <h4 className="font-semibold text-foreground">Join Our Newsletter</h4>
+                <p className="text-sm text-muted-foreground">Get exclusive updates and offers straight to your inbox.</p>
+                <div className="flex w-full max-w-sm items-center space-x-2">
+                    <Input type="email" placeholder="Email" />
+                    <Button type="submit">Subscribe</Button>
+                </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 lg:col-span-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 lg:col-span-8">
               <div className="space-y-4">
                 <h4 className="font-semibold font-headline">Shop</h4>
                 <div className="flex flex-col gap-2">
@@ -100,19 +102,19 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="mt-12 pt-8 border-t">
+        <div className="mt-8 pt-8 border-t">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <p className="text-center text-sm leading-loose text-muted-foreground" suppressHydrationWarning>
+             <div className="flex gap-4">
+              <a href="https://m.facebook.com/acoof.in/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a href="https://www.instagram.com/acoof/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                <Instagram className="h-5 w-5" />
+              </a>
+            </div>
+            <p className="text-center text-sm leading-loose text-muted-foreground md:order-first" suppressHydrationWarning>
               © {year} White Wolf. All Rights Reserved.
             </p>
-            <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">Payments accepted:</p>
-                <div className="flex items-center gap-2">
-                    <div className="w-10 h-6 bg-muted rounded-md flex items-center justify-center text-xs">Visa</div>
-                    <div className="w-10 h-6 bg-muted rounded-md flex items-center justify-center text-xs">MC</div>
-                    <div className="w-10 h-6 bg-muted rounded-md flex items-center justify-center text-xs">Amex</div>
-                </div>
-            </div>
           </div>
         </div>
       </div>
