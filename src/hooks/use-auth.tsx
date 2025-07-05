@@ -6,7 +6,7 @@ import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvide
 import { ref as storageDbRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage, database } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { ref as dbRef, set, get } from "firebase/database";
+import { ref as dbRef, set, get, update } from "firebase/database";
 
 export type AppUser = User & {
     phone?: string;
@@ -143,24 +143,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         const userDbRef = dbRef(database, `users/${currentUser.uid}`);
-        const snapshot = await get(userDbRef);
-        const currentDbData = snapshot.exists() ? snapshot.val() : {};
 
-        const dbData = {
-            ...currentDbData,
-            displayName: data.displayName,
-            email: data.email,
-            phone: data.phone,
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            pincode: data.pincode,
-        };
-        
-        const cleanDbData = Object.fromEntries(Object.entries(dbData).filter(([, v]) => v != null && v !== ''));
+        const dbUpdates: { [key: string]: any } = {};
+        if (data.displayName) dbUpdates.displayName = data.displayName;
+        if (data.email) dbUpdates.email = data.email;
+        if (data.phone) dbUpdates.phone = data.phone;
+        if (data.address) dbUpdates.address = data.address;
+        if (data.city) dbUpdates.city = data.city;
+        if (data.state) dbUpdates.state = data.state;
+        if (data.pincode) dbUpdates.pincode = data.pincode;
 
-        if (Object.keys(cleanDbData).length > 0) {
-            await set(userDbRef, cleanDbData);
+        const cleanDbUpdates = Object.fromEntries(Object.entries(dbUpdates).filter(([, v]) => v != null && v !== ''));
+
+        if (Object.keys(cleanDbUpdates).length > 0) {
+            await update(userDbRef, cleanDbUpdates);
         }
 
         await currentUser.reload();
