@@ -8,7 +8,7 @@ export function Logo({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
     // even if only one dimension (e.g., height) is specified in the className.
     <div className={cn('relative aspect-square', className)} {...props}>
       <Image
-        src="https://firebasestorage.googleapis.com/v0/b/genkit-llm-76571.appspot.com/o/1474921b-683a-4dd3-9114-152e04b43445?alt=media&token=c27c6536-6c8c-49f4-ac3e-5b1233075c32"
+        src="https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.appspot.com/o/74c364fd-44c0-4461-873a-9ac7b928858f.png?alt=media"
         alt="White Wolf Logo"
         fill
         priority
