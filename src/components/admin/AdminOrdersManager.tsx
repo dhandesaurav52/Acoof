@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import type { Order, OrderStatus } from '@/types';
 import { auth, database } from '@/lib/firebase';
-import { ref, onValue, off, update } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -25,49 +25,47 @@ export function AdminOrdersManager() {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        // This effect will only run after the component has confirmed the user is an authenticated admin.
-        if (authLoading || !user || user.email !== ADMIN_EMAIL) {
-            // Do not fetch data if auth is loading or user is not an admin.
-            // The loading/redirect is handled by the component's return logic below.
-            if (!authLoading) setLoadingData(false);
-            return;
+        if (authLoading) {
+            return; // Wait for auth to resolve
+        }
+        if (!user || user.email !== ADMIN_EMAIL) {
+            setLoadingData(false);
+            return; // Not an admin, don't fetch
         }
 
-        if (!database) {
-            setError("Firebase is not configured correctly.");
-            setLoadingData(false);
-            return;
+        async function fetchOrders() {
+            if (!database) {
+                setError("Firebase is not configured correctly.");
+                setLoadingData(false);
+                return;
+            }
+            
+            const ordersRef = ref(database, 'orders');
+            try {
+                const snapshot = await get(ordersRef);
+                if (snapshot.exists()) {
+                    const ordersData = snapshot.val();
+                    const ordersList: Order[] = Object.keys(ordersData)
+                        .map(key => ({ id: key, ...ordersData[key] }))
+                        .reverse();
+                    setOrders(ordersList);
+                } else {
+                    setOrders([]);
+                }
+                setError(null);
+            } catch (err: any) {
+                console.error("Firebase read failed: ", err);
+                if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
+                    setError("Permission Denied: Could not fetch orders. Please check that your Firebase Database rules grant read access to the '/orders' path for the admin email.");
+                } else {
+                    setError("An error occurred while fetching orders data.");
+                }
+            } finally {
+                setLoadingData(false);
+            }
         }
 
-        const ordersRef = ref(database, 'orders');
-        const listener = onValue(ordersRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const ordersData = snapshot.val();
-                const ordersList: Order[] = Object.keys(ordersData)
-                    .map(key => ({ id: key, ...ordersData[key] }))
-                    .reverse();
-                setOrders(ordersList);
-            } else {
-                setOrders([]);
-            }
-            setError(null);
-            setLoadingData(false);
-        }, (err: any) => {
-            console.error("Firebase read failed: ", err);
-            if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
-                setError("Permission Denied: Could not fetch orders. Please check that your Firebase Database rules grant read access to the '/orders' path for the admin email.");
-            } else {
-                setError("An error occurred while fetching orders data.");
-            }
-            setLoadingData(false);
-        });
-
-        // Cleanup: remove the listener when the component unmounts.
-        return () => {
-            if (database && ordersRef) {
-                off(ordersRef, 'value', listener);
-            }
-        };
+        fetchOrders();
     }, [user, authLoading]);
     
     const filteredOrders = useMemo(() => {
@@ -86,7 +84,12 @@ export function AdminOrdersManager() {
         const orderRef = ref(database, `orders/${orderId}`);
         try {
             await update(orderRef, { status: newStatus });
-            // Status change notification for admin is removed.
+            // Manually update local state to reflect the change immediately
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order.id === orderId ? { ...order, status: newStatus } : order
+                )
+            );
         } catch (error: any) {
             if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
                 console.warn("Order update permission denied, user may have logged out.");
@@ -106,8 +109,6 @@ export function AdminOrdersManager() {
         }
     }
     
-    // This is the final client-side guard. It ensures nothing renders until auth is ready.
-    // The AdminLayout provides the primary redirect, this prevents premature data fetching.
     if (authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
