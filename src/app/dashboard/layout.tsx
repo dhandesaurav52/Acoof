@@ -17,9 +17,11 @@ import {
     LogOut,
     Menu,
     Shield,
-    User as UserIcon
+    User as UserIcon,
+    Home,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -29,6 +31,7 @@ function DashboardNavItems() {
     const isAdmin = user?.email === ADMIN_EMAIL;
     
     const userNav = [
+        { href: '/', label: 'Home', icon: Home },
         { href: '/dashboard/user', label: 'Profile', icon: UserIcon },
         { href: '/dashboard/user/orders', label: 'My Orders', icon: Package },
         { href: '/dashboard/user/wishlist', label: 'Wishlist', icon: Heart },
@@ -37,6 +40,7 @@ function DashboardNavItems() {
     ];
 
     const adminNav = [
+        { href: '/', label: 'Home', icon: Home },
         { href: '/dashboard/admin', label: 'Dashboard', icon: LayoutGrid },
         { href: '/dashboard/admin/orders', label: 'Manage Orders', icon: Package },
         { href: '/dashboard/admin/operate-store', label: 'Manage Store', icon: ShoppingBag },
@@ -50,17 +54,29 @@ function DashboardNavItems() {
             {isAdmin && <div className="p-2 mb-2 rounded-md bg-secondary text-secondary-foreground flex items-center gap-2 text-sm font-medium">
                 <Shield className="h-4 w-4" /> Admin Mode
             </div>}
-            {navItems.map((item) => (
-                <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${pathname.startsWith(item.href) && (item.href !== '/dashboard/admin' || pathname === item.href) ? 'bg-muted text-primary' : 'text-muted-foreground'
-                        }`}
-                >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                </Link>
-            ))}
+            {navItems.map((item) => {
+                const isActive =
+                  (item.href === '/' && pathname === '/') ||
+                  (item.href === '/dashboard/admin' && pathname === '/dashboard/admin') ||
+                  (item.href === '/dashboard/user' && pathname === '/dashboard/user') ||
+                  (item.href !== '/' && item.href !== '/dashboard/admin' && item.href !== '/dashboard/user' && pathname.startsWith(item.href));
+
+                return (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                            'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary',
+                            isActive
+                                ? 'bg-muted text-primary'
+                                : 'text-muted-foreground'
+                        )}
+                    >
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
+                    </Link>
+                );
+            })}
         </nav>
     );
 }
