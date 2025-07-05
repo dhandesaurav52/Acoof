@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Users, CreditCard, Loader2, AlertCircle, Package, TrendingUp, LayoutGrid } from 'lucide-react';
 import { ref, get } from 'firebase/database';
@@ -34,6 +35,7 @@ const categoryChartConfig = {
 } satisfies ChartConfig;
 
 export function AdminDashboardContent() {
+    const { user, loading: authLoading } = useAuth();
     const { products: allProducts } = useProducts();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
@@ -42,7 +44,15 @@ export function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
-        // This effect will only run when the component is mounted, which only happens for a confirmed admin.
+        // This effect will not run until auth is resolved and the user is confirmed.
+        if (authLoading) {
+            return;
+        }
+        if (!user) {
+            setLoadingData(false);
+            return;
+        }
+        
         async function fetchAdminData() {
             setLoadingData(true);
             try {
@@ -130,9 +140,9 @@ export function AdminDashboardContent() {
         }
 
         fetchAdminData();
-    }, [allProducts]);
+    }, [user, authLoading, allProducts]);
     
-    if (loadingData) {
+    if (authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-400px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

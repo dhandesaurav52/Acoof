@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 import { Loader2, AlertCircle, Package, Search, FileText, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 export function AdminOrdersManager() {
+    const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
@@ -23,7 +25,15 @@ export function AdminOrdersManager() {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        // This effect will only run for a confirmed admin because the parent component handles the check.
+        // This is the explicit guard. Do not fetch data until auth is resolved and we have a user.
+        if (authLoading) {
+            return;
+        }
+        if (!user) { // If auth is done but there's no user, stop. The layout will redirect.
+            setLoadingData(false);
+            return;
+        }
+
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
@@ -58,7 +68,7 @@ export function AdminOrdersManager() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, []);
+    }, [user, authLoading]);
     
     const filteredOrders = useMemo(() => {
         if (!searchQuery) return orders;
@@ -104,7 +114,7 @@ export function AdminOrdersManager() {
         }
     }
     
-    if (loadingData) {
+    if (authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
