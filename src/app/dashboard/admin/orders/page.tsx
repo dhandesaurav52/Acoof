@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Loader2, AlertCircle, Package, Trash2, Search, FileText, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Package, Search, FileText, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,10 +11,7 @@ import type { Order, OrderStatus } from '@/types';
 import { auth, database } from '@/lib/firebase';
 import { ref, onValue, off, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { clearAllOrders, deleteOrder } from '@/app/actions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 
@@ -23,10 +20,6 @@ export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
-    const [isClearing, setIsClearing] = useState(false);
-    const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
@@ -100,31 +93,6 @@ export default function AdminOrdersPage() {
         }
     };
 
-    const handleClearOrders = async () => {
-        setIsClearing(true);
-        const result = await clearAllOrders();
-        if (result.success) {
-            toast({ title: 'Success', description: 'All orders have been deleted.' });
-        } else {
-            toast({ variant: 'destructive', title: 'Deletion Failed', description: result.error });
-        }
-        setIsClearing(false);
-        setIsClearConfirmOpen(false);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!orderToDelete) return;
-        setIsDeleting(true);
-        const result = await deleteOrder(orderToDelete);
-        if (result.success) {
-            toast({ title: 'Success', description: 'Order has been deleted.' });
-        } else {
-            toast({ variant: 'destructive', title: 'Deletion Failed', description: result.error });
-        }
-        setIsDeleting(false);
-        setOrderToDelete(null);
-    };
-
     const getStatusIcon = (status: Order['status']) => {
         switch (status) {
             case 'Pending': return <Package className="h-5 w-5 text-yellow-500" />;
@@ -173,10 +141,6 @@ export default function AdminOrdersPage() {
                                     <CardTitle>All Orders ({filteredOrders.length})</CardTitle>
                                     <CardDescription>A list of all orders placed in your store.</CardDescription>
                                 </div>
-                                <Button variant="destructive" onClick={() => setIsClearConfirmOpen(true)} disabled={orders.length === 0 || isClearing}>
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Clear All Orders
-                                </Button>
                             </div>
                             <div className="relative mt-4">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -258,21 +222,6 @@ export default function AdminOrdersPage() {
                                                                             <SelectItem value="Cancelled">Cancelled</SelectItem>
                                                                         </SelectContent>
                                                                     </Select>
-                                                                    
-                                                                    <TooltipProvider>
-                                                                        <Tooltip>
-                                                                            <TooltipTrigger asChild>
-                                                                                <span tabIndex={0}>
-                                                                                    <Button variant="destructive" size="icon" onClick={() => setOrderToDelete(order)} disabled={order.status !== 'Pending' && order.status !== 'Cancelled'}>
-                                                                                        <Trash2 className="h-4 w-4" />
-                                                                                    </Button>
-                                                                                </span>
-                                                                            </TooltipTrigger>
-                                                                            <TooltipContent>
-                                                                                {order.status === 'Pending' || order.status === 'Cancelled' ? <p>Delete Order</p> : <p>Only 'Pending' or 'Cancelled' orders can be deleted.</p>}
-                                                                            </TooltipContent>
-                                                                        </Tooltip>
-                                                                    </TooltipProvider>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -293,52 +242,6 @@ export default function AdminOrdersPage() {
                     </Card>
                 )}
             </div>
-
-            <AlertDialog open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete all {orders.length} orders and their references from all user profiles. This is intended for testing and development purposes.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isClearing}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={handleClearOrders} 
-                            disabled={isClearing} 
-                            className={buttonVariants({ variant: "destructive" })}
-                        >
-                            {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Yes, delete all orders
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog open={!!orderToDelete} onOpenChange={(open) => !open && setOrderToDelete(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete order #{orderToDelete?.id}.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleConfirmDelete}
-                            disabled={isDeleting}
-                            className={buttonVariants({ variant: "destructive" })}
-                        >
-                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Yes, delete order
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
-
-    

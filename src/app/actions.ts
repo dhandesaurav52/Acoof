@@ -4,9 +4,6 @@
 import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
-import { database } from '@/lib/firebase';
-import { ref, remove, get, update } from 'firebase/database';
-import type { Order } from '@/types';
 
 export async function getAiSuggestions(browsingHistory: string, photoDataUri?: string) {
   if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
@@ -110,74 +107,4 @@ export async function verifyRazorpayPayment(data: {
   }
   
   return { success: false, error: "Payment verification failed. This means the response from Razorpay could not be trusted. This is often caused by an incorrect 'RAZORPAY_KEY_SECRET'. Please re-verify your secret key for any typos or extra spaces and ensure it matches your account's mode (Test vs. Live)." };
-}
-
-export async function clearAllOrders(): Promise<{ success: boolean; error?: string }> {
-    if (!database) {
-        return { success: false, error: 'Firebase is not configured.' };
-    }
-    try {
-        // Step 1: Get all user IDs
-        const usersRef = ref(database, 'users');
-        const usersSnapshot = await get(usersRef);
-
-        // Step 2: Create a single, multi-path update to clear everything atomically.
-        const updates: { [key: string]: any } = {};
-
-        // Add the main /orders path to the update
-        updates['/orders'] = null;
-
-        // Add each user's orders path to the update
-        if (usersSnapshot.exists()) {
-            const usersData = usersSnapshot.val();
-            Object.keys(usersData).forEach(userId => {
-                updates[`/users/${userId}/orders`] = null;
-            });
-        }
-        
-        // Step 3: Execute the atomic update
-        await update(ref(database), updates);
-
-        return { success: true };
-    } catch (error: any) {
-        console.error("Failed to clear all orders:", error);
-        let errorMessage = 'An unexpected error occurred while clearing orders.';
-        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = `Permission Denied. A security rule is preventing this action. This is the final fix; please ensure the latest database rules have been copied from database.rules.json into your Firebase console. The exact error was: ${error.message}`;
-        } else {
-             errorMessage = error.message || errorMessage;
-        }
-        return { success: false, error: errorMessage };
-    }
-}
-
-
-export async function deleteOrder(order: Order): Promise<{ success: boolean; error?: string }> {
-    if (!database) {
-        return { success: false, error: 'Firebase is not configured.' };
-    }
-    try {
-        const updates: { [key: string]: any } = {};
-        
-        // Path to the main order object
-        updates[`/orders/${order.id}`] = null;
-        
-        // Path to the user's reference of the order
-        if (order.userId) {
-            updates[`/users/${order.userId}/orders/${order.id}`] = null;
-        }
-
-        // Atomically remove both the order and the user's reference to it.
-        await update(ref(database), updates);
-        return { success: true };
-    } catch (error: any) {
-        console.error("Failed to delete order:", error);
-        let errorMessage = 'An unexpected error occurred while deleting the order.';
-        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = `Permission Denied: Could not delete order. Ensure the latest Firebase rules from database.rules.json are published in your console. The error was: ${error.message}`;
-        } else {
-             errorMessage = error.message || errorMessage;
-        }
-        return { success: false, error: errorMessage };
-    }
 }
