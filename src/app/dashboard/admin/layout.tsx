@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -15,40 +15,32 @@ export default function AdminLayout({
 }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState(false);
 
+  // The redirect logic is a side effect and should be in useEffect.
+  // This will trigger a redirect if the user is not authorized.
   useEffect(() => {
-    // Don't do anything until auth state is resolved.
-    if (authLoading) {
-      return;
-    }
-
-    // If loading is done and there's no user, redirect to login.
-    if (!user) {
-      router.replace('/login');
-      return; // Stop execution
-    }
-
-    // If there is a user, check if they are the admin.
-    if (user.email === ADMIN_EMAIL) {
-      setIsAuthorized(true);
-    } else {
-      // If not an admin, redirect them away.
-      router.replace('/dashboard/user');
+    if (!authLoading) {
+      if (!user) {
+        router.replace('/login');
+      } else if (user.email !== ADMIN_EMAIL) {
+        router.replace('/dashboard/user');
+      }
     }
   }, [user, authLoading, router]);
 
-  // While we are waiting for authorization, show a loader.
-  // The children (admin pages) will not be rendered until `isAuthorized` is true.
-  // This prevents any data fetching from starting prematurely.
-  if (!isAuthorized) {
+  // The render guard is the most critical part. We will not render children
+  // unless we are certain the user is an authenticated admin.
+  // While authentication is loading, or if the user is not the admin,
+  // we render a full-screen loader. The redirect will happen in the background.
+  if (authLoading || !user || user.email !== ADMIN_EMAIL) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-  
-  // Only when authorized, render the admin page.
+
+  // Only when we are past the loading state and have confirmed the user is an admin,
+  // do we render the actual admin content.
   return <>{children}</>;
 }
