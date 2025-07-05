@@ -20,7 +20,7 @@ export function Footer() {
       <div className="container py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="flex flex-col gap-4 lg:col-span-1">
-            <Logo className="h-12 w-auto" />
+            <Logo className="h-12" />
             <p className="text-sm text-muted-foreground">
               Style Redefined. Dress with confidence.
             </p>
