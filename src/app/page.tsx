@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -26,7 +27,7 @@ export default function Home() {
       <section className="relative h-[90vh] min-h-[600px] flex items-center">
         <div className="absolute inset-0">
             <Image 
-                src="https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg" 
+                src="https://images.pexels.com/photos/9775860/pexels-photo-9775860.jpeg" 
                 alt="Hero background" 
                 fill
                 className="object-cover object-center"
