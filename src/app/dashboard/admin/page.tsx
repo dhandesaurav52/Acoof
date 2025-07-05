@@ -9,7 +9,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { database } from '@/lib/firebase';
 import type { OrderItem } from '@/types';
-import { useAuth } from '@/hooks/use-auth';
 import { useProducts } from '@/hooks/use-products';
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -36,7 +35,6 @@ const categoryChartConfig = {
 
 
 export default function AdminDashboardPage() {
-    const { user, loading: authLoading } = useAuth();
     const { products: allProducts, loading: productsLoading } = useProducts();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
@@ -44,11 +42,10 @@ export default function AdminDashboardPage() {
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
+    // The AdminLayout handles auth checks. This component will only render for admins.
+    // We only need to wait for product data to finish loading.
     useEffect(() => {
-        if (authLoading || productsLoading || !user || user.email !== ADMIN_EMAIL) {
-            if (!authLoading && !productsLoading) {
-                setLoadingData(false);
-            }
+        if (productsLoading) {
             return;
         }
         
@@ -129,7 +126,7 @@ export default function AdminDashboardPage() {
             } catch (e: any) {
                 console.error("Failed to fetch admin data:", e);
                 if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
-                    setError("Permission Denied. Could not fetch dashboard data. This is almost always a Firebase security rule issue. Please verify two things: 1) You are logged in as the admin user (admin@example.com). 2) Your Realtime Database security rules allow the admin user to read both the '/users' and '/orders' paths. Please check your Firebase console.");
+                    setError("Permission Denied: Could not fetch dashboard data. This indicates a Firebase security rule issue. Please verify that your Realtime Database rules grant the admin read access to both '/users' and '/orders' paths.");
                 } else {
                     setError("An error occurred while processing the dashboard data.");
                 }
@@ -139,17 +136,9 @@ export default function AdminDashboardPage() {
         }
 
         fetchAdminData();
-    }, [user, authLoading, productsLoading, allProducts]);
+    }, [productsLoading, allProducts]);
     
-    if (authLoading || productsLoading || loadingData) {
-        return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (productsLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

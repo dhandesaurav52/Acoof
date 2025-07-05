@@ -11,17 +11,13 @@ import type { Order, OrderStatus } from '@/types';
 import { auth, database } from '@/lib/firebase';
 import { ref, onValue, off, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { clearAllOrders, deleteOrder } from '@/app/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const ADMIN_EMAIL = "admin@example.com";
-
 export default function AdminOrdersPage() {
     const { toast } = useToast();
-    const { user, loading: authLoading } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -30,20 +26,15 @@ export default function AdminOrdersPage() {
     const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-
+    // The AdminLayout handles auth checks, so this component will only render for admins.
+    // The data fetching can proceed without additional checks.
     useEffect(() => {
-        if (authLoading || !user || user.email !== ADMIN_EMAIL) {
-          setLoadingData(false);
-          return;
-        }
-
         if (!database) {
             setError("Firebase is not configured correctly.");
             setLoadingData(false);
             return;
         }
 
-        setLoadingData(true);
         const ordersRef = ref(database, 'orders');
         const listener = onValue(ordersRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -60,7 +51,7 @@ export default function AdminOrdersPage() {
         }, (err: any) => {
             console.error("Firebase read failed: ", err);
             if (err.code === 'PERMISSION_DENIED' || err.message?.includes('permission_denied')) {
-                setError("Permission Denied. Could not fetch orders. This is almost always a Firebase security rule issue. Please verify two things: 1) You are logged in as the admin user (admin@example.com). 2) Your Realtime Database security rules allow the admin user to read the '/orders' path. Please check your Firebase console.");
+                setError("Permission Denied: Could not fetch orders. This indicates a Firebase security rule issue. Please ensure you are logged in as admin and your Realtime Database rules grant read access to '/orders'.");
             } else {
                 setError("An error occurred while fetching orders data.");
             }
@@ -73,7 +64,7 @@ export default function AdminOrdersPage() {
                 off(ordersRef, 'value', listener);
             }
         };
-    }, [user, authLoading]);
+    }, []);
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
         if (!database) return;
@@ -87,7 +78,7 @@ export default function AdminOrdersPage() {
             });
         } catch (error: any) {
             if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
-                console.warn("Order update permission denied, user has logged out.");
+                console.warn("Order update permission denied, user may have logged out.");
                 return;
             }
             console.error("Failed to update order status:", error);
@@ -124,16 +115,7 @@ export default function AdminOrdersPage() {
         setOrderToDelete(null);
     };
     
-    if (authLoading || loadingData) {
-        return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    // Failsafe. The layout handles redirection, but this prevents render attempts before it does.
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -17,20 +17,21 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // Wait until the authentication state is fully loaded
     if (authLoading) {
-      return; // Wait for the auth state to load
+      return;
     }
+    // If loading is finished, check the user's status
     if (!user) {
-      // If not logged in, redirect to login page
-      router.push('/login');
+      router.replace('/login');
     } else if (user.email !== ADMIN_EMAIL) {
-      // If logged in but not an admin, redirect to user dashboard
-      router.push('/dashboard/user');
+      router.replace('/dashboard/user');
     }
   }, [user, authLoading, router]);
 
-  // While loading auth or if the user is not yet verified as admin, show a loader.
-  // This prevents the child pages from rendering and attempting to fetch data.
+  // While loading auth state OR if the user is not the verified admin,
+  // show a loader and prevent the child components from rendering.
+  // This is the crucial step that prevents race conditions.
   if (authLoading || !user || user.email !== ADMIN_EMAIL) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -39,6 +40,6 @@ export default function AdminLayout({
     );
   }
 
-  // If user is verified as admin, render the requested admin page.
+  // Only if the user is fully authenticated as an admin, render the children.
   return <>{children}</>;
 }
