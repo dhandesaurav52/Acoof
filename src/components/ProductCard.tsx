@@ -37,45 +37,45 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg bg-card border-border group">
+    <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-lg h-full flex flex-col">
       <CardHeader className="p-0">
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-lg">
-          <Image
-            src={product.images[0] || 'https://placehold.co/600x800.png'}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+        <Link href={`/products/${product.id}`} className="block relative group">
+          <div className="aspect-[4/5] w-full overflow-hidden">
+            <Image
+              src={product.images[0] || 'https://placehold.co/600x800.png'}
+              alt={product.name}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
           {product.isNew && (
-            <Badge className="absolute left-3 top-3" variant="default">NEW</Badge>
+            <Badge className="absolute left-3 top-3">NEW</Badge>
           )}
            <Button 
             variant="ghost" 
             size="icon" 
-            className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-background/50 text-foreground hover:bg-background/75"
+            className="absolute right-2 top-2 h-8 w-8 rounded-full bg-background/50 text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={handleFavoriteClick}
             aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
            >
               <Heart className={cn("h-5 w-5", isFavorited && "fill-primary text-primary")} />
            </Button>
-           <Link href={`/products/${product.id}`} className="absolute inset-0" aria-label={product.name} />
-        </div>
+        </Link>
       </CardHeader>
-      <CardContent className="flex-grow p-3">
-        <CardTitle className="text-sm font-semibold leading-snug">
-          <Link href={`/products/${product.id}`} className="focus:outline-none">
-            <span className="absolute inset-0"></span>
+      <CardContent className="p-4 flex-grow">
+        <Badge variant="secondary" className="mb-2">{product.category}</Badge>
+        <CardTitle className="text-lg font-bold leading-tight">
+           <Link href={`/products/${product.id}`} className="hover:underline">
             {product.name}
           </Link>
         </CardTitle>
-        <p className="text-xs text-muted-foreground mt-1 truncate">{product.category}</p>
       </CardContent>
-      <CardFooter className="p-3 pt-0 flex justify-between items-center">
-        <p className="text-base font-bold text-primary">₹{product.price.toFixed(2)}</p>
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleAddToCartClick}>
-          <ShoppingCart className="h-4 w-4" />
-          <span className="sr-only">Add to Cart</span>
+      <CardFooter className="p-4 flex justify-between items-center">
+        <p className="text-xl font-semibold text-primary">₹{product.price.toFixed(2)}</p>
+        <Button onClick={handleAddToCartClick}>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Add to Cart
         </Button>
       </CardFooter>
     </Card>
