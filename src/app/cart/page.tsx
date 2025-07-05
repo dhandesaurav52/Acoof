@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, ShoppingBag, Plus, Minus, Loader2 } from 'lucide-react';
+import { Trash2, ShoppingBag, Plus, Minus, Loader2, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ import { useState } from 'react';
 import type { Order, OrderItem } from '@/types';
 import { database } from '@/lib/firebase';
 import { ref as dbRef, update, push } from "firebase/database";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 
 async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
@@ -64,6 +65,7 @@ export default function CartPage() {
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
     const [isCodProcessing, setIsCodProcessing] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
 
     const QuantityControl = ({ itemId, quantity }: { itemId: string, quantity: number }) => (
         <div className="flex items-center justify-center gap-2">
@@ -92,6 +94,11 @@ export default function CartPage() {
 
         if (cart.length === 0) {
             toast({ variant: 'destructive', title: 'Empty Cart', description: 'Your cart is empty.' });
+            return;
+        }
+
+        if (!user.address) {
+            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
             return;
         }
 
@@ -194,6 +201,11 @@ export default function CartPage() {
         }
         if (cart.length === 0) {
             toast({ variant: 'destructive', title: 'Empty Cart', description: 'Your cart is empty.' });
+            return;
+        }
+
+        if (!user.address) {
+            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
             return;
         }
     
@@ -351,20 +363,65 @@ export default function CartPage() {
                                 </div>
                             </CardContent>
                             <CardFooter className="flex-col gap-2">
-                                <Button className="w-full" onClick={handleCheckout} disabled={isProcessing || isCodProcessing}>
-                                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {isProcessing ? 'Processing...' : 'Pay Online'}
-                                </Button>
-                                <div className="relative flex py-2 items-center w-full">
-                                    <div className="flex-grow border-t border-muted"></div>
-                                    <span className="flex-shrink mx-4 text-muted-foreground text-xs">OR</span>
-                                    <div className="flex-grow border-t border-muted"></div>
-                                </div>
-                                <Button className="w-full" variant="secondary" onClick={handleCodCheckout} disabled={isProcessing || isCodProcessing}>
-                                    {isCodProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {isCodProcessing ? 'Placing Order...' : 'Pay with Cash on Delivery'}
-                                </Button>
-                                <Button variant="outline" className="w-full mt-2" onClick={clearCart} disabled={isProcessing || isCodProcessing}>Clear Cart</Button>
+                                <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
+                                    <DialogTrigger asChild>
+                                        <Button className="w-full">
+                                            Proceed to Checkout
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Confirm Order</DialogTitle>
+                                            <DialogDescription>
+                                                Please confirm your shipping address and payment method.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        
+                                        <div className="space-y-4 py-4">
+                                            <div className="p-4 border rounded-lg space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <h4 className="font-semibold">Shipping to:</h4>
+                                                    <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/user')}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Change
+                                                    </Button>
+                                                </div>
+                                                {user?.address ? (
+                                                    <address className="text-sm text-muted-foreground not-italic">
+                                                        <p className="font-medium text-foreground">{user.displayName}</p>
+                                                        <p>{user.address}</p>
+                                                        <p>{user.city}, {user.state} {user.pincode}</p>
+                                                        <p>{user.phone}</p>
+                                                    </address>
+                                                ) : (
+                                                    <div className="text-sm text-destructive">
+                                                        No address found. Please add a shipping address to your profile.
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex justify-between items-center p-4 border rounded-lg">
+                                                <div>
+                                                    <p className="font-semibold">Total Amount</p>
+                                                    <p className="text-2xl text-primary font-bold">₹{cartTotal.toFixed(2)}</p>
+                                                </div>
+                                                <p className="text-muted-foreground">{cartCount} items</p>
+                                            </div>
+                                        </div>
+                            
+                                        <DialogFooter className="sm:justify-between gap-2">
+                                            <Button className="w-full sm:w-auto" onClick={handleCheckout} disabled={isProcessing || isCodProcessing || !user?.address}>
+                                                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                {isProcessing ? 'Processing...' : 'Pay Online'}
+                                            </Button>
+                                            <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCodCheckout} disabled={isProcessing || isCodProcessing || !user?.address}>
+                                                {isCodProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                {isCodProcessing ? 'Placing Order...' : 'Cash on Delivery'}
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                <Button variant="outline" className="w-full" onClick={clearCart} disabled={isProcessing || isCodProcessing}>Clear Cart</Button>
                             </CardFooter>
                         </Card>
                     </div>

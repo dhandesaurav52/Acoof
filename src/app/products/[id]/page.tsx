@@ -9,7 +9,7 @@ import { useWishlist } from '@/hooks/use-wishlist';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Loader2, Heart, ShoppingCart, Star, CheckCircle, Zap } from 'lucide-react';
+import { Loader2, Heart, ShoppingCart, Star, CheckCircle, Zap, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -116,15 +116,20 @@ export default function ProductDetailPage() {
 
     const handleBuyNow = async () => {
         if (!product) return;
-        
-        if (product.price < 1) {
-            toast({ variant: 'destructive', title: 'Invalid Amount', description: 'This product cannot be purchased as its price is less than ₹1.00.' });
-            return;
-        }
 
         if (!user) {
             toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
             router.push('/login');
+            return;
+        }
+
+        if (!user.address) {
+            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
+            return;
+        }
+        
+        if (product.price < 1) {
+            toast({ variant: 'destructive', title: 'Invalid Amount', description: 'This product cannot be purchased as its price is less than ₹1.00.' });
             return;
         }
 
@@ -219,6 +224,11 @@ export default function ProductDetailPage() {
         if (!user) {
             toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
             router.push('/login');
+            return;
+        }
+
+        if (!user.address) {
+            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
             return;
         }
         
@@ -382,10 +392,31 @@ export default function ProductDetailPage() {
                                 <DialogHeader>
                                     <DialogTitle>Confirm Purchase</DialogTitle>
                                     <DialogDescription>
-                                        Choose your preferred payment method for "{product.name}".
+                                        Please confirm your shipping address before purchasing "{product.name}".
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4 space-y-4">
+                                    <div className="p-4 border rounded-lg space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <h4 className="font-semibold">Shipping to:</h4>
+                                            <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/user')}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                Change
+                                            </Button>
+                                        </div>
+                                        {user?.address ? (
+                                            <address className="text-sm text-muted-foreground not-italic">
+                                                <p className="font-medium text-foreground">{user.displayName}</p>
+                                                <p>{user.address}</p>
+                                                <p>{user.city}, {user.state} {user.pincode}</p>
+                                                <p>{user.phone}</p>
+                                            </address>
+                                        ) : (
+                                            <div className="text-sm text-destructive">
+                                                No address found. Please add a shipping address to your profile.
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="flex justify-between items-center p-4 border rounded-lg">
                                         <div>
                                             <p className="font-semibold">Total Amount</p>
@@ -397,11 +428,11 @@ export default function ProductDetailPage() {
                                     </div>
                                 </div>
                                 <DialogFooter className="sm:justify-between gap-2">
-                                    <Button className="w-full sm:w-auto" onClick={handleBuyNow} disabled={isProcessing || isCodProcessing}>
+                                    <Button className="w-full sm:w-auto" onClick={handleBuyNow} disabled={isProcessing || isCodProcessing || !user?.address}>
                                         {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                         {isProcessing ? 'Processing...' : 'Pay Online'}
                                     </Button>
-                                    <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCodBuyNow} disabled={isProcessing || isCodProcessing}>
+                                    <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCodBuyNow} disabled={isProcessing || isCodProcessing || !user?.address}>
                                         {isCodProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                         {isCodProcessing ? 'Placing Order...' : 'Cash on Delivery'}
                                     </Button>
