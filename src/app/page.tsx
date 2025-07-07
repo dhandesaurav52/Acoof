@@ -146,6 +146,38 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Oversized T-shirts Section */}
+      <section className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4">
+            <div className="relative rounded-lg overflow-hidden bg-secondary p-8 md:p-16 flex items-center min-h-[400px] md:min-h-[500px]">
+                <div className="absolute inset-0 z-0">
+                    <Image
+                        src="https://images.pexels.com/photos/769733/pexels-photo-769733.jpeg"
+                        alt="A man wearing a stylish oversized t-shirt"
+                        fill
+                        className="object-cover"
+                        data-ai-hint="oversized t-shirt"
+                        quality={80}
+                    />
+                    <div className="absolute inset-0 bg-black/40" />
+                </div>
+                <div className="relative z-10 max-w-md text-white">
+                    <h2 className="text-4xl font-bold tracking-tighter md:text-5xl font-headline">
+                        The Perfect Drape
+                    </h2>
+                    <p className="mt-4 text-lg text-white/90">
+                        Discover ultimate comfort and effortless style with our collection of oversized t-shirts. Designed for a relaxed fit and a modern silhouette.
+                    </p>
+                    <Button asChild size="lg" className="mt-8 text-lg">
+                        <Link href="/products">
+                            Shop Oversized Tees <ArrowRight className="ml-2 h-5 w-5" />
+                        </Link>
+                    </Button>
+                </div>
+            </div>
+        </div>
+      </section>
     </div>
   );
 }
