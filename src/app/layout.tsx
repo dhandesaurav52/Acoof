@@ -56,7 +56,7 @@ export default function RootLayout({
       <head>
         <title>Acoof</title>
         <meta name="description" content="A new app built in Firebase Studio." />
-        <meta name="theme-color" content="#F44336" />
+        <meta name="theme-color" content="#F54336" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="https://placehold.co/192x192.png"></link>
         <link rel="icon" type="image/png" sizes="192x192" href="https://placehold.co/192x192.png" />
