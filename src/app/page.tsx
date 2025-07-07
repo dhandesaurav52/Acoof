@@ -9,9 +9,16 @@ import { ProductCard } from '@/components/ProductCard';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { useProducts } from '@/hooks/use-products';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   const featuredStyles = [
     { name: 'Streetwear', image: 'https://images.pexels.com/photos/32872368/pexels-photo-32872368.jpeg' },
@@ -20,6 +27,18 @@ export default function Home() {
   ];
   
   const newArrivals = products.filter(p => p.isNew).slice(0, 8);
+
+  const ProductSkeletons = () => (
+    Array.from({ length: 4 }).map((_, index) => (
+      <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+        <div className="p-1 space-y-2">
+            <Skeleton className="aspect-[4/5] w-full" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-5 w-1/2" />
+        </div>
+      </CarouselItem>
+    ))
+  );
 
   return (
     <div className="flex flex-col bg-background text-foreground">
@@ -85,7 +104,7 @@ export default function Home() {
            <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl font-headline">New Arrivals</h2>
             <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
-              Fresh threads, just landed. Check out the latest additions to the Acoof collection.
+              Fresh threads, just landed. Check out the latest additions to the Urban Attire collection.
             </p>
           </div>
           <Carousel
@@ -96,13 +115,15 @@ export default function Home() {
             className="w-full"
           >
             <CarouselContent>
-              {newArrivals.map((product) => (
-                <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                  <div className="p-1">
-                    <ProductCard product={product} />
-                  </div>
-                </CarouselItem>
-              ))}
+              {(!isClient || loading) ? <ProductSkeletons /> : (
+                newArrivals.map((product) => (
+                  <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                    <div className="p-1">
+                      <ProductCard product={product} />
+                    </div>
+                  </CarouselItem>
+                ))
+              )}
             </CarouselContent>
             <CarouselPrevious className="hidden sm:flex" />
             <CarouselNext className="hidden sm:flex" />

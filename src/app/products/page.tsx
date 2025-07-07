@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, type ChangeEvent } from 'react';
+import { useState, useMemo, type ChangeEvent, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/ProductCard';
 import { ListFilter, Search, SlidersHorizontal } from 'lucide-react';
@@ -14,15 +14,21 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescri
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProductsPage() {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
+  const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedColor, setSelectedColor] = useState('All');
   const [selectedAlphaSize, setSelectedAlphaSize] = useState('All');
   const [selectedNumericSize, setSelectedNumericSize] = useState('All');
   const [sortOption, setSortOption] = useState('default');
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -86,6 +92,16 @@ export default function ProductsPage() {
     setSelectedNumericSize('All');
     setSortOption('default');
   };
+
+  const ProductSkeletons = () => (
+    Array.from({ length: 8 }).map((_, index) => (
+        <div key={index} className="space-y-2">
+            <Skeleton className="aspect-[4/5] w-full" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-5 w-1/2" />
+        </div>
+    ))
+  );
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -255,7 +271,11 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {filteredProducts.length > 0 ? (
+      {(!isClient || loading) ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <ProductSkeletons />
+        </div>
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />

@@ -68,7 +68,8 @@ export default function ProductDetailPage() {
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const { toast } = useToast();
     const { user } = useAuth();
-
+    
+    const [isClient, setIsClient] = useState(false);
     const [selectedColor, setSelectedColor] = useState<string | undefined>();
     const [selectedSize, setSelectedSize] = useState<string | undefined>();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -83,6 +84,10 @@ export default function ProductDetailPage() {
         state: '',
         pincode: ''
     });
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const isNewAddressValid = useMemo(() => {
         return newAddress.address.trim() && newAddress.city.trim() && newAddress.state.trim() && newAddress.pincode.trim();
@@ -202,7 +207,7 @@ export default function ProductDetailPage() {
         }
     }, [product, selectedColor, selectedSize]);
 
-    if (productsLoading) {
+    if (!isClient || productsLoading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -283,7 +288,7 @@ export default function ProductDetailPage() {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
             amount: orderResponse.amount,
             currency: orderResponse.currency,
-            name: 'Acoof',
+            name: 'Urban Attire',
             description: `Payment for ${product.name}`,
             order_id: orderResponse.id,
             handler: async function (response: any) {
