@@ -20,10 +20,11 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { createRazorpayOrder, verifyRazorpayPayment } from '@/app/actions';
-import type { Order, OrderItem } from '@/types';
+import type { Order, OrderItem, Product } from '@/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { database } from '@/lib/firebase';
 import { ref as dbRef, update, push } from 'firebase/database';
+import { ProductCard } from '@/components/ProductCard';
 
 async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     if (!database) {
@@ -88,6 +89,41 @@ export default function ProductDetailPage() {
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+    const product = useMemo(() => products.find(p => p.id === id), [products, id]);
+
+    const relatedProducts = useMemo(() => {
+        if (!product || !products.length) return [];
+    
+        const categoryMap: Record<Product['category'], Product['category'][]> = {
+            'Tshirts': ['Jeans', 'Pants', 'Shoes', 'Bags', 'Belts'],
+            'Oversized T-shirt': ['Jeans', 'Trousers', 'Shoes', 'Belts', 'Track pants'],
+            'Shirts': ['Trousers', 'Jeans', 'Shoes', 'Belts', 'Pants'],
+            'Sweater': ['Jeans', 'Pants', 'Shoes', 'Trousers'],
+            'Sweatshirt': ['Track pants', 'Jeans', 'Shoes', 'Bags'],
+            'Jackets': ['Tshirts', 'Jeans', 'Pants', 'Shoes', 'Sweatshirt'],
+            'Jeans': ['Tshirts', 'Shirts', 'Shoes', 'Belts', 'Sweatshirt', 'Jackets'],
+            'Pants': ['Tshirts', 'Shirts', 'Shoes', 'Belts', 'Sweater'],
+            'Trousers': ['Shirts', 'Shoes', 'Belts', 'Sweater'],
+            'Track pants': ['Sweatshirt', 'Tshirts', 'Shoes'],
+            'Shoes': ['Socks', 'Jeans', 'Pants', 'Trousers', 'Track pants'],
+            'Bags': ['Tshirts', 'Wallets', 'Jackets', 'Jeans'],
+            'Belts': ['Jeans', 'Pants', 'Trousers'],
+            'Socks': ['Shoes', 'Track pants'],
+            'Wallets': ['Bags', 'Jeans'],
+        };
+    
+        const relatedCategories = categoryMap[product.category] || [];
+        
+        const recommended = products.filter(p => 
+            p.id !== product.id && relatedCategories.includes(p.category)
+        );
+        
+        const shuffled = recommended.sort(() => 0.5 - Math.random());
+        
+        return shuffled.slice(0, 8);
+    
+    }, [product, products]);
 
     const isNewAddressValid = useMemo(() => {
         return newAddress.address.trim() && newAddress.city.trim() && newAddress.state.trim() && newAddress.pincode.trim();
@@ -193,8 +229,6 @@ export default function ProductDetailPage() {
           }
         );
     };
-
-    const product = products.find(p => p.id === id);
     
     useEffect(() => {
         if (product) {
@@ -616,6 +650,31 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {relatedProducts.length > 0 && (
+                <div className="mt-20 md:mt-28">
+                    <h2 className="text-3xl font-bold tracking-tighter font-headline mb-8">You Might Also Like</h2>
+                    <Carousel
+                        opts={{
+                            align: "start",
+                            loop: relatedProducts.length > 4,
+                        }}
+                        className="w-full"
+                    >
+                        <CarouselContent>
+                            {relatedProducts.map((relatedProduct) => (
+                                <CarouselItem key={relatedProduct.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                                    <div className="p-1">
+                                        <ProductCard product={relatedProduct} />
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="hidden sm:flex" />
+                        <CarouselNext className="hidden sm:flex" />
+                    </Carousel>
+                </div>
+            )}
         </div>
     );
 }
