@@ -30,7 +30,7 @@ export default function Home() {
 
   const ProductSkeletons = () => (
     Array.from({ length: 4 }).map((_, index) => (
-      <CarouselItem key={index} className="sm:basis-1/2 lg:basis-1/4">
+      <CarouselItem key={index} className="basis-1/2 md:basis-1/4">
         <div className="p-1 space-y-2">
             <Skeleton className="aspect-[4/5] w-full" />
             <Skeleton className="h-5 w-3/4" />
@@ -117,7 +117,7 @@ export default function Home() {
             <CarouselContent>
               {(!isClient || loading) ? <ProductSkeletons /> : (
                 newArrivals.map((product) => (
-                  <CarouselItem key={product.id} className="sm:basis-1/2 lg:basis-1/4">
+                  <CarouselItem key={product.id} className="basis-1/2 md:basis-1/4">
                     <div className="p-1">
                       <ProductCard product={product} />
                     </div>
