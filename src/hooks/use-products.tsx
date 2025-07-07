@@ -4,7 +4,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Product } from '@/types';
 import { database, storage } from '@/lib/firebase';
-import { ref, get, remove } from 'firebase/database';
+import { ref, onValue, remove } from 'firebase/database';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
 
 interface ProductsContextType {
@@ -26,10 +26,11 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        const fetchProducts = async () => {
-            const productsRef = ref(database, 'products');
+        setLoading(true);
+        const productsRef = ref(database, 'products');
+
+        const unsubscribe = onValue(productsRef, (snapshot) => {
             try {
-                const snapshot = await get(productsRef);
                 if (snapshot.exists()) {
                     const productsData = snapshot.val();
                     const productsList: Product[] = Object.keys(productsData)
@@ -58,19 +59,26 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
                             };
                         })
                         .filter((p): p is Product => p !== null)
-                        .reverse();
+                        .reverse(); // Reverse to show newest products first
                     setProducts(productsList);
                 } else {
                     setProducts([]);
                 }
-            } catch (error) {
-                console.error("Firebase read failed: ", error);
+            } catch(error) {
+                console.error("Error processing products snapshot: ", error);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
-        };
+        }, (error) => {
+            console.error("Firebase read failed with onValue: ", error);
+            setLoading(false);
+        });
 
-        fetchProducts();
+        // Cleanup: Unsubscribe from the listener when the component unmounts
+        return () => {
+            unsubscribe();
+        };
     }, []);
 
     const removeProduct = useCallback(async (product: Product) => {
@@ -80,7 +88,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
         const productRef = ref(database, `products/${product.id}`);
         await remove(productRef);
-        setProducts(prev => prev.filter(p => p.id !== product.id));
+        // No need to manually update state, the onValue listener will handle it.
 
         const imageDeletePromises = product.images
             .filter(url => url.includes('firebasestorage.googleapis.com'))
