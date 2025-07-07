@@ -153,7 +153,7 @@ export default function Home() {
             <div className="relative rounded-lg overflow-hidden bg-secondary p-8 md:p-16 flex items-center min-h-[400px] md:min-h-[500px]">
                 <div className="absolute inset-0 z-0">
                     <Image
-                        src="https://images.pexels.com/photos/769733/pexels-photo-769733.jpeg"
+                        src="https://images.pexels.com/photos/5698847/pexels-photo-5698847.jpeg"
                         alt="A man wearing a stylish oversized t-shirt"
                         fill
                         className="object-cover"
