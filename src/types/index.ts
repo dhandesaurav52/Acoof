@@ -48,3 +48,14 @@ export interface Order {
   paymentSignature?: string;
   cancellationReason?: string;
 }
+
+export interface Notification {
+  id: string;
+  type: 'order_cancellation' | 'order_return' | 'new_order';
+  message: string;
+  timestamp: string;
+  read: boolean;
+  orderId: string;
+  userId: string;
+  userEmail: string;
+}

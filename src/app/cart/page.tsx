@@ -42,17 +42,29 @@ async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boole
     const finalOrderData: Order = { ...orderData, id: newId };
     
     try {
-        // Use a multi-path update to save the order and the user's order reference atomically
         const updates: { [key: string]: any } = {};
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
+
+        // Add notification for admin
+        const notificationMessage = `New order #${newId} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
+        const newNotificationRef = push(dbRef(database, 'notifications'));
+        updates[`/notifications/${newNotificationRef.key}`] = {
+            type: 'new_order',
+            message: notificationMessage,
+            timestamp: new Date().toISOString(),
+            read: false,
+            orderId: newId,
+            userId: orderData.userId,
+            userEmail: orderData.userEmail,
+        };
 
         await update(dbRef(database), updates);
         return { success: true, orderId: newId };
     } catch (error: any) {
         let errorMessage = 'An unexpected error occurred while saving the order.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders' and their own 'users' data path.";
+            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders', their own 'users' data path, and the 'notifications' path.";
         }
         console.error("Firebase saveOrder error:", error);
         return { success: false, error: errorMessage };

@@ -12,7 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import type { Order, OrderStatus } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { auth, database } from '@/lib/firebase';
-import { ref, get, update } from 'firebase/database';
+import { ref, get, update, push, set } from 'firebase/database';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -131,11 +131,29 @@ export default function UserOrdersPage() {
     };
 
     const handleConfirmCancel = async () => {
-        if (!orderToCancel || !database) return;
+        if (!orderToCancel || !database || !user) return;
         setIsCancelling(true);
         const orderRef = ref(database, `orders/${orderToCancel.id}`);
         try {
             await update(orderRef, { status: 'Cancelled', cancellationReason: cancellationReason || 'No reason provided' });
+
+            // Add notification for admin
+            const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
+            const notificationMessage = `User ${user.displayName || user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id}.`;
+            
+            const notificationsRef = ref(database, 'notifications');
+            const newNotificationRef = push(notificationsRef);
+            
+            await set(newNotificationRef, {
+                type: notificationType,
+                message: notificationMessage,
+                timestamp: new Date().toISOString(),
+                read: false,
+                orderId: orderToCancel.id,
+                userId: user.uid,
+                userEmail: user.email,
+            });
+
             setOrders(prevOrders =>
                 prevOrders.map(order =>
                     order.id === orderToCancel.id ? { ...order, status: 'Cancelled' as OrderStatus, cancellationReason: cancellationReason || 'No reason provided' } : order
