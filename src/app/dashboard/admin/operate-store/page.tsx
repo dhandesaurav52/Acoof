@@ -54,7 +54,7 @@ export default function ManageStorePage() {
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const { register: registerAdd, handleSubmit: handleSubmitAdd, control: controlAdd, watch: watchAdd, setValue: setValueAdd, reset: resetAdd, formState: { errors: errorsAdd } } = useForm<AddProductFormValues>({
         resolver: zodResolver(addProductSchema),
-        defaultValues: { isNew: true }
+        defaultValues: { isNew: true, name: '', description: '', price: 0, category: '', colors: '', sizesText: '', sizesNumeric: '', images: undefined }
     });
     const watchedImages = watchAdd("images");
     useEffect(() => {
@@ -75,7 +75,7 @@ export default function ManageStorePage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOption, setSortOption] = useState('default');
     
-    const { register: registerEdit, handleSubmit: handleSubmitEdit, control: controlEdit, reset: resetEdit, formState: { errors: errorsEdit } } = useForm<EditProductFormValues>({
+    const { register: registerEdit, handleSubmit: handleSubmitEdit, control: controlEdit, reset: resetEdit, watch: watchEdit, setValue: setValueEdit, formState: { errors: errorsEdit } } = useForm<EditProductFormValues>({
         resolver: zodResolver(editProductSchema),
     });
 
@@ -155,7 +155,7 @@ export default function ManageStorePage() {
                 sizes: [...textSizes, ...numericSizes],
             });
             toast({ title: "Product Added", description: `"${data.name}" has been successfully added.` });
-            resetAdd({ name: '', description: '', price: 0, category: '', isNew: true, colors: '', sizesText: '', sizesNumeric: '', images: undefined });
+            resetAdd();
             setImagePreviews([]);
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Submission Failed', description: "Could not add product." });
@@ -217,7 +217,7 @@ export default function ManageStorePage() {
                         </div>
                         <div className="space-y-2"><Label htmlFor="description">Description</Label><Textarea id="description" {...registerAdd("description")} />{errorsAdd.description && <p className="text-sm text-destructive">{errorsAdd.description.message}</p>}</div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2"><Label htmlFor="category">Category</Label><Select onValueChange={(value) => setValueAdd('category', value)} defaultValue={controlAdd._defaultValues.category}><SelectTrigger id="category"><SelectValue placeholder="Select a category" /></SelectTrigger><SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent></Select>{errorsAdd.category && <p className="text-sm text-destructive">{errorsAdd.category.message}</p>}</div>
+                            <div className="space-y-2"><Label htmlFor="category">Category</Label><Select onValueChange={(value) => setValueAdd('category', value)} value={watchAdd('category')}><SelectTrigger id="category"><SelectValue placeholder="Select a category" /></SelectTrigger><SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent></Select>{errorsAdd.category && <p className="text-sm text-destructive">{errorsAdd.category.message}</p>}</div>
                             <div className="space-y-2"><Label htmlFor="colors">Colors (comma-separated)</Label><Input id="colors" {...registerAdd("colors")} placeholder="e.g., Black, White, Blue"/></div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -225,7 +225,7 @@ export default function ManageStorePage() {
                             <div className="space-y-2"><Label htmlFor="sizesNumeric">Numeric Sizes (comma-separated)</Label><Input id="sizesNumeric" {...registerAdd("sizesNumeric")} placeholder="e.g., 28, 30, 32" /></div>
                         </div>
                         <div className="space-y-4"><Label>Product Images</Label><div className="relative border-2 border-dashed border-muted rounded-lg p-6 text-center"><UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" /><p className="mt-2 text-sm text-muted-foreground">Drag & drop files here, or click to select files</p><Input id="images" type="file" {...registerAdd("images")} multiple accept="image/png, image/jpeg, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /></div>{errorsAdd.images && <p className="text-sm text-destructive">{errorsAdd.images.message}</p>}{imagePreviews.length > 0 && <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{imagePreviews.map((src, index) => <div key={index} className="relative aspect-square"><Image src={src} alt={`Preview ${index}`} fill className="rounded-md object-cover" /></div>)}</div>}</div>
-                        <div className="flex items-center space-x-2"><Switch id="isNew" {...registerAdd("isNew")} defaultChecked={controlAdd._defaultValues.isNew} onCheckedChange={(checked) => setValueAdd('isNew', checked)} /><Label htmlFor="isNew">Mark as New Arrival</Label></div>
+                        <div className="flex items-center space-x-2"><Switch id="isNew" checked={watchAdd('isNew')} onCheckedChange={(checked) => setValueAdd('isNew', checked)} /><Label htmlFor="isNew">Mark as New Arrival</Label></div>
                         <div className="flex justify-end gap-4"><Button type="button" variant="outline" onClick={() => router.push('/dashboard/admin')} disabled={isAddSubmitting}>Cancel</Button><Button type="submit" disabled={isAddSubmitting}>{isAddSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Adding Product...</> : <><PlusCircle className="mr-2 h-4 w-4" />Add Product</>}</Button></div>
                     </form>
                 </CardContent>
@@ -318,14 +318,21 @@ export default function ManageStorePage() {
                         </div>
                         <div className="space-y-2"><Label htmlFor="edit-description">Description</Label><Textarea id="edit-description" {...registerEdit("description")} />{errorsEdit.description && <p className="text-sm text-destructive">{errorsEdit.description.message}</p>}</div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2"><Label htmlFor="edit-category">Category</Label><Select onValueChange={(value) => resetEdit({...controlEdit._formValues, category: value})} defaultValue={productToEdit?.category}><SelectTrigger id="edit-category"><SelectValue placeholder="Select a category" /></SelectTrigger><SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent></Select>{errorsEdit.category && <p className="text-sm text-destructive">{errorsEdit.category.message}</p>}</div>
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-category">Category</Label>
+                                <Select onValueChange={(value) => setValueEdit('category', value)} value={watchEdit('category')}>
+                                    <SelectTrigger id="edit-category"><SelectValue placeholder="Select a category" /></SelectTrigger>
+                                    <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                                </Select>
+                                {errorsEdit.category && <p className="text-sm text-destructive">{errorsEdit.category.message}</p>}
+                            </div>
                             <div className="space-y-2"><Label htmlFor="edit-colors">Colors (comma-separated)</Label><Input id="edit-colors" {...registerEdit("colors")} placeholder="e.g., Black, White, Blue"/></div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2"><Label htmlFor="edit-sizesText">Text-based Sizes (comma-separated)</Label><Input id="edit-sizesText" {...registerEdit("sizesText")} placeholder="e.g., S, M, L, XL, XXL" /></div>
                             <div className="space-y-2"><Label htmlFor="edit-sizesNumeric">Numeric Sizes (comma-separated)</Label><Input id="edit-sizesNumeric" {...registerEdit("sizesNumeric")} placeholder="e.g., 28, 30, 32" /></div>
                         </div>
-                        <div className="flex items-center space-x-2 pt-2"><Switch id="edit-isNew" {...registerEdit("isNew")} checked={watchAdd('isNew')} onCheckedChange={(checked) => setValueAdd('isNew', checked)} /><Label htmlFor="edit-isNew">Mark as New Arrival</Label></div>
+                        <div className="flex items-center space-x-2 pt-2"><Switch id="edit-isNew" checked={watchEdit("isNew")} onCheckedChange={(checked) => setValueEdit('isNew', checked)} /><Label htmlFor="edit-isNew">Mark as New Arrival</Label></div>
                         <DialogFooter className="pt-4 border-t sticky bottom-0 bg-background py-4">
                             <Button type="button" variant="outline" onClick={() => setProductToEdit(null)}>Cancel</Button>
                             <Button type="submit" disabled={isEditSubmitting}>{isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save Changes</Button>
@@ -348,5 +355,4 @@ export default function ManageStorePage() {
             </AlertDialog>
         </div>
     );
-
-    
+}
