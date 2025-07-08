@@ -16,6 +16,7 @@ import { ref, get, update } from 'firebase/database';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { differenceInDays } from 'date-fns';
 
 
 export default function UserOrdersPage() {
@@ -105,6 +106,26 @@ export default function UserOrdersPage() {
             default: return <FileText className="h-5 w-5 text-muted-foreground" />;
         }
     }
+
+    const isOrderCancellable = (order: Order): { cancellable: boolean; reason: string } => {
+        if (order.status !== 'Pending') {
+            return { cancellable: false, reason: `This order cannot be cancelled as its status is '${order.status}'.` };
+        }
+        
+        try {
+            const orderDate = new Date(order.date);
+            const daysSinceOrder = differenceInDays(new Date(), orderDate);
+            
+            if (daysSinceOrder > 7) {
+                return { cancellable: false, reason: 'This order is outside the 7-day cancellation window.' };
+            }
+        } catch(e) {
+            console.error("Could not parse order date:", order.date, e);
+            return { cancellable: false, reason: 'Could not determine order date.' };
+        }
+        
+        return { cancellable: true, reason: '' };
+    };
 
     const handleConfirmCancel = async () => {
         if (!orderToCancel || !database) return;
@@ -225,35 +246,42 @@ export default function UserOrdersPage() {
                                                 </TableBody>
                                             </Table>
                                             <div className="mt-6 flex justify-end">
-                                                {order.status === 'Pending' ? (
-                                                    <Button
-                                                        variant="destructive"
-                                                        onClick={() => setOrderToCancel(order)}
-                                                    >
-                                                        <XCircle className="mr-2 h-4 w-4" />
-                                                        Cancel Order
-                                                    </Button>
-                                                ) : (
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <span tabIndex={0}>
-                                                                    <Button
-                                                                        variant="destructive"
-                                                                        disabled
-                                                                        className="pointer-events-none"
-                                                                    >
-                                                                        <XCircle className="mr-2 h-4 w-4" />
-                                                                        Cancel Order
-                                                                    </Button>
-                                                                </span>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>This order cannot be cancelled as its status is '{order.status}'.</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                )}
+                                                {(() => {
+                                                    const { cancellable, reason } = isOrderCancellable(order);
+                                                    if (cancellable) {
+                                                        return (
+                                                            <Button
+                                                                variant="destructive"
+                                                                onClick={() => setOrderToCancel(order)}
+                                                            >
+                                                                <XCircle className="mr-2 h-4 w-4" />
+                                                                Cancel Order
+                                                            </Button>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <span tabIndex={0}>
+                                                                            <Button
+                                                                                variant="destructive"
+                                                                                disabled
+                                                                                className="pointer-events-none"
+                                                                            >
+                                                                                <XCircle className="mr-2 h-4 w-4" />
+                                                                                Cancel Order
+                                                                            </Button>
+                                                                        </span>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p>{reason}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        );
+                                                    }
+                                                })()}
                                             </div>
                                         </div>
                                     </AccordionContent>
