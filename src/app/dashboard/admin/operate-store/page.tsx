@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, PlusCircle, UploadCloud, Edit, Trash2 } from 'lucide-react';
+import { Loader2, PlusCircle, UploadCloud, Edit, Trash2, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -72,9 +72,42 @@ export default function ManageStorePage() {
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const [isEditSubmitting, setIsEditSubmitting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortOption, setSortOption] = useState('default');
+    
     const { register: registerEdit, handleSubmit: handleSubmitEdit, control: controlEdit, reset: resetEdit, formState: { errors: errorsEdit } } = useForm<EditProductFormValues>({
         resolver: zodResolver(editProductSchema),
     });
+
+    const filteredAndSortedProducts = useMemo(() => {
+        let processedProducts = [...products];
+
+        if (searchQuery) {
+            processedProducts = processedProducts.filter(p =>
+                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                p.category.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        switch (sortOption) {
+            case 'name-asc':
+                processedProducts.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'name-desc':
+                processedProducts.sort((a, b) => b.name.localeCompare(a.name));
+                break;
+            case 'price-asc':
+                processedProducts.sort((a, b) => a.price - b.price);
+                break;
+            case 'price-desc':
+                processedProducts.sort((a, b) => b.price - a.price);
+                break;
+            default:
+                break;
+        }
+
+        return processedProducts;
+    }, [products, searchQuery, sortOption]);
 
     useEffect(() => {
         if (productToEdit) {
@@ -204,6 +237,30 @@ export default function ManageStorePage() {
                     <CardDescription>View, edit, or delete products from your store catalog.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                        <div className="relative flex-grow">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by name or category..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                        <Select value={sortOption} onValueChange={setSortOption}>
+                            <SelectTrigger className="w-full sm:w-[200px]">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="default">Sort by: Default</SelectItem>
+                                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                                <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+                                <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     {productsLoading ? (
                         <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
@@ -219,20 +276,28 @@ export default function ManageStorePage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {products.map(product => (
-                                        <TableRow key={product.id}>
-                                            <TableCell><Image src={product.images[0] || 'https://placehold.co/80x80.png'} alt={product.name} width={60} height={60} className="rounded-md object-cover aspect-square" /></TableCell>
-                                            <TableCell className="font-medium">{product.name}</TableCell>
-                                            <TableCell>{product.category}</TableCell>
-                                            <TableCell className="text-right">₹{product.price.toFixed(2)}</TableCell>
-                                            <TableCell className="text-center">
-                                                <div className="flex justify-center gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => setProductToEdit(product)}><Edit className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => setProductToDelete(product)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                </div>
+                                    {filteredAndSortedProducts.length > 0 ? (
+                                        filteredAndSortedProducts.map(product => (
+                                            <TableRow key={product.id}>
+                                                <TableCell><Image src={product.images[0] || 'https://placehold.co/80x80.png'} alt={product.name} width={60} height={60} className="rounded-md object-cover aspect-square" /></TableCell>
+                                                <TableCell className="font-medium">{product.name}</TableCell>
+                                                <TableCell>{product.category}</TableCell>
+                                                <TableCell className="text-right">₹{product.price.toFixed(2)}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        <Button variant="ghost" size="icon" onClick={() => setProductToEdit(product)}><Edit className="h-4 w-4" /></Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => setProductToDelete(product)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center">
+                                                No products found.
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )}
                                 </TableBody>
                             </Table>
                         </div>
@@ -283,4 +348,5 @@ export default function ManageStorePage() {
             </AlertDialog>
         </div>
     );
-}
+
+    
