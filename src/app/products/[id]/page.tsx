@@ -1,5 +1,4 @@
-
-'use client';
+ 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
