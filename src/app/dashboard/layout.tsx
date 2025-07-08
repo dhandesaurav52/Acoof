@@ -2,11 +2,19 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     LayoutGrid,
     Package,
@@ -88,6 +96,7 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const { user, logout } = useAuth();
+    const router = useRouter();
     const initials = (user?.displayName?.split(' ').map(n => n[0]).join('') || user?.email?.charAt(0).toUpperCase()) ?? 'U';
     
     return (
@@ -102,21 +111,6 @@ export default function DashboardLayout({
                     <div className="flex-1 overflow-auto py-2 px-2 lg:px-4">
                        <DashboardNavItems />
                     </div>
-                    {user && <div className="mt-auto p-4 border-t">
-                        <div className="flex items-center gap-3">
-                            <Avatar>
-                                <AvatarImage src={user.photoURL ?? ''} />
-                                <AvatarFallback>{initials}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-semibold truncate">{user.displayName ?? 'User'}</p>
-                                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={logout}>
-                                <LogOut className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>}
                 </div>
             </aside>
             <div className="flex flex-col">
@@ -150,10 +144,42 @@ export default function DashboardLayout({
                         </SheetContent>
                     </Sheet>
                     <div className="w-full flex-1" />
-                    {user && <Avatar>
-                        <AvatarImage src={user.photoURL ?? ''} />
-                        <AvatarFallback>{initials}</AvatarFallback>
-                    </Avatar>}
+                    {user && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="rounded-full">
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
+                                        <AvatarFallback>{initials}</AvatarFallback>
+                                    </Avatar>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>
+                                    <div className="flex flex-col">
+                                        <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                                        <p className="text-xs leading-none text-muted-foreground pt-1">
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => router.push('/dashboard/user')}>
+                                    <UserIcon className="mr-2 h-4 w-4" />
+                                    <span>Profile</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    <span>Settings</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={logout}>
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <span>Log out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">{children}</main>
             </div>
