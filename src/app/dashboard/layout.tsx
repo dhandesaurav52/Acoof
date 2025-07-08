@@ -44,6 +44,7 @@ function DashboardNavItems() {
         { href: '/dashboard/admin', label: 'Dashboard', icon: LayoutGrid },
         { href: '/dashboard/admin/orders', label: 'Manage Orders', icon: Package },
         { href: '/dashboard/admin/operate-store', label: 'Manage Store', icon: ShoppingBag },
+        { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
         { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     ];
 
