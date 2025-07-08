@@ -4,13 +4,14 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Product } from '@/types';
 import { database, storage } from '@/lib/firebase';
-import { ref, onValue, remove } from 'firebase/database';
+import { ref, onValue, remove, update } from 'firebase/database';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
 
 interface ProductsContextType {
     products: Product[];
     loading: boolean;
     removeProduct: (product: Product) => Promise<void>;
+    updateProduct: (productId: string, data: Partial<Omit<Product, 'id'>>) => Promise<void>;
 }
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
@@ -105,8 +106,17 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         await Promise.all(imageDeletePromises);
     }, []);
 
+    const updateProduct = useCallback(async (productId: string, data: Partial<Omit<Product, 'id'>>) => {
+        if (!database) {
+            throw new Error('Firebase not configured.');
+        }
+        const productRef = ref(database, `products/${productId}`);
+        await update(productRef, data);
+    }, []);
+
+
     return (
-        <ProductsContext.Provider value={{ products, loading, removeProduct }}>
+        <ProductsContext.Provider value={{ products, loading, removeProduct, updateProduct }}>
             {children}
         </ProductsContext.Provider>
     );

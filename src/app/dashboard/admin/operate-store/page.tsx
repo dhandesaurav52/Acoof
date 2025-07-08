@@ -1,15 +1,15 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, PlusCircle, UploadCloud } from 'lucide-react';
+import { Loader2, PlusCircle, UploadCloud, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,8 +20,14 @@ import { categories } from '@/lib/data';
 import { database, storage } from '@/lib/firebase';
 import { ref as dbRef, push, set } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useProducts } from '@/hooks/use-products';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { Product } from '@/types';
 
-const productSchema = z.object({
+
+const addProductSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long"),
   description: z.string().min(10, "Description must be at least 10 characters long"),
   price: z.coerce.number().min(0, "Price must be a positive number"),
@@ -33,21 +39,24 @@ const productSchema = z.object({
   images: z.custom<FileList>().refine((files) => files.length > 0, "At least one image is required."),
 });
 
-type ProductFormValues = z.infer<typeof productSchema>;
+type AddProductFormValues = z.infer<typeof addProductSchema>;
 
-export default function AddProductPage() {
+const editProductSchema = addProductSchema.omit({ images: true });
+type EditProductFormValues = z.infer<typeof editProductSchema>;
+
+
+export default function ManageStorePage() {
     const router = useRouter();
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Add Product States and Form
+    const [isAddSubmitting, setIsAddSubmitting] = useState(false);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-    
-    const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<ProductFormValues>({
-        resolver: zodResolver(productSchema),
+    const { register: registerAdd, handleSubmit: handleSubmitAdd, control: controlAdd, watch: watchAdd, setValue: setValueAdd, reset: resetAdd, formState: { errors: errorsAdd } } = useForm<AddProductFormValues>({
+        resolver: zodResolver(addProductSchema),
         defaultValues: { isNew: true }
     });
-
-    const watchedImages = watch("images");
-
+    const watchedImages = watchAdd("images");
     useEffect(() => {
         if (watchedImages && watchedImages.length > 0) {
             const newPreviews = Array.from(watchedImages).map(file => URL.createObjectURL(file));
@@ -57,15 +66,37 @@ export default function AddProductPage() {
         setImagePreviews([]);
     }, [watchedImages]);
 
-    // Auth is now handled by the AdminLayout. This page only renders for admins.
+    // Manage Products States and Form
+    const { products, loading: productsLoading, removeProduct, updateProduct } = useProducts();
+    const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { register: registerEdit, handleSubmit: handleSubmitEdit, control: controlEdit, reset: resetEdit, formState: { errors: errorsEdit } } = useForm<EditProductFormValues>({
+        resolver: zodResolver(editProductSchema),
+    });
 
-    const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
+    useEffect(() => {
+        if (productToEdit) {
+            resetEdit({
+                name: productToEdit.name,
+                description: productToEdit.description,
+                price: productToEdit.price,
+                category: productToEdit.category,
+                isNew: productToEdit.isNew,
+                colors: productToEdit.colors?.join(', '),
+                sizesText: productToEdit.sizes?.filter(s => isNaN(Number(s))).join(', '),
+                sizesNumeric: productToEdit.sizes?.filter(s => !isNaN(Number(s))).join(', '),
+            });
+        }
+    }, [productToEdit, resetEdit]);
+
+    const onAddSubmit: SubmitHandler<AddProductFormValues> = async (data) => {
         if (!database || !storage) {
             toast({ variant: 'destructive', title: 'Error', description: 'Firebase is not configured. Cannot add product.' });
             return;
         }
-        setIsSubmitting(true);
-
+        setIsAddSubmitting(true);
         try {
             const newProductRef = push(dbRef(database, 'products'));
             const newProductId = newProductRef.key;
@@ -78,12 +109,9 @@ export default function AddProductPage() {
                 const url = await getDownloadURL(imageFileRef);
                 imageUrls.push(url);
             }
-
             const textSizes = data.sizesText ? data.sizesText.split(',').map(s => s.trim()).filter(Boolean) : [];
             const numericSizes = data.sizesNumeric ? data.sizesNumeric.split(',').map(s => s.trim()).filter(Boolean) : [];
-            const allSizes = [...textSizes, ...numericSizes];
-
-            const productData = {
+            await set(newProductRef, {
                 name: data.name,
                 description: data.description,
                 price: data.price,
@@ -91,131 +119,168 @@ export default function AddProductPage() {
                 isNew: data.isNew,
                 images: imageUrls,
                 colors: data.colors ? data.colors.split(',').map(s => s.trim()).filter(Boolean) : [],
-                sizes: allSizes,
-            };
-
-            await set(newProductRef, productData);
-            toast({ title: "Product Added", description: `"${data.name}" has been successfully added to the store.` });
-            router.push('/dashboard/admin');
-
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Submission Failed',
-                description: "Could not add product. Please check console for details.",
+                sizes: [...textSizes, ...numericSizes],
             });
-            console.error("Failed to add product:", error);
+            toast({ title: "Product Added", description: `"${data.name}" has been successfully added.` });
+            resetAdd({ name: '', description: '', price: 0, category: '', isNew: true, colors: '', sizesText: '', sizesNumeric: '', images: undefined });
+            setImagePreviews([]);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Submission Failed', description: "Could not add product." });
         } finally {
-            setIsSubmitting(false);
+            setIsAddSubmitting(false);
+        }
+    };
+    
+    const onEditSubmit: SubmitHandler<EditProductFormValues> = async (data) => {
+        if (!productToEdit) return;
+        setIsEditSubmitting(true);
+        try {
+            const textSizes = data.sizesText ? data.sizesText.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const numericSizes = data.sizesNumeric ? data.sizesNumeric.split(',').map(s => s.trim()).filter(Boolean) : [];
+            await updateProduct(productToEdit.id, {
+                name: data.name,
+                description: data.description,
+                price: data.price,
+                category: data.category,
+                isNew: data.isNew,
+                colors: data.colors ? data.colors.split(',').map(s => s.trim()).filter(Boolean) : [],
+                sizes: [...textSizes, ...numericSizes],
+            });
+            toast({ title: "Product Updated", description: `"${data.name}" has been successfully updated.` });
+            setProductToEdit(null);
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Update Failed', description: "Could not update product." });
+        } finally {
+            setIsEditSubmitting(false);
+        }
+    };
+
+    const onDeleteConfirm = async () => {
+        if (!productToDelete) return;
+        setIsDeleting(true);
+        try {
+            await removeProduct(productToDelete);
+            toast({ title: "Product Deleted", description: `"${productToDelete.name}" has been removed.` });
+            setProductToDelete(null);
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: "Could not delete product." });
+        } finally {
+            setIsDeleting(false);
         }
     };
     
     return (
-        <div className="p-4 sm:p-6 lg:p-8">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-8">
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>
                     <CardTitle>Add New Product</CardTitle>
                     <CardDescription>Fill out the form below to add a new product to your store catalog.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                        {/* Product Details */}
+                    <form onSubmit={handleSubmitAdd(onAddSubmit)} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Product Name</Label>
-                                <Input id="name" {...register("name")} />
-                                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="price">Price (₹)</Label>
-                                <Input id="price" type="number" step="0.01" {...register("price")} />
-                                {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
-                            </div>
+                            <div className="space-y-2"><Label htmlFor="name">Product Name</Label><Input id="name" {...registerAdd("name")} />{errorsAdd.name && <p className="text-sm text-destructive">{errorsAdd.name.message}</p>}</div>
+                            <div className="space-y-2"><Label htmlFor="price">Price (₹)</Label><Input id="price" type="number" step="0.01" {...registerAdd("price")} />{errorsAdd.price && <p className="text-sm text-destructive">{errorsAdd.price.message}</p>}</div>
                         </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea id="description" {...register("description")} />
-                            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
-                        </div>
-
+                        <div className="space-y-2"><Label htmlFor="description">Description</Label><Textarea id="description" {...registerAdd("description")} />{errorsAdd.description && <p className="text-sm text-destructive">{errorsAdd.description.message}</p>}</div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div className="space-y-2">
-                                <Label htmlFor="category">Category</Label>
-                                <Select onValueChange={(value) => setValue('category', value)} defaultValue={control._defaultValues.category}>
-                                    <SelectTrigger id="category">
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {categories.map(cat => (
-                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="colors">Colors (comma-separated)</Label>
-                                <Input id="colors" {...register("colors")} placeholder="e.g., Black, White, Blue"/>
-                            </div>
+                            <div className="space-y-2"><Label htmlFor="category">Category</Label><Select onValueChange={(value) => setValueAdd('category', value)} defaultValue={controlAdd._defaultValues.category}><SelectTrigger id="category"><SelectValue placeholder="Select a category" /></SelectTrigger><SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent></Select>{errorsAdd.category && <p className="text-sm text-destructive">{errorsAdd.category.message}</p>}</div>
+                            <div className="space-y-2"><Label htmlFor="colors">Colors (comma-separated)</Label><Input id="colors" {...registerAdd("colors")} placeholder="e.g., Black, White, Blue"/></div>
                         </div>
-                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div className="space-y-2">
-                                <Label htmlFor="sizesText">Text-based Sizes (comma-separated)</Label>
-                                <Input id="sizesText" {...register("sizesText")} placeholder="e.g., S, M, L, XL, XXL" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="sizesNumeric">Numeric Sizes (comma-separated)</Label>
-                                <Input id="sizesNumeric" {...register("sizesNumeric")} placeholder="e.g., 28, 30, 32" />
-                            </div>
+                            <div className="space-y-2"><Label htmlFor="sizesText">Text-based Sizes (comma-separated)</Label><Input id="sizesText" {...registerAdd("sizesText")} placeholder="e.g., S, M, L, XL, XXL" /></div>
+                            <div className="space-y-2"><Label htmlFor="sizesNumeric">Numeric Sizes (comma-separated)</Label><Input id="sizesNumeric" {...registerAdd("sizesNumeric")} placeholder="e.g., 28, 30, 32" /></div>
                         </div>
-                        
-                        <div className="space-y-4">
-                            <Label>Product Images</Label>
-                             <div className="relative border-2 border-dashed border-muted rounded-lg p-6 text-center">
-                                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <p className="mt-2 text-sm text-muted-foreground">Drag & drop files here, or click to select files</p>
-                                <Input id="images" type="file" {...register("images")} multiple accept="image/png, image/jpeg, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                            </div>
-                            {errors.images && <p className="text-sm text-destructive">{errors.images.message}</p>}
-                            {imagePreviews.length > 0 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                    {imagePreviews.map((src, index) => (
-                                        <div key={index} className="relative aspect-square">
-                                            <Image src={src} alt={`Preview ${index}`} fill className="rounded-md object-cover" />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                            <Switch id="isNew" {...register("isNew")} defaultChecked={control._defaultValues.isNew} onCheckedChange={(checked) => setValue('isNew', checked)} />
-                            <Label htmlFor="isNew">Mark as New Arrival</Label>
-                        </div>
-                        
-                        <div className="flex justify-end gap-4">
-                            <Button type="button" variant="outline" onClick={() => router.push('/dashboard/admin')} disabled={isSubmitting}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Adding Product...
-                                    </>
-                                ) : (
-                                    <>
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Product
-                                    </>
-                                )}
-                            </Button>
-                        </div>
+                        <div className="space-y-4"><Label>Product Images</Label><div className="relative border-2 border-dashed border-muted rounded-lg p-6 text-center"><UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" /><p className="mt-2 text-sm text-muted-foreground">Drag & drop files here, or click to select files</p><Input id="images" type="file" {...registerAdd("images")} multiple accept="image/png, image/jpeg, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /></div>{errorsAdd.images && <p className="text-sm text-destructive">{errorsAdd.images.message}</p>}{imagePreviews.length > 0 && <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{imagePreviews.map((src, index) => <div key={index} className="relative aspect-square"><Image src={src} alt={`Preview ${index}`} fill className="rounded-md object-cover" /></div>)}</div>}</div>
+                        <div className="flex items-center space-x-2"><Switch id="isNew" {...registerAdd("isNew")} defaultChecked={controlAdd._defaultValues.isNew} onCheckedChange={(checked) => setValueAdd('isNew', checked)} /><Label htmlFor="isNew">Mark as New Arrival</Label></div>
+                        <div className="flex justify-end gap-4"><Button type="button" variant="outline" onClick={() => router.push('/dashboard/admin')} disabled={isAddSubmitting}>Cancel</Button><Button type="submit" disabled={isAddSubmitting}>{isAddSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Adding Product...</> : <><PlusCircle className="mr-2 h-4 w-4" />Add Product</>}</Button></div>
                     </form>
                 </CardContent>
             </Card>
+
+            <Card className="max-w-4xl mx-auto">
+                <CardHeader>
+                    <CardTitle>Manage Existing Products</CardTitle>
+                    <CardDescription>View, edit, or delete products from your store catalog.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {productsLoading ? (
+                        <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                    ) : (
+                        <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[80px]">Image</TableHead>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead className="text-right">Price</TableHead>
+                                        <TableHead className="w-[120px] text-center">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {products.map(product => (
+                                        <TableRow key={product.id}>
+                                            <TableCell><Image src={product.images[0] || 'https://placehold.co/80x80.png'} alt={product.name} width={60} height={60} className="rounded-md object-cover aspect-square" /></TableCell>
+                                            <TableCell className="font-medium">{product.name}</TableCell>
+                                            <TableCell>{product.category}</TableCell>
+                                            <TableCell className="text-right">₹{product.price.toFixed(2)}</TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex justify-center gap-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => setProductToEdit(product)}><Edit className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => setProductToDelete(product)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+            
+            <Dialog open={!!productToEdit} onOpenChange={(isOpen) => !isOpen && setProductToEdit(null)}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Product</DialogTitle>
+                        <DialogDescription>Make changes to "{productToEdit?.name}". Click save when you're done.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmitEdit(onEditSubmit)} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2"><Label htmlFor="edit-name">Product Name</Label><Input id="edit-name" {...registerEdit("name")} />{errorsEdit.name && <p className="text-sm text-destructive">{errorsEdit.name.message}</p>}</div>
+                            <div className="space-y-2"><Label htmlFor="edit-price">Price (₹)</Label><Input id="edit-price" type="number" step="0.01" {...registerEdit("price")} />{errorsEdit.price && <p className="text-sm text-destructive">{errorsEdit.price.message}</p>}</div>
+                        </div>
+                        <div className="space-y-2"><Label htmlFor="edit-description">Description</Label><Textarea id="edit-description" {...registerEdit("description")} />{errorsEdit.description && <p className="text-sm text-destructive">{errorsEdit.description.message}</p>}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2"><Label htmlFor="edit-category">Category</Label><Select onValueChange={(value) => resetEdit({...controlEdit._formValues, category: value})} defaultValue={productToEdit?.category}><SelectTrigger id="edit-category"><SelectValue placeholder="Select a category" /></SelectTrigger><SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent></Select>{errorsEdit.category && <p className="text-sm text-destructive">{errorsEdit.category.message}</p>}</div>
+                            <div className="space-y-2"><Label htmlFor="edit-colors">Colors (comma-separated)</Label><Input id="edit-colors" {...registerEdit("colors")} placeholder="e.g., Black, White, Blue"/></div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2"><Label htmlFor="edit-sizesText">Text-based Sizes (comma-separated)</Label><Input id="edit-sizesText" {...registerEdit("sizesText")} placeholder="e.g., S, M, L, XL, XXL" /></div>
+                            <div className="space-y-2"><Label htmlFor="edit-sizesNumeric">Numeric Sizes (comma-separated)</Label><Input id="edit-sizesNumeric" {...registerEdit("sizesNumeric")} placeholder="e.g., 28, 30, 32" /></div>
+                        </div>
+                        <div className="flex items-center space-x-2 pt-2"><Switch id="edit-isNew" {...registerEdit("isNew")} checked={watchAdd('isNew')} onCheckedChange={(checked) => setValueAdd('isNew', checked)} /><Label htmlFor="edit-isNew">Mark as New Arrival</Label></div>
+                        <DialogFooter className="pt-4 border-t sticky bottom-0 bg-background py-4">
+                            <Button type="button" variant="outline" onClick={() => setProductToEdit(null)}>Cancel</Button>
+                            <Button type="submit" disabled={isEditSubmitting}>{isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save Changes</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <AlertDialog open={!!productToDelete} onOpenChange={(isOpen) => !isOpen && setProductToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>This action cannot be undone. This will permanently delete the product "{productToDelete?.name}" and all of its images.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={onDeleteConfirm} disabled={isDeleting} className={buttonVariants({ variant: "destructive" })}>{isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
