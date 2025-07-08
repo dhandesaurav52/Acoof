@@ -1,8 +1,6 @@
-
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export', // ✅ THIS ENABLES STATIC EXPORT
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -10,7 +8,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: true,
     domains: [
       'placehold.co',
       'images.pexels.com',
