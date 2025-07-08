@@ -108,7 +108,7 @@ export default function UserOrdersPage() {
     }
 
     const isOrderCancellable = (order: Order): { cancellable: boolean; reason: string } => {
-        if (order.status === 'Cancelled' || order.status === 'Shipped') {
+        if (order.status !== 'Pending' && order.status !== 'Delivered') {
             return { cancellable: false, reason: `This order cannot be returned as its status is '${order.status}'.` };
         }
         
@@ -170,7 +170,7 @@ export default function UserOrdersPage() {
             <div className="text-left">
                 <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter font-headline">My Orders</h1>
                 <p className="text-muted-foreground mt-2">
-                    Track your purchase history and order status.
+                    Track your purchase history and order status. You can return delivered items or cancel pending orders within 7 days of purchase.
                 </p>
             </div>
 
