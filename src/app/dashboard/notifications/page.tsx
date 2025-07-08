@@ -63,6 +63,11 @@ export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<NotificationType[]>([]);
     const [dataLoading, setDataLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
 
     const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -165,7 +170,9 @@ export default function NotificationsPage() {
                                         <Icon className={cn("h-6 w-6 mt-1 flex-shrink-0", color)} />
                                         <div className="flex-1">
                                             <p className="text-sm font-medium">{notification.message}</p>
-                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {isMounted ? formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true }) : '...'}
+                                            </p>
                                         </div>
                                     </div>
                                 )
