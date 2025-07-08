@@ -11,11 +11,13 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 
 export function Footer() {
-  const [year, setYear] = useState<number>();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setYear(new Date().getFullYear());
+    setIsMounted(true);
   }, []);
+
+  const year = new Date().getFullYear();
 
   return (
     <footer className="border-t bg-secondary">
@@ -112,8 +114,8 @@ export function Footer() {
                 <Instagram className="h-5 w-5" />
               </a>
             </div>
-            <p className="text-center text-sm leading-loose text-muted-foreground md:order-first" suppressHydrationWarning>
-              © {year} Acoof. All Rights Reserved.
+            <p className="text-center text-sm leading-loose text-muted-foreground md:order-first">
+              © {isMounted ? year : ''} Acoof. All Rights Reserved.
             </p>
           </div>
         </div>
