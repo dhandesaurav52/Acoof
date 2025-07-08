@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
     LayoutGrid,
     Package,
@@ -133,6 +133,12 @@ export default function DashboardLayout({
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col p-0">
+                            <SheetHeader className="sr-only">
+                                <SheetTitle>Dashboard Menu</SheetTitle>
+                                <SheetDescription>
+                                    Main navigation for user and admin dashboards.
+                                </SheetDescription>
+                            </SheetHeader>
                            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                                 <Link href="/" className="flex items-center gap-2 font-semibold">
                                     <Logo width={130} height={40} />
