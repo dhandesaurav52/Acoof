@@ -108,8 +108,8 @@ export default function UserOrdersPage() {
     }
 
     const isOrderCancellable = (order: Order): { cancellable: boolean; reason: string } => {
-        if (order.status !== 'Pending') {
-            return { cancellable: false, reason: `This order cannot be cancelled as its status is '${order.status}'.` };
+        if (order.status === 'Cancelled' || order.status === 'Shipped') {
+            return { cancellable: false, reason: `This order cannot be returned as its status is '${order.status}'.` };
         }
         
         try {
@@ -117,7 +117,7 @@ export default function UserOrdersPage() {
             const daysSinceOrder = differenceInDays(new Date(), orderDate);
             
             if (daysSinceOrder > 7) {
-                return { cancellable: false, reason: 'This order is outside the 7-day cancellation window.' };
+                return { cancellable: false, reason: 'This order is outside the 7-day return window.' };
             }
         } catch(e) {
             console.error("Could not parse order date:", order.date, e);
@@ -138,7 +138,10 @@ export default function UserOrdersPage() {
                     order.id === orderToCancel.id ? { ...order, status: 'Cancelled' as OrderStatus } : order
                 )
             );
-            toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
+            toast({ 
+                title: orderToCancel.status === 'Delivered' ? "Return Initiated" : "Order Cancelled", 
+                description: orderToCancel.status === 'Delivered' ? "Your return request has been submitted." : "Your order has been successfully cancelled." 
+            });
         } catch (error: any) {
             // This is a special check to handle a "race condition" where the user
             // logs out immediately after cancelling. The update fails with a
@@ -248,6 +251,7 @@ export default function UserOrdersPage() {
                                             <div className="mt-6 flex justify-end">
                                                 {(() => {
                                                     const { cancellable, reason } = isOrderCancellable(order);
+                                                    const buttonText = order.status === 'Delivered' ? 'Return Order' : 'Cancel Order';
                                                     if (cancellable) {
                                                         return (
                                                             <Button
@@ -255,7 +259,7 @@ export default function UserOrdersPage() {
                                                                 onClick={() => setOrderToCancel(order)}
                                                             >
                                                                 <XCircle className="mr-2 h-4 w-4" />
-                                                                Cancel Order
+                                                                {buttonText}
                                                             </Button>
                                                         );
                                                     } else {
@@ -270,7 +274,7 @@ export default function UserOrdersPage() {
                                                                                 className="pointer-events-none"
                                                                             >
                                                                                 <XCircle className="mr-2 h-4 w-4" />
-                                                                                Cancel Order
+                                                                                {buttonText}
                                                                             </Button>
                                                                         </span>
                                                                     </TooltipTrigger>
@@ -304,7 +308,7 @@ export default function UserOrdersPage() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will cancel your order <span className="font-semibold">#{orderToCancel?.id}</span>.
+                        This action cannot be undone. This will {orderToCancel?.status === 'Delivered' ? 'initiate a return for' : 'cancel'} your order <span className="font-semibold">#{orderToCancel?.id}</span>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -315,7 +319,7 @@ export default function UserOrdersPage() {
                         className={buttonVariants({ variant: "destructive" })}
                     >
                         {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        {isCancelling ? "Cancelling..." : "Confirm Cancellation"}
+                        {isCancelling ? "Processing..." : `Confirm ${orderToCancel?.status === 'Delivered' ? 'Return' : 'Cancellation'}`}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
