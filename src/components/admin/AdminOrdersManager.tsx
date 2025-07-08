@@ -213,6 +213,12 @@ export function AdminOrdersManager() {
                                                             <p className="text-sm text-muted-foreground">{order.shippingAddress}</p>
                                                             <p className="text-sm mt-1">Payment Method: <span className="font-medium">{order.paymentMethod}</span></p>
                                                         </div>
+                                                        {order.status === 'Cancelled' && order.cancellationReason && (
+                                                            <div>
+                                                                <h4 className="font-semibold mb-1">Reason for Cancellation/Return</h4>
+                                                                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">{order.cancellationReason}</p>
+                                                            </div>
+                                                        )}
                                                         <div>
                                                             <h4 className="font-semibold mb-2">Actions</h4>
                                                             <div className="flex items-center gap-2">

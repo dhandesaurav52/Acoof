@@ -17,6 +17,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { differenceInDays } from 'date-fns';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 
 export default function UserOrdersPage() {
@@ -28,6 +30,7 @@ export default function UserOrdersPage() {
     const [error, setError] = useState<string | null>(null);
     const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
     const [isCancelling, setIsCancelling] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -132,10 +135,10 @@ export default function UserOrdersPage() {
         setIsCancelling(true);
         const orderRef = ref(database, `orders/${orderToCancel.id}`);
         try {
-            await update(orderRef, { status: 'Cancelled' });
+            await update(orderRef, { status: 'Cancelled', cancellationReason: cancellationReason || 'No reason provided' });
             setOrders(prevOrders =>
                 prevOrders.map(order =>
-                    order.id === orderToCancel.id ? { ...order, status: 'Cancelled' as OrderStatus } : order
+                    order.id === orderToCancel.id ? { ...order, status: 'Cancelled' as OrderStatus, cancellationReason: cancellationReason || 'No reason provided' } : order
                 )
             );
             toast({ 
@@ -161,6 +164,7 @@ export default function UserOrdersPage() {
         } finally {
             setIsCancelling(false);
             setOrderToCancel(null);
+            setCancellationReason('');
         }
     };
 
@@ -303,7 +307,7 @@ export default function UserOrdersPage() {
             </Card>
         </div>
         
-        <AlertDialog open={!!orderToCancel} onOpenChange={(open) => { if (!open) setOrderToCancel(null); }}>
+        <AlertDialog open={!!orderToCancel} onOpenChange={(open) => { if (!open) { setOrderToCancel(null); setCancellationReason(''); } }}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -311,8 +315,20 @@ export default function UserOrdersPage() {
                         This action cannot be undone. This will {orderToCancel?.status === 'Delivered' ? 'initiate a return for' : 'cancel'} your order <span className="font-semibold">#{orderToCancel?.id}</span>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="py-2">
+                    <Label htmlFor="cancellation-reason" className="text-sm font-medium">
+                        Reason for {orderToCancel?.status === 'Delivered' ? 'Return' : 'Cancellation'} (Optional)
+                    </Label>
+                    <Textarea
+                        id="cancellation-reason"
+                        placeholder="Tell us why you're making this request..."
+                        value={cancellationReason}
+                        onChange={(e) => setCancellationReason(e.target.value)}
+                        className="mt-2"
+                    />
+                </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setOrderToCancel(null)} disabled={isCancelling}>Back</AlertDialogCancel>
+                    <AlertDialogCancel onClick={() => { setOrderToCancel(null); setCancellationReason(''); }} disabled={isCancelling}>Back</AlertDialogCancel>
                     <AlertDialogAction 
                         onClick={handleConfirmCancel} 
                         disabled={isCancelling} 

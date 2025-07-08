@@ -46,4 +46,5 @@ export interface Order {
   orderId?: string; // Razorpay Order ID
   paymentId?: string;
   paymentSignature?: string;
+  cancellationReason?: string;
 }
