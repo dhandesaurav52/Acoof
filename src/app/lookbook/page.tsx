@@ -5,13 +5,13 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
-import type { LookCategory } from "@/types";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sparkles, Loader2, Wand2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { generateOutfitImage } from '@/ai/flows/generate-outfit-image';
+// The direct import is removed to prevent it from running during the build.
+// import { generateOutfitImage } from '@/ai/flows/generate-outfit-image';
 
 
 function AIStylist() {
@@ -33,6 +33,8 @@ function AIStylist() {
     setIsLoading(true);
     setGeneratedImage(null);
     try {
+      // Dynamically import the AI function only when it's needed.
+      const { generateOutfitImage } = await import('@/ai/flows/generate-outfit-image');
       const result = await generateOutfitImage({ prompt });
       if (result.imageUrl) {
         setGeneratedImage(result.imageUrl);
