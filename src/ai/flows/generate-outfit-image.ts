@@ -67,9 +67,9 @@ ${userDetails}
 Generate one new image that follows these rules.`;
 
       const outfitPrompts = [
-        `The outfit must be a **modern take on classic western wear**. Think a well-fitted denim jacket over a simple t-shirt, dark wash jeans, and stylish leather boots.`,
-        `The outfit must be **elevated rancher style**. Think a clean button-down shirt (perhaps a subtle plaid or chambray), fitted trousers, and a high-quality leather belt.`,
-        `The outfit must be **rugged yet refined**. Think a premium henley shirt, a well-worn leather jacket, and slim-fit jeans. The overall look should feel authentic and stylishly modern.`
+        `A stylish **jacket-centric outfit**. This could feature a sleek leather jacket, a modern bomber jacket, or a classic denim jacket. Pair it with complementary trousers or jeans and appropriate footwear for a complete, fashionable look.`,
+        `A sophisticated **blazer outfit**. The look should be modern and sharp, suitable for a smart-casual or business-casual setting. The blazer should be the centerpiece, paired with well-fitting trousers and stylish shoes.`,
+        `A fashionable **hip-hop style outfit**. This should reflect modern streetwear trends. Think designer hoodies, graphic tees, baggy or distressed jeans, and iconic sneakers. The overall vibe should be cool, confident, and on-trend.`
       ];
 
       try {
