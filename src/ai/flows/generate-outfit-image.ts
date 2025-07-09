@@ -26,8 +26,7 @@ const OutfitImagesOutputSchema = z.object({
           "A generated image of a person in a new outfit, as a data URI."
         )
     )
-    .length(3)
-    .describe('An array of three distinct outfit images as data URIs.'),
+    .describe('An array of one or more distinct outfit images as data URIs.'),
 });
 
 export async function generateOutfitImages(
@@ -67,13 +66,18 @@ User's Photo: {{media url=photoDataUri}}`;
         
         const results = await Promise.all(imagePromises);
 
-        const images = results.map(result => {
-          if (!result.media || !result.media.url) {
-            throw new Error('AI failed to generate a valid image.');
-          }
-          return result.media.url;
-        });
+        // Filter out any failed generations instead of throwing an error immediately.
+        const images = results
+            .map(result => result.media?.url)
+            .filter((url): url is string => !!url);
+        
+        // If all image generations fail, then we throw an error.
+        if (images.length === 0) {
+            console.error("AI Generation Failed. All attempts returned no image. API Results:", JSON.stringify(results, null, 2));
+            throw new Error('The AI was unable to generate any outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.');
+        }
 
+        // Return the successfully generated images, even if it's less than 3.
         return { images };
 
       } catch (error: any) {
