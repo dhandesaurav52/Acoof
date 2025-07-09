@@ -150,15 +150,15 @@ export default function LookbookPage() {
       <div className="max-w-7xl mx-auto mb-20">
         {photoDataUri ? (
             // START: RESULTS VIEW (when photo is taken)
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
               <div className="space-y-4 lg:col-span-1 lg:sticky lg:top-24">
-                <h2 className="text-2xl font-bold font-headline">Your Photo</h2>
+                <h2 className="text-xl font-bold font-headline">Your Photo</h2>
                 <Card className="overflow-hidden">
                   <div className="relative aspect-[4/5] w-full">
-                    <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="33vw" />
+                    <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="20vw" />
                   </div>
                 </Card>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   <Button onClick={handleNewPhoto} variant="outline" size="sm">
                     <Camera className="mr-2 h-4 w-4" /> Start Over
                   </Button>
@@ -173,8 +173,8 @@ export default function LookbookPage() {
                 </div>
               </div>
   
-              <div className="space-y-4 lg:col-span-3">
-                <h2 className="text-2xl font-bold font-headline">AI-Styled Outfits</h2>
+              <div className="space-y-4 lg:col-span-4">
+                <h2 className="text-xl font-bold font-headline">AI-Styled Outfits</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {isLoading || (photoDataUri && generatedImages.length === 0) ? (
                     <>
