@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, Download, LayoutGrid, LogOut, Settings, Bell } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, Download, LayoutGrid, LogOut, Settings, Bell, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +34,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
   { href: "/lookbook", label: "Lookbook" },
+  { href: "/virtual-try-on", label: "AI Stylist", icon: Sparkles },
 ];
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -65,19 +66,23 @@ export function Header() {
 
   const NavLinks = ({ className }: { className?: string }) => (
     <nav className={cn("flex items-center gap-6 text-sm font-medium", className)}>
-      {navLinks.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className={cn(
-            "transition-colors hover:text-primary",
-            pathname === link.href ? "text-primary font-semibold" : "text-foreground/80",
-          )}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          {link.label}
-        </Link>
-      ))}
+      {navLinks.map((link) => {
+        const isActive = pathname === link.href;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={cn(
+              "transition-colors hover:text-primary flex items-center gap-2",
+              isActive ? "text-primary font-semibold" : "text-foreground/80",
+            )}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {link.icon && <link.icon className={cn("h-4 w-4", isActive && "text-primary")} />}
+            <span>{link.label}</span>
+          </Link>
+        )
+      })}
       {isMounted && installPromptEvent && (
         <button onClick={handleInstallClick} className={cn("transition-colors hover:text-primary flex items-center gap-2", className?.includes('flex-col') ? '' : 'text-foreground/80')}>
             <Download className="h-4 w-4" />
