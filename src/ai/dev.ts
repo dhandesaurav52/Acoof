@@ -1,5 +1,3 @@
-
-'use server';
 /**
  * @fileoverview This file initializes the Genkit AI instance with necessary plugins.
  * It checks for the GOOGLE_API_KEY environment variable and configures the Google AI plugin.
