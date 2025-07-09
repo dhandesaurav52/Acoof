@@ -162,73 +162,78 @@ export default function LookbookPage() {
 
       <div className="max-w-7xl mx-auto mb-20">
         {photoDataUri ? (
-            // START: RESULTS VIEW (when photo is taken)
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-              {/* User Photo */}
-              <div className="space-y-4 lg:sticky lg:top-24">
-                <h3 className="text-xl font-bold font-headline">Your Photo</h3>
-                <Card className="overflow-hidden">
-                  <div className="relative aspect-[4/5] w-full">
-                    <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="100vw" />
-                  </div>
-                </Card>
-                <div className="flex flex-col gap-2">
-                  <Button onClick={handleNewPhoto} variant="outline" size="sm">
-                    <Camera className="mr-2 h-4 w-4" /> Start Over
-                  </Button>
-                  <Button onClick={handleGenerate} disabled={isLoading} size="sm">
-                    {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                    )}
-                    {isLoading ? 'Generating...' : 'Try Again'}
-                  </Button>
+            // START: NEW RESULTS VIEW
+            <div className="flex flex-col items-center gap-8">
+                {/* User Photo in the middle */}
+                <div className="w-full max-w-sm space-y-4">
+                    <h3 className="text-xl font-bold font-headline text-center">Your Photo</h3>
+                    <Card className="overflow-hidden">
+                        <div className="relative aspect-[4/5] w-full">
+                            <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="(max-width: 640px) 100vw, 448px" />
+                        </div>
+                    </Card>
+                    <div className="flex gap-2">
+                        <Button onClick={handleNewPhoto} variant="outline" className="w-full">
+                            <Camera className="mr-2 h-4 w-4" /> Start Over
+                        </Button>
+                        <Button onClick={handleGenerate} disabled={isLoading} className="w-full">
+                            {isLoading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                            )}
+                            {isLoading ? 'Generating...' : 'Try Again'}
+                        </Button>
+                    </div>
                 </div>
-              </div>
+                
+                <Separator className="my-4" />
 
-              {/* AI Generated Outfits */}
-              {error ? (
-                <div className="sm:col-span-1 lg:col-span-3">
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Generation Failed</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
+                {/* AI Generated Outfits below */}
+                <div className="w-full">
+                    <h3 className="text-xl font-bold font-headline text-center mb-6">AI-Styled Outfits</h3>
+                    {error ? (
+                        <div className="max-w-2xl mx-auto">
+                            <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Generation Failed</AlertTitle>
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            {isLoading || (photoDataUri && generatedImages.length === 0) ? (
+                                <>
+                                    {Array.from({ length: 3 }).map((_, index) => (
+                                        <Card key={index} className="overflow-hidden">
+                                            <div className="relative aspect-[4/5] w-full bg-muted animate-pulse flex items-center justify-center">
+                                                <Sparkles className="h-8 w-8 text-muted-foreground/50" />
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </>
+                            ) : (
+                                <>
+                                    {generatedImages.map((src, index) => (
+                                        <Card key={index} className="overflow-hidden group">
+                                            <div className="relative aspect-[4/5] w-full bg-muted">
+                                                <Image
+                                                    src={src}
+                                                    alt={`Generated Outfit ${index + 1}`}
+                                                    fill
+                                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    sizes="(max-width: 639px) 100vw, (max-width: 768px) 50vw, 33vw"
+                                                />
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
-              ) : (
-                <>
-                  {isLoading || (photoDataUri && generatedImages.length === 0) ? (
-                    <>
-                      {Array.from({ length: 3 }).map((_, index) => (
-                        <Card key={index} className="overflow-hidden">
-                          <div className="relative aspect-[4/5] w-full bg-muted animate-pulse flex items-center justify-center">
-                            <Sparkles className="h-8 w-8 text-muted-foreground/50" />
-                          </div>
-                        </Card>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      {generatedImages.map((src, index) => (
-                        <Card key={index} className="overflow-hidden group">
-                          <div className="relative aspect-[4/5] w-full bg-muted">
-                            <Image
-                              src={src}
-                              alt={`Generated Outfit ${index + 1}`}
-                              fill
-                              className="object-cover transition-transform duration-300 group-hover:scale-105"
-                              sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 25vw"
-                            />
-                          </div>
-                        </Card>
-                      ))}
-                    </>
-                  )}
-                </>
-              )}
             </div>
-            // END: RESULTS VIEW
+            // END: NEW RESULTS VIEW
         ) : (
             // START: INITIAL VIEW (before photo is taken)
             <div className="max-w-md mx-auto">
