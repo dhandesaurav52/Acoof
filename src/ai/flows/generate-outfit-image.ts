@@ -41,19 +41,16 @@ export async function generateOutfitImages(
     },
     async (input) => {
       const model = 'googleai/gemini-2.0-flash-preview-image-generation';
-      const prompt = `You are an expert AI fashion stylist and photo editor. Your task is to perform a virtual try-on for a user. You must follow this process exactly:
+      const prompt = `Your task is to generate a full-body image of a person wearing a stylish, realistic outfit.
 
-1.  **Analyze the User's Photo:** The provided image contains a user's face. Carefully analyze their facial features, expression, and skin tone.
-2.  **Generate a New Scene:** Create a realistic, full-body image of a male model wearing a stylish, complete, modern streetwear outfit. The model should be in a natural pose against a simple, neutral background.
-3.  **Merge the Face:** Seamlessly replace the generated model's face with the user's face from the original photo. The user's head, hair, and facial expression must be perfectly preserved and blended realistically onto the model's body. The final result should look like a natural, unedited photograph of the user.
-4.  **Ensure Full Outfit:** The generated image must show a full outfit, including top, bottom, and appropriate footwear.
+**Instructions:**
+- From the provided user's photo, take the user's face and seamlessly blend it onto a realistic full-body male model.
+- The final image must preserve the user's actual face.
+- Ensure the entire outfit is visible from head to toe.
+- The outfit must be modern, trendy men's clothing, suitable for a fashion lookbook.
+- The final image must be photorealistic.
 
-**CRITICAL RULES:**
--   **MENSWEAR ONLY:** All generated outfits must be men's clothing.
--   **PRESERVE THE FACE:** The user's face from the original photo is the most important element. It MUST be used on the final image. Do not generate a new face.
--   **REALISM:** The final image must be photorealistic.
-
-Process the following photo and generate one image based on these instructions.
+Process the user's photo to generate one new image.
 
 User's Photo: {{media url=photoDataUri}}`;
 
