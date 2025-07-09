@@ -14,6 +14,7 @@ import { OutfitCard } from '@/components/OutfitCard';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 export default function LookbookPage() {
   // AI STYLIST STATE AND LOGIC
@@ -26,6 +27,7 @@ export default function LookbookPage() {
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [height, setHeight] = useState('');
   const [bodyType, setBodyType] = useState('');
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -44,7 +46,7 @@ export default function LookbookPage() {
             return;
         }
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
           setHasCameraPermission(true);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -69,7 +71,7 @@ export default function LookbookPage() {
         }
       };
     }
-  }, [isCameraOn]);
+  }, [isCameraOn, facingMode]);
 
 
   const handleStartCamera = () => {
@@ -84,9 +86,11 @@ export default function LookbookPage() {
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
-        // We flip the context horizontally to get the non-mirrored image
-        context.translate(canvas.width, 0);
-        context.scale(-1, 1);
+        // We flip the context horizontally to get the non-mirrored image for the front camera
+        if (facingMode === 'user') {
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+        }
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUri = canvas.toDataURL('image/jpeg');
         setPhotoDataUri(dataUri);
@@ -113,8 +117,9 @@ export default function LookbookPage() {
         height,
         bodyType,
       });
-      if (result.images.length === 0) {
-        setError("The AI was unable to generate any outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.");
+      if (result.images.length < 3) {
+        setError("The AI was unable to generate all outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.");
+        setGeneratedImages(result.images);
       } else {
         setGeneratedImages(result.images);
       }
@@ -139,6 +144,10 @@ export default function LookbookPage() {
     setGeneratedImages([]);
     setError(null);
     setIsCameraOn(false); // Ensure camera is off
+  };
+
+  const handleToggleCamera = () => {
+    setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
   };
 
   // Automatically trigger generation once a photo is captured
@@ -171,7 +180,6 @@ export default function LookbookPage() {
         {photoDataUri ? (
             // START: NEW RESULTS VIEW
             <div className="flex flex-col items-center gap-8">
-                {/* User Photo in the middle */}
                 <div className="w-full max-w-sm space-y-4">
                     <h3 className="text-xl font-bold font-headline text-center">Your Photo</h3>
                     <Card className="overflow-hidden">
@@ -196,7 +204,6 @@ export default function LookbookPage() {
                 
                 <Separator className="my-4" />
 
-                {/* AI Generated Outfits below */}
                 <div className="w-full">
                     <h3 className="text-xl font-bold font-headline text-center mb-6">AI-Styled Outfits</h3>
                     {error ? (
@@ -250,8 +257,12 @@ export default function LookbookPage() {
                             // Camera is ON -> show video feed
                             <div className="space-y-4">
                                 <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-muted">
-                                    <video ref={videoRef} className="w-full h-full object-cover transform -scale-x-100" autoPlay muted playsInline />
+                                    <video ref={videoRef} className={cn("w-full h-full object-cover", facingMode === 'user' && "transform -scale-x-100")} autoPlay muted playsInline />
                                     <canvas ref={canvasRef} className="hidden" />
+                                     <Button onClick={handleToggleCamera} variant="outline" size="icon" className="absolute top-2 right-2 z-10 bg-background/50 backdrop-blur-sm rounded-full">
+                                        <RefreshCw className="h-5 w-5" />
+                                        <span className="sr-only">Flip Camera</span>
+                                    </Button>
                                 </div>
                                 <Button onClick={handleCapture} className="w-full">
                                     <Camera className="mr-2 h-5 w-5" />
@@ -350,3 +361,5 @@ export default function LookbookPage() {
     </div>
   );
 }
+
+    
