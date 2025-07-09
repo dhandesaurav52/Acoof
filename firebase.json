@@ -1,7 +1,5 @@
-
 {
   "apphosting": {
-    "backend": "acoof-backend",
-    "source": "."
+    "backend": "acoof-backend"
   }
 }
