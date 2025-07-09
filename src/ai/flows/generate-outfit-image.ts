@@ -59,17 +59,16 @@ export async function generateOutfitImages(
 ${userDetails}
 **CRITICAL RULES:**
 1.  **DO NOT CHANGE THE PERSON:** You must use the user's actual face, body, and pose from the provided photo. Do not generate a new person or a new face. All facial features, including beards, glasses, and hairstyle, must be preserved exactly as they are in the original photo.
-2.  **REPLACE THE CLOTHING:** Generate a new, complete, and stylish full-body outfit on the person from the photo as described. The outfit should be appropriate for the provided height and body type if specified.
-3.  **SHOW THE FULL OUTFIT:** The final image must show the person from head to toe.
+2.  **SHOW THE FULL OUTFIT:** Generate a new, complete, stylish, and full-body outfit. The final image MUST show the person from head to toe, including good shoes.
+3.  **FACE CLARITY:** The person's face MUST be clear, in-focus, and not blurry or distorted in any way.
 4.  **MAINTAIN REALISM:** The final image, with the new clothes, must look photorealistic.
-5.  **FACE CLARITY:** The person's face must be clear, in-focus, and not blurry or distorted in any way.
 
 Generate one new image that follows these rules.`;
 
       const outfitPrompts = [
-        `A stylish **jacket-centric outfit**. This could feature a sleek leather jacket, a modern bomber jacket, or a classic denim jacket. Pair it with complementary trousers or jeans and appropriate footwear for a complete, fashionable look.`,
-        `A sophisticated **blazer outfit**. The look should be modern and sharp, suitable for a smart-casual or business-casual setting. The blazer should be the centerpiece, paired with well-fitting trousers and stylish shoes.`,
-        `A fashionable **hip-hop style outfit**. This should reflect modern streetwear trends. Think designer hoodies, graphic tees, baggy or distressed jeans, and iconic sneakers. The overall vibe should be cool, confident, and on-trend.`
+        `A stylish **jacket-centric outfit**. This could feature a sleek leather jacket, a modern bomber jacket, or a classic denim jacket. Pair it with good, stylish jeans or pants and appropriate fashionable footwear for a complete, fashionable look.`,
+        `A sophisticated **blazer outfit**. The look should be modern and sharp, suitable for a smart-casual setting. The blazer should be the centerpiece, paired with well-fitting trousers or smart jeans and stylish shoes.`,
+        `A fashionable **hip-hop style outfit**. This should reflect modern streetwear trends. Think designer hoodies, graphic tees, baggy or distressed hip-hop style jeans, and iconic sneakers. The overall vibe should be cool, confident, and on-trend.`
       ];
 
       try {
