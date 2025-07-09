@@ -41,17 +41,21 @@ export async function generateOutfitImages(
     },
     async (input) => {
       const model = 'googleai/gemini-2.0-flash-preview-image-generation';
-      const prompt = `You are a highly precise AI photo-editing tool. Your only function is to replace clothing in a photograph. You must follow these rules without exception.
+      const prompt = `You are an expert AI fashion stylist and photo editor. Your task is to perform a virtual try-on for a user. You must follow this process exactly:
 
-**CRITICAL RULES - VIOLATING THESE RULES WILL RESULT IN FAILURE:**
-1.  **PRESERVE THE PERSON:** The person's face, facial expression, hair, pose, and body shape MUST remain 100% identical to the original photo. The person must be perfectly recognizable. DO NOT change the person in any way.
-2.  **PRESERVE THE BACKGROUND:** The background, lighting, and all other elements of the photo MUST NOT be changed.
-3.  **REPLACE CLOTHING ONLY:** Your one and only task is to replace the clothes the person is currently wearing. The new outfit must be a full, complete look (e.g., a shirt and pants) and should be modern streetwear. This is the only change allowed.
-4.  **MAINTAIN REALISM:** The final image must look like a realistic, unedited photograph of the original person in the original setting, but wearing the new outfit. DO NOT add any artistic filters or effects.
+1.  **Analyze the User's Photo:** The provided image contains a user's face. Carefully analyze their facial features, expression, and skin tone.
+2.  **Generate a New Scene:** Create a realistic, full-body image of a male model wearing a stylish, complete, modern streetwear outfit. The model should be in a natural pose against a simple, neutral background.
+3.  **Merge the Face:** Seamlessly replace the generated model's face with the user's face from the original photo. The user's head, hair, and facial expression must be perfectly preserved and blended realistically onto the model's body. The final result should look like a natural, unedited photograph of the user.
+4.  **Ensure Full Outfit:** The generated image must show a full outfit, including top, bottom, and appropriate footwear.
 
-Process the following photo according to these rules. Edit the photo directly and keep the user's face.
+**CRITICAL RULES:**
+-   **MENSWEAR ONLY:** All generated outfits must be men's clothing.
+-   **PRESERVE THE FACE:** The user's face from the original photo is the most important element. It MUST be used on the final image. Do not generate a new face.
+-   **REALISM:** The final image must be photorealistic.
 
-Photo to edit: {{media url=photoDataUri}}`;
+Process the following photo and generate one image based on these instructions.
+
+User's Photo: {{media url=photoDataUri}}`;
 
       try {
         // Generate three images in parallel
