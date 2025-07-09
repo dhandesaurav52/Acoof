@@ -88,12 +88,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const user = result.user;
       if (user) {
         const userDbRef = dbRef(database, `users/${user.uid}`);
-        const snapshot = await get(userDbRef);
-        if (!snapshot.exists()) {
-            await set(userDbRef, {
-                email: user.email,
-                displayName: user.displayName,
-            });
+        try {
+            const snapshot = await get(userDbRef);
+            if (!snapshot.exists()) {
+                await set(userDbRef, {
+                    email: user.email,
+                    displayName: user.displayName,
+                });
+            }
+        } catch (dbError) {
+            console.error("Database error during Google login:", dbError);
+            // Non-fatal error as user is still logged in. We can proceed.
         }
       }
       return result;
@@ -110,17 +115,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signupWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
     if (!auth || !database) throw NOT_CONFIGURED_ERROR;
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    if (userCredential.user) {
-      const displayName = `${firstName} ${lastName}`;
-      await updateProfile(userCredential.user, { displayName });
-      const userDbRef = dbRef(database, `users/${userCredential.user.uid}`);
-      await set(userDbRef, {
-        email: userCredential.user.email,
-        displayName: displayName,
-      });
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        if (userCredential.user) {
+            try {
+                const displayName = `${firstName} ${lastName}`;
+                await updateProfile(userCredential.user, { displayName });
+                const userDbRef = dbRef(database, `users/${userCredential.user.uid}`);
+                await set(userDbRef, {
+                    email: userCredential.user.email,
+                    displayName: displayName,
+                });
+            } catch (dbError) {
+                console.error("Database error during sign up:", dbError);
+                // Non-fatal error. User is created in Auth, but profile data might be missing in DB.
+                // This state can be recovered from later, so we don't throw an error to the user.
+            }
+        }
+        return userCredential;
+    } catch (error) {
+        // This will catch auth-related errors from createUserWithEmailAndPassword
+        throw error;
     }
-    return userCredential;
   }
 
   const updateUserProfile = async (data: Partial<AppUser>) => {

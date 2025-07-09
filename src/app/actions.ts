@@ -2,6 +2,9 @@
 
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
+import type { Order } from '@/types';
+import { database } from '@/lib/firebase';
+import { ref as dbRef, update, push } from "firebase/database";
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -76,4 +79,52 @@ export async function verifyRazorpayPayment(data: {
   }
   
   return { success: false, error: "Payment verification failed. This means the response from Razorpay could not be trusted. This is often caused by an incorrect 'RAZORPAY_KEY_SECRET'. Please re-verify your secret key for any typos or extra spaces and ensure it matches your account's mode (Test vs. Live)." };
+}
+
+export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+    if (!database) {
+        return { success: false, error: 'Firebase is not configured. Cannot save order.' };
+    }
+
+    if (!orderData.userId) {
+        return { success: false, error: 'Cannot save order without a user ID.' };
+    }
+
+    const newOrderRef = push(dbRef(database, 'orders'));
+    const newId = newOrderRef.key;
+
+    if (!newId) {
+        return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
+    }
+    
+    const finalOrderData: Order = { ...orderData, id: newId };
+    
+    try {
+        const updates: { [key: string]: any } = {};
+        updates[`/orders/${newId}`] = finalOrderData;
+        updates[`/users/${orderData.userId}/orders/${newId}`] = true;
+
+        // Add notification for admin
+        const notificationMessage = `New order #${newId} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
+        const newNotificationRef = push(dbRef(database, 'notifications'));
+        updates[`/notifications/${newNotificationRef.key}`] = {
+            type: 'new_order',
+            message: notificationMessage,
+            timestamp: new Date().toISOString(),
+            read: false,
+            orderId: newId,
+            userId: orderData.userId,
+            userEmail: orderData.userEmail,
+        };
+
+        await update(dbRef(database), updates);
+        return { success: true, orderId: newId };
+    } catch (error: any) {
+        let errorMessage = 'An unexpected error occurred while saving the order.';
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders', their own 'users' data path, and the 'notifications' path.";
+        }
+        console.error("Firebase saveOrder error:", error);
+        return { success: false, error: errorMessage };
+    }
 }

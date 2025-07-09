@@ -51,7 +51,7 @@ export default function SignupPage() {
           errorMessage = 'The email address is not valid.';
           break;
         default:
-          errorMessage = error.message;
+          errorMessage = error.message || "An unexpected error occurred.";
           break;
       }
       toast({

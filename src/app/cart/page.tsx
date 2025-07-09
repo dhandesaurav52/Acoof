@@ -12,65 +12,13 @@ import { Trash2, ShoppingBag, Plus, Minus, Loader2, Edit, MapPin } from 'lucide-
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { createRazorpayOrder, verifyRazorpayPayment } from '@/app/actions';
+import { createRazorpayOrder, verifyRazorpayPayment, saveOrderToDatabase } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import type { Order, OrderItem } from '@/types';
-import { database } from '@/lib/firebase';
-import { ref as dbRef, update, push } from "firebase/database";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-
-
-async function saveOrder(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
-    if (!database) {
-        return { success: false, error: 'Firebase is not configured. Cannot save order.' };
-    }
-
-    if (!orderData.userId) {
-        return { success: false, error: 'Cannot save order without a user ID.' };
-    }
-
-    const newOrderRef = push(dbRef(database, 'orders'));
-    const newId = newOrderRef.key;
-
-    if (!newId) {
-        return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
-    }
-    
-    const finalOrderData: Order = { ...orderData, id: newId };
-    
-    try {
-        const updates: { [key: string]: any } = {};
-        updates[`/orders/${newId}`] = finalOrderData;
-        updates[`/users/${orderData.userId}/orders/${newId}`] = true;
-
-        // Add notification for admin
-        const notificationMessage = `New order #${newId} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
-        const newNotificationRef = push(dbRef(database, 'notifications'));
-        updates[`/notifications/${newNotificationRef.key}`] = {
-            type: 'new_order',
-            message: notificationMessage,
-            timestamp: new Date().toISOString(),
-            read: false,
-            orderId: newId,
-            userId: orderData.userId,
-            userEmail: orderData.userEmail,
-        };
-
-        await update(dbRef(database), updates);
-        return { success: true, orderId: newId };
-    } catch (error: any) {
-        let errorMessage = 'An unexpected error occurred while saving the order.';
-        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders', their own 'users' data path, and the 'notifications' path.";
-        }
-        console.error("Firebase saveOrder error:", error);
-        return { success: false, error: errorMessage };
-    }
-}
-
 
 export default function CartPage() {
     const { cart, removeFromCart, updateQuantity, cartTotal, cartCount, clearCart } = useCart();
@@ -250,8 +198,7 @@ export default function CartPage() {
         }
 
         if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
-            toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment gateway is not configured. Public key is missing.' });
-            console.error('ERROR: NEXT_PUBLIC_RAZORPAY_KEY_ID is not set in your .env file.');
+            toast({ variant: 'destructive', title: 'Configuration Error', description: 'Payment gateway is not configured. Public key is missing. Please add NEXT_PUBLIC_RAZORPAY_KEY_ID to your .env file.' });
             return;
         }
 
@@ -302,7 +249,7 @@ export default function CartPage() {
                         paymentSignature: response.razorpay_signature,
                     };
                     
-                    const saveResult = await saveOrder(orderData);
+                    const saveResult = await saveOrderToDatabase(orderData);
                     if (saveResult.success) {
                         toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
                         clearCart();
@@ -370,7 +317,7 @@ export default function CartPage() {
             paymentMethod: 'COD',
         };
         
-        const saveResult = await saveOrder(orderData);
+        const saveResult = await saveOrderToDatabase(orderData);
         if (saveResult.success) {
             toast({ title: 'Order Placed!', description: 'Your order has been placed successfully. You will pay upon delivery.' });
             clearCart();
