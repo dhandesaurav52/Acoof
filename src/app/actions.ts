@@ -4,34 +4,10 @@ import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 
 export async function getAiSuggestions(browsingHistory: string, photoDataUri?: string) {
-  if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
-    const errorMessage = "The AI feature is not configured on the server. The `GOOGLE_API_KEY` is missing from the .env file. Please obtain a key from Google AI Studio and add it to your project's environment variables to enable the AI stylist.";
-    console.error(errorMessage);
-    return { suggestions: [], error: errorMessage };
-  }
-  
-  try {
-    // Dynamically import the flow only when the key exists to prevent build-time errors.
-    const { generateOutfitSuggestions } = await import('@/ai/flows/generate-outfit-suggestions');
-    const result = await generateOutfitSuggestions({ browsingHistory, photoDataUri });
-    if (!result || !result.suggestions) {
-      return { suggestions: [], error: 'Received an invalid response from the AI.' };
-    }
-    return { suggestions: result.suggestions, error: null };
-  } catch (error) {
-    console.error('AI suggestion generation failed:', error);
-    let detailedError = 'Failed to generate suggestions. Please try again later.';
-    if (error instanceof Error) {
-        if (error.message.includes('API key not valid')) {
-            detailedError = "The provided AI API key is not valid. Please check it for typos or generate a new one.";
-        } else if (error.message.includes('permission')) {
-            detailedError = "AI generation failed due to a permission issue. Please ensure the Google AI API is enabled in your cloud project.";
-        } else if (error.message.includes('Image generation failed')) {
-            detailedError = "The AI created outfit ideas, but failed to generate images. This can be due to safety filters or service load. Please try again."
-        }
-    }
-    return { suggestions: [], error: detailedError };
-  }
+  // Temporarily disabled to diagnose build issues.
+  const errorMessage = "The AI feature is temporarily disabled for maintenance. Please try again later.";
+  console.error(errorMessage);
+  return { suggestions: [], error: errorMessage };
 }
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
