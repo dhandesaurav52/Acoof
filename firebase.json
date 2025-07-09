@@ -2,7 +2,6 @@
   "apphosting": [
     {
       "backend": "acoof-backend",
-      "source": ".",
       "region": "asia-east1"
     }
   ]
