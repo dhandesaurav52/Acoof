@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -6,14 +7,18 @@ import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wand2, Loader2, AlertCircle, Camera, RefreshCw } from 'lucide-react';
+import { Wand2, Loader2, AlertCircle, Camera, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateOutfitImage } from '@/ai/flows/generate-outfit-image';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function LookbookPage() {
   const { toast } = useToast();
+
+  // Component states
+  const [isStylistOpen, setIsStylistOpen] = useState(false);
 
   // Camera states
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -26,12 +31,30 @@ export default function LookbookPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Camera permission logic
+  // Camera permission logic, now triggered by opening the collapsible
   useEffect(() => {
-    // Only run on client
+    let stream: MediaStream | null = null;
     const getCameraPermission = async () => {
+        // Only run if the collapsible is open
+        if (!isStylistOpen) {
+            // if it's not open, make sure to clean up any existing stream
+            if (videoRef.current && videoRef.current.srcObject) {
+                const existingStream = videoRef.current.srcObject as MediaStream;
+                existingStream.getTracks().forEach(track => track.stop());
+                videoRef.current.srcObject = null;
+            }
+            setHasCameraPermission(null); // Reset permission state
+            return;
+        }
+
+        // if it's already running, don't do it again
+        if (videoRef.current?.srcObject) {
+            setHasCameraPermission(true);
+            return;
+        }
+
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
             setHasCameraPermission(true);
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
@@ -51,16 +74,11 @@ export default function LookbookPage() {
 
     // Cleanup function to stop video stream
     return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            try {
-                const stream = videoRef.current.srcObject as MediaStream;
-                stream.getTracks().forEach(track => track.stop());
-            } catch(e) {
-                console.error("Error stopping video stream:", e)
-            }
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
         }
     };
-  }, [toast]);
+  }, [isStylistOpen, toast]);
 
   const handleTakePicture = () => {
       if (!videoRef.current || !canvasRef.current) return;
@@ -74,8 +92,13 @@ export default function LookbookPage() {
       
       const context = canvas.getContext('2d');
       if (context) {
+          // Flip the canvas horizontally to un-mirror the final image
+          context.translate(canvas.width, 0);
+          context.scale(-1, 1);
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUri = canvas.toDataURL('image/jpeg');
+          
+          // Get compressed image data
+          const dataUri = canvas.toDataURL('image/jpeg', 0.8);
           setCapturedImage(dataUri);
       }
   };
@@ -146,21 +169,31 @@ export default function LookbookPage() {
       {/* AI Stylist Section */}
       <section className="mb-16">
           <Card className="max-w-4xl mx-auto">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                      <Wand2 className="h-6 w-6 text-primary"/>
-                      AI Stylist
-                  </CardTitle>
-                  <CardDescription>
-                      Use your camera to take a picture of yourself, and our AI will generate three new outfit concepts for you.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent>
+            <Collapsible open={isStylistOpen} onOpenChange={setIsStylistOpen} className="w-full">
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <Wand2 className="h-8 w-8 text-primary" />
+                    <div>
+                      <h3 className="text-lg font-semibold">AI Stylist</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Click here to use your camera and generate new outfits.
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" className="flex-shrink-0">
+                      {isStylistOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                      <span className="sr-only">{isStylistOpen ? 'Collapse AI Stylist' : 'Expand AI Stylist'}</span>
+                  </Button>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0 p-6 border-t">
                   {!capturedImage ? (
                       // Camera View
                       <div className="space-y-4">
                           <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
-                              <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                              <video ref={videoRef} className="w-full h-full object-cover -scale-x-100" autoPlay muted playsInline />
                               <canvas ref={canvasRef} className="hidden" />
                               
                               {hasCameraPermission === false && (
@@ -175,13 +208,13 @@ export default function LookbookPage() {
                                   </div>
                               )}
 
-                              {hasCameraPermission === null && (
+                              {isStylistOpen && hasCameraPermission === null && (
                                   <div className="absolute inset-0 flex items-center justify-center">
                                       <Loader2 className="h-10 w-10 text-primary animate-spin" />
                                   </div>
                               )}
                           </div>
-                          <Button onClick={handleTakePicture} disabled={!hasCameraPermission} className="w-full">
+                          <Button onClick={handleTakePicture} disabled={!hasCameraPermission || !isStylistOpen} className="w-full">
                               <Camera className="mr-2 h-4 w-4" />
                               Take Picture
                           </Button>
@@ -230,7 +263,9 @@ export default function LookbookPage() {
                           </Button>
                       </div>
                   )}
-              </CardContent>
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
       </section>
 
