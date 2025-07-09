@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Wand2, Loader2, AlertCircle, Camera, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateOutfitImage } from '@/ai/flows/generate-outfit-image';
 import { useToast } from '@/hooks/use-toast';
@@ -17,66 +17,53 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 export default function LookbookPage() {
   const { toast } = useToast();
 
-  // Component states
   const [isStylistOpen, setIsStylistOpen] = useState(false);
 
-  // Camera states
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
-  // AI states
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Camera permission logic, now triggered by opening the collapsible
   useEffect(() => {
-    let stream: MediaStream | null = null;
+    const stopVideoStream = () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+    };
+
     const getCameraPermission = async () => {
-        // Only run if the collapsible is open
-        if (!isStylistOpen) {
-            // if it's not open, make sure to clean up any existing stream
-            if (videoRef.current && videoRef.current.srcObject) {
-                const existingStream = videoRef.current.srcObject as MediaStream;
-                existingStream.getTracks().forEach(track => track.stop());
-                videoRef.current.srcObject = null;
-            }
-            setHasCameraPermission(null); // Reset permission state
-            return;
-        }
-
-        // if it's already running, don't do it again
-        if (videoRef.current?.srcObject) {
-            setHasCameraPermission(true);
-            return;
-        }
-
+      if (isStylistOpen) {
+        setHasCameraPermission(null); // Show loader while initializing
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            setHasCameraPermission(true);
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          setHasCameraPermission(true);
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
         } catch (err) {
-            console.error('Error accessing camera:', err);
-            setHasCameraPermission(false);
-            toast({
-                variant: 'destructive',
-                title: 'Camera Access Denied',
-                description: 'Please enable camera permissions in your browser settings to use this feature.',
-            });
+          console.error('Error accessing camera:', err);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings to use this feature.',
+          });
         }
+      } else {
+        stopVideoStream();
+      }
     };
 
     getCameraPermission();
 
-    // Cleanup function to stop video stream
     return () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
+      stopVideoStream();
     };
   }, [isStylistOpen, toast]);
 
@@ -86,24 +73,20 @@ export default function LookbookPage() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      // Set canvas dimensions to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
       const context = canvas.getContext('2d');
       if (context) {
-          // Flip the canvas horizontally to un-mirror the final image
           context.translate(canvas.width, 0);
           context.scale(-1, 1);
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
           
-          // Get compressed image data
           const dataUri = canvas.toDataURL('image/jpeg', 0.8);
           setCapturedImage(dataUri);
       }
   };
   
-  // Trigger AI generation when an image is captured
   useEffect(() => {
       if (!capturedImage) return;
 
@@ -166,7 +149,6 @@ export default function LookbookPage() {
         </p>
       </div>
 
-      {/* AI Stylist Section */}
       <section className="mb-16">
           <Card className="max-w-4xl mx-auto">
             <Collapsible open={isStylistOpen} onOpenChange={setIsStylistOpen} className="w-full">
@@ -177,7 +159,7 @@ export default function LookbookPage() {
                     <div>
                       <h3 className="text-lg font-semibold">AI Stylist</h3>
                       <p className="text-sm text-muted-foreground">
-                        Click here to use your camera and generate new outfits.
+                        Use your camera to generate new outfits instantly.
                       </p>
                     </div>
                   </div>
@@ -188,9 +170,8 @@ export default function LookbookPage() {
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <CardContent className="pt-0 p-6 border-t">
+                <div className="p-6 border-t">
                   {!capturedImage ? (
-                      // Camera View
                       <div className="space-y-4">
                           <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
                               <video ref={videoRef} className="w-full h-full object-cover -scale-x-100" autoPlay muted playsInline />
@@ -202,7 +183,7 @@ export default function LookbookPage() {
                                           <AlertCircle className="h-4 w-4" />
                                           <AlertTitle>Camera Access Required</AlertTitle>
                                           <AlertDescription>
-                                              Please allow camera access in your browser to use this feature.
+                                              Please allow camera access to use this feature.
                                           </AlertDescription>
                                       </Alert>
                                   </div>
@@ -214,13 +195,12 @@ export default function LookbookPage() {
                                   </div>
                               )}
                           </div>
-                          <Button onClick={handleTakePicture} disabled={!hasCameraPermission || !isStylistOpen} className="w-full">
+                          <Button onClick={handleTakePicture} disabled={!hasCameraPermission} className="w-full">
                               <Camera className="mr-2 h-4 w-4" />
                               Take Picture
                           </Button>
                       </div>
                   ) : (
-                      // Results View
                       <div className="space-y-6">
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-start">
                               <div className="space-y-2 text-center md:text-left">
@@ -263,7 +243,7 @@ export default function LookbookPage() {
                           </Button>
                       </div>
                   )}
-                </CardContent>
+                </div>
               </CollapsibleContent>
             </Collapsible>
           </Card>
