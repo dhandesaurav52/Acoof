@@ -139,7 +139,7 @@ export default function LookbookPage() {
       {/* AI STYLIST UI */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <Sparkles className="h-5 w-5 text-primary" />
             AI Stylist
         </h1>
         <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
@@ -150,15 +150,15 @@ export default function LookbookPage() {
       <div className="max-w-7xl mx-auto mb-20">
         {photoDataUri ? (
             // START: RESULTS VIEW (when photo is taken)
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-              <div className="space-y-4 lg:sticky lg:top-24">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+              <div className="space-y-4 lg:col-span-1 lg:sticky lg:top-24">
                 <h2 className="text-2xl font-bold font-headline">Your Photo</h2>
                 <Card className="overflow-hidden">
                   <div className="relative aspect-[4/5] w-full">
                     <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="33vw" />
                   </div>
                 </Card>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2">
                   <Button onClick={handleNewPhoto} variant="outline" size="sm">
                     <Camera className="mr-2 h-4 w-4" /> Start Over
                   </Button>
@@ -173,9 +173,9 @@ export default function LookbookPage() {
                 </div>
               </div>
   
-              <div className="space-y-4 lg:col-span-2">
+              <div className="space-y-4 lg:col-span-3">
                 <h2 className="text-2xl font-bold font-headline">AI-Styled Outfits</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {isLoading || (photoDataUri && generatedImages.length === 0) ? (
                     <>
                       {Array.from({ length: 3 }).map((_, index) => (
@@ -187,7 +187,7 @@ export default function LookbookPage() {
                       ))}
                     </>
                   ) : error ? (
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-3">
                       <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Generation Failed</AlertTitle>
@@ -217,7 +217,7 @@ export default function LookbookPage() {
             // END: RESULTS VIEW
         ) : (
             // START: INITIAL VIEW (before photo is taken)
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-md mx-auto">
                 <Card className="overflow-hidden">
                     <CardContent className="p-4 sm:p-6">
                         {isCameraOn ? (
@@ -234,9 +234,9 @@ export default function LookbookPage() {
                             </div>
                         ) : (
                             // Camera is OFF -> show placeholder and "Turn On" button
-                            <div className="flex flex-col items-center justify-center text-center rounded-lg bg-secondary/30 min-h-[400px] p-6">
+                            <div className="flex flex-col items-center justify-center text-center rounded-lg bg-secondary/30 min-h-[350px] p-6">
                                 <div className="p-3 bg-primary/10 rounded-full mb-4">
-                                    <Camera className="h-8 w-8 text-primary" />
+                                    <Camera className="h-6 w-6 text-primary" />
                                 </div>
                                 <h3 className="text-lg font-bold font-headline">Ready for your close-up?</h3>
                                 <p className="text-muted-foreground max-w-xs mt-2 mb-4">
