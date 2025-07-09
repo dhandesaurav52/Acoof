@@ -41,20 +41,17 @@ export async function generateOutfitImage(
       inputSchema: GenerateOutfitImageInputSchema,
       outputSchema: GenerateOutfitImageOutputSchema,
     },
-    async (input) => {
-      const promptTemplate = `You are an expert fashion stylist. Your goal is to generate a new image of a person wearing a stylish and modern outfit.
-Critically, the person in the generated image MUST be the same person as in the reference image provided. Do not change their appearance. Place them in a completely new, fashionable outfit.
-The outfit should be something trendy and appropriate for a fashion lookbook (e.g., streetwear, smart casual, or minimalist).
-Reference Image: {{media url=userImageDataUri}}
-The final image should be a full-body photograph of the person in the new outfit. The photo should be professional, with a clean, minimalist background.`;
-      
+    async (flowInput) => {
       try {
           const {media} = await ai.generate({
               model: 'googleai/gemini-2.0-flash-preview-image-generation',
-              prompt: [{
-                text: promptTemplate,
-                context: input
-              }],
+              prompt: [
+                { text: `You are an expert fashion stylist. Your goal is to generate a new image of a person wearing a stylish and modern outfit.
+Critically, the person in the generated image MUST be the same person as in the reference image provided. Do not change their appearance. Place them in a completely new, fashionable outfit.
+The outfit should be something trendy and appropriate for a fashion lookbook (e.g., streetwear, smart casual, or minimalist).
+The final image should be a full-body photograph of the person in the new outfit. The photo should be professional, with a clean, minimalist background.` },
+                { media: { url: flowInput.userImageDataUri } }
+              ],
               config: {
                   responseModalities: ['TEXT', 'IMAGE'],
               },
@@ -77,3 +74,4 @@ The final image should be a full-body photograph of the person in the new outfit
   // Immediately invoke the just-in-time defined flow.
   return generateOutfitImageFlow(input);
 }
+    
