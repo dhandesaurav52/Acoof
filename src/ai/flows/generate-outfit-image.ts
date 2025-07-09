@@ -41,16 +41,15 @@ export async function generateOutfitImages(
     },
     async (input) => {
       const model = 'googleai/gemini-2.0-flash-preview-image-generation';
-      const prompt = `Your task is to generate a full-body image of a person wearing a stylish, realistic outfit.
+      const prompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes in the user's photo while keeping the person identical.
 
-**Instructions:**
-- From the provided user's photo, take the user's face and seamlessly blend it onto a realistic full-body male model.
-- The final image must preserve the user's actual face.
-- Ensure the entire outfit is visible from head to toe.
-- The outfit must be modern, trendy men's clothing, suitable for a fashion lookbook.
-- The final image must be photorealistic.
+**CRITICAL RULES:**
+1.  **DO NOT CHANGE THE PERSON:** You must use the user's actual face, body, and pose from the provided photo. Do not generate a new person or a new face. All facial features, including beards, glasses, and hairstyle, must be preserved exactly as they are in the original photo.
+2.  **REPLACE THE CLOTHING:** Generate a new, complete, and stylish full-body outfit on the person from the photo. The outfit must be modern men's streetwear.
+3.  **SHOW THE FULL OUTFIT:** The final image must show the person from head to toe.
+4.  **MAINTAIN REALISM:** The final image, with the new clothes, must look photorealistic.
 
-Process the user's photo to generate one new image.
+You will be given a user's photo. Generate one new image that follows these rules.
 
 User's Photo: {{media url=photoDataUri}}`;
 
