@@ -105,7 +105,11 @@ export default function LookbookPage() {
     setGeneratedImages([]);
     try {
       const result = await generateOutfitImages(photoDataUri);
-      setGeneratedImages(result.images);
+      if (result.images.length === 0) {
+        setError("The AI was unable to generate any outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.");
+      } else {
+        setGeneratedImages(result.images);
+      }
     } catch (err: any) {
       console.error("AI Generation Error:", err);
       let errorMessage = "The AI failed to generate outfits. Please try again.";
@@ -159,12 +163,13 @@ export default function LookbookPage() {
       <div className="max-w-7xl mx-auto mb-20">
         {photoDataUri ? (
             // START: RESULTS VIEW (when photo is taken)
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
-              <div className="space-y-4 lg:col-span-1 lg:sticky lg:top-24">
-                <h2 className="text-lg font-bold font-headline">Your Photo</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+              {/* User Photo */}
+              <div className="space-y-4 lg:sticky lg:top-24">
+                <h3 className="text-xl font-bold font-headline">Your Photo</h3>
                 <Card className="overflow-hidden">
                   <div className="relative aspect-[4/5] w-full">
-                    <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="20vw" />
+                    <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="100vw" />
                   </div>
                 </Card>
                 <div className="flex flex-col gap-2">
@@ -181,10 +186,18 @@ export default function LookbookPage() {
                   </Button>
                 </div>
               </div>
-  
-              <div className="space-y-4 lg:col-span-4">
-                <h2 className="text-lg font-bold font-headline">AI-Styled Outfits</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+              {/* AI Generated Outfits */}
+              {error ? (
+                <div className="sm:col-span-1 lg:col-span-3">
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Generation Failed</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                </div>
+              ) : (
+                <>
                   {isLoading || (photoDataUri && generatedImages.length === 0) ? (
                     <>
                       {Array.from({ length: 3 }).map((_, index) => (
@@ -195,14 +208,6 @@ export default function LookbookPage() {
                         </Card>
                       ))}
                     </>
-                  ) : error ? (
-                    <div className="sm:col-span-2 xl:col-span-3">
-                      <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Generation Failed</AlertTitle>
-                        <AlertDescription>{error}</AlertDescription>
-                      </Alert>
-                    </div>
                   ) : (
                     <>
                       {generatedImages.map((src, index) => (
@@ -213,15 +218,15 @@ export default function LookbookPage() {
                               alt={`Generated Outfit ${index + 1}`}
                               fill
                               className="object-cover transition-transform duration-300 group-hover:scale-105"
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 25vw"
                             />
                           </div>
                         </Card>
                       ))}
                     </>
                   )}
-                </div>
-              </div>
+                </>
+              )}
             </div>
             // END: RESULTS VIEW
         ) : (
