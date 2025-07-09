@@ -86,7 +86,14 @@ export default function LookbookPage() {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUri = canvas.toDataURL('image/jpeg');
         setPhotoDataUri(dataUri);
-        setIsCameraOn(false); // Turn off camera after capture
+        
+        // Explicitly stop the camera tracks to turn off the light
+        if (video.srcObject) {
+            const stream = video.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+        }
+
+        setIsCameraOn(false); // Update state to hide video UI
       }
     }
   };
@@ -106,6 +113,8 @@ export default function LookbookPage() {
         errorMessage = "The service is busy. Please wait a moment and try again.";
       } else if (err.message?.includes('key')) {
         errorMessage = "The AI service is not configured correctly. Please check the API key.";
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       setError(errorMessage);
     } finally {
@@ -152,13 +161,13 @@ export default function LookbookPage() {
             // START: RESULTS VIEW (when photo is taken)
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
               <div className="space-y-4 lg:col-span-1 lg:sticky lg:top-24">
-                <h2 className="text-xl font-bold font-headline">Your Photo</h2>
+                <h2 className="text-lg font-bold font-headline">Your Photo</h2>
                 <Card className="overflow-hidden">
                   <div className="relative aspect-[4/5] w-full">
                     <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="20vw" />
                   </div>
                 </Card>
-                <div className="grid grid-cols-1 gap-2">
+                <div className="flex flex-col gap-2">
                   <Button onClick={handleNewPhoto} variant="outline" size="sm">
                     <Camera className="mr-2 h-4 w-4" /> Start Over
                   </Button>
@@ -174,8 +183,8 @@ export default function LookbookPage() {
               </div>
   
               <div className="space-y-4 lg:col-span-4">
-                <h2 className="text-xl font-bold font-headline">AI-Styled Outfits</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <h2 className="text-lg font-bold font-headline">AI-Styled Outfits</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {isLoading || (photoDataUri && generatedImages.length === 0) ? (
                     <>
                       {Array.from({ length: 3 }).map((_, index) => (
@@ -187,7 +196,7 @@ export default function LookbookPage() {
                       ))}
                     </>
                   ) : error ? (
-                    <div className="sm:col-span-3">
+                    <div className="sm:col-span-2 xl:col-span-3">
                       <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Generation Failed</AlertTitle>
