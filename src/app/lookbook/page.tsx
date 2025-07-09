@@ -71,9 +71,7 @@ export default function LookbookPage() {
     
     const context = canvas.getContext('2d');
     if (context) {
-        // Flip the image horizontally to match the mirror view of the camera
-        context.translate(canvas.width, 0);
-        context.scale(-1, 1);
+        // Draw the raw (un-mirrored) video frame to the canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUri = canvas.toDataURL('image/jpeg', 0.8);
         setCapturedImage(dataUri);

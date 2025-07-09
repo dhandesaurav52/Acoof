@@ -43,16 +43,13 @@ export async function generateOutfitImages(
       const model = 'googleai/gemini-2.0-flash-preview-image-generation';
       const prompt = `You are a highly precise AI photo-editing tool. Your only function is to replace clothing in a photograph. You must follow these rules without exception.
 
-**Input:** A photograph of a person.
-**Output:** The exact same photograph, but with the person's clothes replaced with a new, complete, stylish, modern streetwear outfit.
-
 **CRITICAL RULES - VIOLATING THESE RULES WILL RESULT IN FAILURE:**
 1.  **PRESERVE THE PERSON:** The person's face, facial expression, hair, pose, and body shape MUST remain 100% identical to the original photo. The person must be perfectly recognizable. DO NOT change the person in any way.
 2.  **PRESERVE THE BACKGROUND:** The background, lighting, and all other elements of the photo MUST NOT be changed.
-3.  **REPLACE CLOTHING ONLY:** Your one and only task is to replace the clothes the person is currently wearing. The new outfit must be a full, complete look (e.g., a shirt and pants). This is the only change allowed.
+3.  **REPLACE CLOTHING ONLY:** Your one and only task is to replace the clothes the person is currently wearing. The new outfit must be a full, complete look (e.g., a shirt and pants) and should be modern streetwear. This is the only change allowed.
 4.  **MAINTAIN REALISM:** The final image must look like a realistic, unedited photograph of the original person in the original setting, but wearing the new outfit. DO NOT add any artistic filters or effects.
 
-Process the following photo according to these rules.
+Process the following photo according to these rules. Edit the photo directly and keep the user's face.
 
 Photo to edit: {{media url=photoDataUri}}`;
 
