@@ -3,7 +3,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +11,7 @@ import { generateOutfitIdeas } from '@/ai/flows/generate-outfit-image';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OutfitCard } from '@/components/OutfitCard';
 
 export default function LookbookPage() {
   const { toast } = useToast();
@@ -72,14 +72,13 @@ export default function LookbookPage() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    const scale = 360 / video.videoWidth;
-    canvas.width = 360;
+    const MAX_WIDTH = 512;
+    const scale = MAX_WIDTH / video.videoWidth;
+    canvas.width = MAX_WIDTH;
     canvas.height = video.videoHeight * scale;
     
     const context = canvas.getContext('2d');
     if (context) {
-        context.translate(canvas.width, 0);
-        context.scale(-1, 1);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         const dataUri = canvas.toDataURL('image/jpeg', 0.8);
@@ -110,12 +109,16 @@ export default function LookbookPage() {
         } catch (err: any) {
             console.error(err);
             let friendlyError = err.message || 'An unknown error occurred while generating ideas.';
-            if (friendlyError.includes('API key not valid')) {
+            if (friendlyError.includes('API key expired')) {
+                friendlyError = 'Your Google AI API key has expired. Please go to Google AI Studio to generate a new one and update your .env file.';
+            } else if (friendlyError.includes('API key not valid')) {
                 friendlyError = 'Your Google AI API key is not valid. Please check your .env file.';
             } else if (friendlyError.includes('permission to access')) {
                 friendlyError = "The AI service is not enabled. Please go to your Google Cloud project and enable the 'Vertex AI API'.";
             } else if (friendlyError.includes('flow/outfitIdeasFlow not found')) {
                 friendlyError = "The AI feature isn't ready yet. This can happen during development if the server is restarting. Please try again in a moment.";
+            } else if (friendlyError.includes(`Must supply a \`model\` to \`generate()\` calls`)){
+                friendlyError = "The AI model wasn't specified correctly in the code. This is an application error."
             }
             setError(friendlyError);
             toast({
@@ -146,7 +149,7 @@ export default function LookbookPage() {
   })).filter(group => group.looks.length > 0);
 
   const renderInitialState = () => (
-    <div className="text-center p-6 flex flex-col items-center justify-center h-full">
+    <div className="text-center p-6 flex flex-col items-center justify-center h-full min-h-[300px]">
       <Wand2 className="h-12 w-12 text-primary mb-4" />
       <h3 className="text-lg font-semibold">AI Stylist</h3>
       <p className="text-sm text-muted-foreground mb-6">
@@ -161,8 +164,8 @@ export default function LookbookPage() {
 
   const renderCameraState = () => (
     <div className="space-y-4 p-6">
-        <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
-            <video ref={videoRef} className="w-full h-full object-cover -scale-x-100" autoPlay muted playsInline />
+        <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden -scale-x-100">
+            <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
             <canvas ref={canvasRef} className="hidden" />
             
             {hasCameraPermission === false && (
@@ -243,7 +246,7 @@ export default function LookbookPage() {
       </div>
 
       <section className="mb-16">
-          <Card className="max-w-4xl mx-auto min-h-[300px]">
+          <Card className="max-w-4xl mx-auto">
             {capturedImage ? renderResultState() : (showCamera ? renderCameraState() : renderInitialState())}
           </Card>
       </section>
