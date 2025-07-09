@@ -1,64 +1,80 @@
 
 'use server';
 /**
- * @fileOverview An AI flow to generate outfit descriptions based on a user's photo.
+ * @fileOverview An AI flow to generate outfit images based on a user's photo.
  *
- * - generateOutfitIdeas - A function that takes a photo data URI and returns three text-based outfit ideas.
+ * - generateOutfitImages - A function that takes a photo data URI and returns three generated outfit images.
  */
 
 import { ai } from '@/ai/dev';
 import { z } from 'zod';
 
-export async function generateOutfitIdeas(
+const OutfitImagesInputSchema = z.object({
+  photoDataUri: z
+    .string()
+    .describe(
+      "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+});
+
+const OutfitImagesOutputSchema = z.object({
+  images: z
+    .array(
+      z
+        .string()
+        .describe(
+          "A generated image of a person in a new outfit, as a data URI."
+        )
+    )
+    .length(3)
+    .describe('An array of three distinct outfit images as data URIs.'),
+});
+
+export async function generateOutfitImages(
   photoDataUri: string
-): Promise<{ ideas: string[] }> {
-
-  const OutfitIdeasInputSchema = z.object({
-    photoDataUri: z
-      .string()
-      .describe(
-        "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-      ),
-  });
-
-  const OutfitIdeasOutputSchema = z.object({
-    ideas: z
-      .array(
-        z.string().describe('A detailed description of a complete outfit, including items of clothing, accessories, and a style name.')
-      )
-      .length(3)
-      .describe('An array of three distinct and detailed outfit descriptions.'),
-  });
-
-  const outfitIdeasFlow = ai.defineFlow(
+): Promise<z.infer<typeof OutfitImagesOutputSchema>> {
+  const outfitImagesFlow = ai.defineFlow(
     {
-      name: 'outfitIdeasFlow',
-      inputSchema: OutfitIdeasInputSchema,
-      outputSchema: OutfitIdeasOutputSchema,
+      name: 'outfitImagesFlow',
+      inputSchema: OutfitImagesInputSchema,
+      outputSchema: OutfitImagesOutputSchema,
     },
     async (input) => {
-      const prompt = ai.definePrompt({
-        name: 'outfitIdeasPrompt',
-        input: { schema: OutfitIdeasInputSchema },
-        output: { schema: OutfitIdeasOutputSchema },
-        model: 'googleai/gemini-pro-vision',
-        prompt: `You are an expert fashion stylist. Based on the person in the photo, generate three distinct and detailed outfit descriptions.
+      const model = 'googleai/gemini-2.0-flash-preview-image-generation';
+      const prompt = `Based on the person in the photo, generate a new image of them wearing a complete, stylish, modern streetwear outfit. The background should be a neutral studio setting.
 
-For each outfit, describe the clothing items, accessories, and a catchy name for the style (e.g., "Urban Explorer", "Coastal Casual", "Monochrome Minimalist"). Be descriptive and inspiring.
+Photo: {{media url=photoDataUri}}`;
 
-Your response must be structured as a JSON object with a single key "ideas" containing an array of three strings.
+      try {
+        // Generate three images in parallel
+        const imagePromises = Array(3).fill(null).map(() => 
+          ai.generate({
+            model,
+            prompt,
+            config: {
+              responseModalities: ['TEXT', 'IMAGE'],
+            },
+          })
+        );
+        
+        const results = await Promise.all(imagePromises);
 
-Photo: {{media url=photoDataUri}}`,
-      });
-      
-      const { output } = await prompt(input);
-      if (!output) {
-        throw new Error('The AI failed to generate outfit ideas.');
+        const images = results.map(result => {
+          if (!result.media || !result.media.url) {
+            throw new Error('AI failed to generate a valid image.');
+          }
+          return result.media.url;
+        });
+
+        return { images };
+
+      } catch (error: any) {
+        console.error("Error in image generation flow:", error);
+        // Re-throw the error to be caught by the frontend for user feedback
+        throw error;
       }
-      return output;
     }
   );
 
-  const result = await outfitIdeasFlow({ photoDataUri });
-  return result;
+  return await outfitImagesFlow({ photoDataUri });
 }
