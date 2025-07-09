@@ -1,6 +1,5 @@
 'use client';
 
-import { AiStylist } from '@/components/AiStylist';
 import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
 import type { LookCategory } from "@/types";
@@ -16,14 +15,11 @@ export default function LookbookPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline">The Lookbook</h1>
         <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
-          Get inspired by our curated looks, or let our AI stylist create something new for you.
+          Get inspired by our curated looks.
         </p>
       </div>
 
       <div className="space-y-16">
-        {/* AI Stylist Section */}
-        <AiStylist />
-        
         {/* Outfit Gallery Section */}
         <section>
           <div className="space-y-12">

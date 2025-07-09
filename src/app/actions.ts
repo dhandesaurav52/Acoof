@@ -3,23 +3,6 @@
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 
-export async function getAiSuggestions(browsingHistory: string) {
-  if (!process.env.GOOGLE_API_KEY) {
-    const errorMessage = "The AI feature is not configured on the server. The Google API key is missing.";
-    console.error(errorMessage);
-    return { suggestions: [], error: errorMessage };
-  }
-  try {
-    // Dynamic import to avoid build-time issues
-    const { generateOutfitSuggestions } = await import('@/ai/flows/generate-outfit-suggestions');
-    const result = await generateOutfitSuggestions({ browsingHistory });
-    return { suggestions: result.suggestions, error: null };
-  } catch (error: any) {
-    console.error('Error getting AI suggestions:', error);
-    return { suggestions: [], error: 'An unexpected error occurred while generating suggestions.' };
-  }
-}
-
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
