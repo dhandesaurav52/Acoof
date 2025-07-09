@@ -1,5 +1,3 @@
 {
-  "apphosting": {
-    "backend": "acoof-backend"
-  }
+  "apphosting": {}
 }
