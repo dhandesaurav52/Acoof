@@ -79,7 +79,11 @@ The final image should be a full-body photograph of the person in the new outfit
 
       } catch (error: any) {
         console.error('Error in generateOutfitImageFlow:', error);
-        throw new Error(`Failed to generate outfit image: ${error.message}`);
+        let message = `Failed to generate outfit image: ${error.message || 'An unknown error occurred.'}`;
+        if (error.message?.includes('PERMISSION_DENIED')) {
+            message = 'AI service permission denied. This often means the Generative AI API is not enabled in your Google Cloud project. Please check your project settings.';
+        }
+        throw new Error(message);
       }
     }
   );
