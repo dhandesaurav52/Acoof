@@ -41,16 +41,18 @@ export async function generateOutfitImages(
     },
     async (input) => {
       const model = 'googleai/gemini-2.0-flash-preview-image-generation';
-      const prompt = `You are an expert AI photo editor. Your task is to perform a virtual try-on by editing the provided photograph.
+      const prompt = `You are a highly precise AI photo-editing tool. Your only function is to replace clothing in a photograph. You must follow these rules without exception.
 
-**Your Goal:** Modify the photo to show the person wearing a new, complete, stylish, modern streetwear outfit.
+**Input:** A photograph of a person.
+**Output:** The exact same photograph, but with the person's clothes replaced with a new, complete, stylish, modern streetwear outfit.
 
-**Critical Rules - DO NOT BREAK:**
-1.  **Keep the Person Identical:** The person's face, hair, body shape, and pose MUST remain exactly as they are in the original photo. The person must be perfectly recognizable.
-2.  **Keep the Background:** The background of the photo must NOT be changed.
-3.  **Only Change Clothes:** The *only* modification you are allowed to make is to replace the clothes the person is currently wearing. The new outfit should be a full, complete look (e.g., shirt and pants, not just a t-shirt).
+**CRITICAL RULES - VIOLATING THESE RULES WILL RESULT IN FAILURE:**
+1.  **PRESERVE THE PERSON:** The person's face, facial expression, hair, pose, and body shape MUST remain 100% identical to the original photo. The person must be perfectly recognizable. DO NOT change the person in any way.
+2.  **PRESERVE THE BACKGROUND:** The background, lighting, and all other elements of the photo MUST NOT be changed.
+3.  **REPLACE CLOTHING ONLY:** Your one and only task is to replace the clothes the person is currently wearing. The new outfit must be a full, complete look (e.g., a shirt and pants). This is the only change allowed.
+4.  **MAINTAIN REALISM:** The final image must look like a realistic, unedited photograph of the original person in the original setting, but wearing the new outfit. DO NOT add any artistic filters or effects.
 
-The final image must look like a realistic photograph of the *original person* in the *original setting*, just wearing a different outfit.
+Process the following photo according to these rules.
 
 Photo to edit: {{media url=photoDataUri}}`;
 
