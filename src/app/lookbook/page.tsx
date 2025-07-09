@@ -138,8 +138,8 @@ export default function LookbookPage() {
     <div className="container mx-auto py-12 px-4">
       {/* AI STYLIST UI */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-3">
-            <Sparkles className="h-8 w-8 text-primary" />
+        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
             AI Stylist
         </h1>
         <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
@@ -150,12 +150,12 @@ export default function LookbookPage() {
       <div className="max-w-7xl mx-auto mb-20">
         {photoDataUri ? (
             // START: RESULTS VIEW (when photo is taken)
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
               <div className="space-y-4 lg:sticky lg:top-24">
                 <h2 className="text-2xl font-bold font-headline">Your Photo</h2>
                 <Card className="overflow-hidden">
                   <div className="relative aspect-[4/5] w-full">
-                    <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="50vw" />
+                    <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="33vw" />
                   </div>
                 </Card>
                 <div className="grid grid-cols-2 gap-4">
@@ -173,7 +173,7 @@ export default function LookbookPage() {
                 </div>
               </div>
   
-              <div className="space-y-4">
+              <div className="space-y-4 lg:col-span-2">
                 <h2 className="text-2xl font-bold font-headline">AI-Styled Outfits</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {isLoading || (photoDataUri && generatedImages.length === 0) ? (
@@ -204,7 +204,7 @@ export default function LookbookPage() {
                               alt={`Generated Outfit ${index + 1}`}
                               fill
                               className="object-cover transition-transform duration-300 group-hover:scale-105"
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                           </div>
                         </Card>
