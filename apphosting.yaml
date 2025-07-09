@@ -1,8 +1,13 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+buildConfig:
+  # Increase the memory available to the build process.
+  memoryMiB: 1024
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+  # Increase the memory available to the running application.
+  memoryMiB: 1024
 runtime: nodejs20
