@@ -33,8 +33,7 @@ import { useInstallPrompt } from "@/hooks/use-install-prompt";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
-  { href: "/lookbook", label: "Lookbook" },
-  { href: "/virtual-try-on", label: "AI Stylist", icon: Sparkles },
+  { href: "/lookbook", label: "Lookbook", icon: Sparkles },
 ];
 
 const ADMIN_EMAIL = "admin@example.com";
