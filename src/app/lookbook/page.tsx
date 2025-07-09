@@ -123,112 +123,119 @@ function AiStylist() {
             AI Stylist
         </CardTitle>
         <CardDescription>
-            Take a selfie and our AI will generate three different stylish outfits for you.
+            Use your photo to generate three different stylish outfits, powered by AI.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid lg:grid-cols-2 gap-8">
-            <div className="space-y-4 flex flex-col">
-                <div className="space-y-2 flex-grow flex flex-col">
-                    <Label htmlFor="user-photo">Your Selfie</Label>
-                    <Card className="aspect-square flex items-center justify-center p-4 flex-grow">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* LEFT SIDE - INPUT & ACTION */}
+            <div className="space-y-6">
+                <div className="space-y-2">
+                    <Label className="text-base font-semibold">1. Your Photo</Label>
+                    <p className="text-sm text-muted-foreground">Provide a clear, full-body photo for the best results.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="relative w-32 h-40 rounded-lg border-2 border-dashed flex-shrink-0 flex items-center justify-center bg-muted/50 overflow-hidden">
                         {userImage ? (
-                            <div className="relative w-full h-full">
-                                <Image src={userImage} alt="User selfie" fill className="object-contain rounded-md" />
+                            <>
+                                <Image src={userImage} alt="User selfie" fill className="object-cover" />
                                 <Button
                                     variant="destructive"
                                     size="icon"
-                                    className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                                    className="absolute top-1 right-1 h-7 w-7 rounded-full opacity-0 hover:opacity-100 transition-opacity"
                                     onClick={() => setUserImage(null)}
                                 >
                                     <X className="h-4 w-4" />
                                 </Button>
-                            </div>
+                            </>
                         ) : (
-                            <div className="text-center space-y-3">
-                                <p className="text-sm text-muted-foreground">Add a photo to get your new looks.</p>
-                                <div className="flex justify-center gap-4">
-                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                        <Upload className="mr-2 h-4 w-4" /> Upload
-                                    </Button>
-                                    <Dialog open={isCameraOpen} onOpenChange={(isOpen) => {
-                                        if (isOpen) {
-                                            openCamera();
-                                        } else {
-                                            closeCamera();
-                                        }
-                                        setIsCameraOpen(isOpen);
-                                    }}>
-                                        <DialogTrigger asChild>
-                                            <Button type="button"><Camera className="mr-2 h-4 w-4" /> Take Selfie</Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Webcam</DialogTitle>
-                                                <DialogDescription>Position yourself and capture your photo.</DialogDescription>
-                                            </DialogHeader>
-                                            <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
-                                                {hasCameraPermission === false && (
-                                                    <div className="absolute inset-0 flex items-center justify-center p-4">
-                                                         <Alert variant="destructive">
-                                                            <AlertTitle>Camera Access Denied</AlertTitle>
-                                                            <AlertDescription>
-                                                                Please enable camera permissions to use this feature.
-                                                            </AlertDescription>
-                                                        </Alert>
-                                                    </div>
-                                                )}
-                                                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-                                            </div>
-                                            <DialogFooter>
-                                                <Button onClick={capturePhoto} disabled={!hasCameraPermission}>Take Photo</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
-                                </div>
-                            </div>
+                            <Camera className="h-8 w-8 text-muted-foreground" />
                         )}
-                    </Card>
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" className="hidden" />
-                    <canvas ref={canvasRef} className="hidden" />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                            <Upload className="mr-2 h-4 w-4" /> Upload Photo
+                        </Button>
+                        <Dialog open={isCameraOpen} onOpenChange={(isOpen) => {
+                            if (isOpen) { openCamera(); } else { closeCamera(); }
+                            setIsCameraOpen(isOpen);
+                        }}>
+                            <DialogTrigger asChild>
+                                <Button type="button"><Camera className="mr-2 h-4 w-4" /> Take Selfie</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Webcam</DialogTitle>
+                                    <DialogDescription>Position yourself and capture your photo.</DialogDescription>
+                                </DialogHeader>
+                                <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
+                                    {hasCameraPermission === false && (
+                                        <div className="absolute inset-0 flex items-center justify-center p-4">
+                                            <Alert variant="destructive">
+                                                <AlertTitle>Camera Access Denied</AlertTitle>
+                                                <AlertDescription>
+                                                    Please enable camera permissions to use this feature.
+                                                </AlertDescription>
+                                            </Alert>
+                                        </div>
+                                    )}
+                                    <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                                </div>
+                                <DialogFooter>
+                                    <Button onClick={capturePhoto} disabled={!hasCameraPermission}>Take Photo</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
-                <Button onClick={handleSubmit} className="w-full" disabled={isLoading || !userImage}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : "Generate 3 Outfits"}
-                </Button>
+                 <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" className="hidden" />
+                <canvas ref={canvasRef} className="hidden" />
+
+                <div className="space-y-2">
+                     <Label className="text-base font-semibold">2. Generate Outfits</Label>
+                     <Button onClick={handleSubmit} className="w-full" disabled={isLoading || !userImage}>
+                        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : "Generate My 3 Looks"}
+                    </Button>
+                </div>
             </div>
-            <div className="relative aspect-square border border-dashed rounded-lg flex items-center justify-center bg-muted/50 p-4">
-                {isLoading && (
-                    <div className="space-y-2 flex flex-col items-center text-center">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <p className="text-muted-foreground">Generating your masterpieces...</p>
-                        <p className="text-xs text-muted-foreground">This can take up to 30 seconds.</p>
-                    </div>
-                )}
-                {!isLoading && !generatedImageUrls && !error && (
-                    <p className="text-muted-foreground text-center p-4">Your three generated outfits will appear here.</p>
-                )}
-                {generatedImageUrls && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 w-full h-full">
-                        {generatedImageUrls.map((url, index) => (
-                            <div key={index} className="relative w-full h-full rounded-lg overflow-hidden bg-black">
-                                <Image
-                                    src={url}
-                                    alt={`AI generated outfit ${index + 1}`}
-                                    fill
-                                    className="object-contain"
-                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 15vw"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-                {error && (
-                    <div className="text-destructive text-center p-4 flex flex-col items-center gap-2">
-                        <AlertCircle className="h-8 w-8" />
-                        <p className="font-semibold">Generation Failed</p>
-                        <p className="text-sm">{error}</p>
-                    </div>
-                )}
+
+            {/* RIGHT SIDE - OUTPUT */}
+            <div className="space-y-2">
+                <Label className="text-base font-semibold">3. Your New Styles</Label>
+                <div className="relative aspect-[16/10] border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/50 p-2">
+                     {isLoading && (
+                        <div className="space-y-2 flex flex-col items-center text-center">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                            <p className="text-muted-foreground">Generating your masterpieces...</p>
+                            <p className="text-xs text-muted-foreground">This can take up to 30 seconds.</p>
+                        </div>
+                    )}
+                    {!isLoading && !generatedImageUrls && !error && (
+                        <p className="text-muted-foreground text-center p-4">Your three generated outfits will appear here.</p>
+                    )}
+                    {generatedImageUrls && (
+                        <div className="grid grid-cols-3 gap-2 w-full h-full">
+                            {generatedImageUrls.map((url, index) => (
+                                <div key={index} className="relative w-full h-full rounded-md overflow-hidden bg-black">
+                                    <Image
+                                        src={url}
+                                        alt={`AI generated outfit ${index + 1}`}
+                                        fill
+                                        className="object-contain"
+                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 15vw"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {error && (
+                        <div className="text-destructive text-center p-4 flex flex-col items-center gap-2">
+                            <AlertCircle className="h-8 w-8" />
+                            <p className="font-semibold">Generation Failed</p>
+                            <p className="text-sm">{error}</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
       </CardContent>
