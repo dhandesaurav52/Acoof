@@ -7,7 +7,6 @@
  */
 import {genkit} from 'genkit';
 import {googleai} from '@genkit-ai/googleai';
-import {isDev} from 'genkit/dev';
 
 const plugins = [];
 
@@ -22,13 +21,15 @@ if (process.env.GOOGLE_API_KEY) {
   );
 }
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export const ai = genkit({
   plugins,
   // The logger is disabled in production to avoid noisy logs.
-  // In a development environment (e.g., when running `genkit dev`),
+  // In a development environment (e.g., when running `next dev`),
   // the logger is enabled to show detailed information.
-  logLevel: isDev ? 'debug' : 'silent',
+  logLevel: isDevelopment ? 'debug' : 'silent',
   // The flow state is persisted to the local file system in development.
   // In production, flow state is not stored.
-  flowStateStore: isDev ? 'local' : 'none',
+  flowStateStore: isDevelopment ? 'local' : 'none',
 });
