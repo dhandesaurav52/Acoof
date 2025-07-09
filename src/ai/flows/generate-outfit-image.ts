@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow for generating an image of a person wearing a specified outfit.
+ * @fileOverview A Genkit flow for generating a stylish outfit on a person from a photo.
  *
- * - generateOutfitImage - A function that generates an image based on a text prompt and an optional user image.
+ * - generateOutfitImage - A function that generates an image based on a user's image.
  * - GenerateOutfitImageInput - The input type for the generateOutfitImage function.
  * - GenerateOutfitImageOutput - The return type for the generateOutfitImage function.
  */
@@ -11,12 +11,10 @@ import {ai} from '@/ai/dev';
 import {z} from 'genkit';
 
 const GenerateOutfitImageInputSchema = z.object({
-  prompt: z.string().describe('A detailed description of the outfit to generate an image for.'),
   userImageDataUri: z
     .string()
-    .optional()
     .describe(
-      "An optional photo of a person, as a data URI. If provided, the generated image will feature this person. Format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of a person, as a data URI. The generated image will feature this person in a new outfit. Format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 export type GenerateOutfitImageInput = z.infer<typeof GenerateOutfitImageInputSchema>;
@@ -44,13 +42,11 @@ export async function generateOutfitImage(
       outputSchema: GenerateOutfitImageOutputSchema,
     },
     async (input) => {
-      const promptTemplate = `You are an expert fashion stylist. Your goal is to generate a new image of a person wearing an outfit based on the text description provided.
-{{#if userImageDataUri}}
-Critically, the person in the generated image MUST be the same person as in the reference image provided. Do not change their appearance. Place them in the described outfit.
+      const promptTemplate = `You are an expert fashion stylist. Your goal is to generate a new image of a person wearing a stylish and modern outfit.
+Critically, the person in the generated image MUST be the same person as in the reference image provided. Do not change their appearance. Place them in a completely new, fashionable outfit.
+The outfit should be something trendy and appropriate for a fashion lookbook (e.g., streetwear, smart casual, or minimalist).
 Reference Image: {{media url=userImageDataUri}}
-{{/if}}
-Outfit Description: {{{prompt}}}
-The final image should be a full-body photograph of the person in the described outfit. The photo should be professional, with a clean, minimalist background suitable for a fashion lookbook.`;
+The final image should be a full-body photograph of the person in the new outfit. The photo should be professional, with a clean, minimalist background.`;
       
       try {
           const {media} = await ai.generate({

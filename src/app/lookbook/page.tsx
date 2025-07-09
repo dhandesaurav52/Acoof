@@ -5,7 +5,6 @@ import { useState, useRef, type ChangeEvent } from 'react';
 import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Wand2, AlertCircle, Upload, Camera, X } from 'lucide-react';
 import Image from 'next/image';
@@ -16,7 +15,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function AiStylist() {
-  const [prompt, setPrompt] = useState('');
   const [userImage, setUserImage] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,14 +88,21 @@ function AiStylist() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
+    if (!userImage) {
+        toast({
+            variant: 'destructive',
+            title: 'No Photo Provided',
+            description: 'Please upload or take a photo to generate an outfit.',
+        });
+        return;
+    }
 
     setIsLoading(true);
     setError(null);
     setGeneratedImageUrl(null);
 
     try {
-      const result = await generateOutfitImage({ prompt, userImageDataUri: userImage || undefined });
+      const result = await generateOutfitImage({ userImageDataUri: userImage });
       setGeneratedImageUrl(result.imageUrl);
     } catch (err: any) {
       console.error(err);
@@ -121,15 +126,15 @@ function AiStylist() {
             AI Stylist
         </CardTitle>
         <CardDescription>
-            Describe an outfit and optionally provide your photo. Our AI will generate an image for you. Be descriptive!
+            Provide your photo and our AI will generate a stylish new outfit for you.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="user-photo">Your Photo (Optional)</Label>
-                    <Card className="aspect-square flex items-center justify-center p-4">
+            <div className="space-y-4 flex flex-col">
+                <div className="space-y-2 flex-grow flex flex-col">
+                    <Label htmlFor="user-photo">Your Photo</Label>
+                    <Card className="aspect-square flex items-center justify-center p-4 flex-grow">
                         {userImage ? (
                             <div className="relative w-full h-full">
                                 <Image src={userImage} alt="User" fill className="object-contain rounded-md" />
@@ -144,7 +149,7 @@ function AiStylist() {
                             </div>
                         ) : (
                             <div className="text-center space-y-3">
-                                <p className="text-sm text-muted-foreground">Add a photo to see the outfit on you.</p>
+                                <p className="text-sm text-muted-foreground">Add a photo to get your new look.</p>
                                 <div className="flex justify-center gap-4">
                                     <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                                         <Upload className="mr-2 h-4 w-4" /> Upload
@@ -190,19 +195,7 @@ function AiStylist() {
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" className="hidden" />
                     <canvas ref={canvasRef} className="hidden" />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="prompt">Outfit Description</Label>
-                    <Textarea
-                        id="prompt"
-                        placeholder="e.g., A model wearing a black leather jacket, white t-shirt, dark wash jeans, and brown chelsea boots, walking down a city street."
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        rows={5}
-                        disabled={isLoading}
-                        required
-                    />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading || !prompt.trim()}>
+                <Button type="submit" className="w-full" disabled={isLoading || !userImage}>
                     {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : "Generate Outfit"}
                 </Button>
             </div>
