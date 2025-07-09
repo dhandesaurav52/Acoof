@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { looks, lookCategories } from "@/lib/data";
 import { Button } from '@/components/ui/button';
@@ -71,7 +71,9 @@ export default function LookbookPage() {
     
     const context = canvas.getContext('2d');
     if (context) {
-        // Draw the raw (un-mirrored) video frame to the canvas
+        // We MUST flip the canvas before drawing the image to get a non-mirrored photo.
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUri = canvas.toDataURL('image/jpeg', 0.8);
         setCapturedImage(dataUri);
@@ -85,45 +87,48 @@ export default function LookbookPage() {
     }
   };
   
+  const handleGenerate = useCallback(async () => {
+      if (!capturedImage) return;
+
+      setIsLoading(true);
+      setError(null);
+      setGeneratedImages([]);
+      try {
+          const result = await generateOutfitImages(capturedImage);
+          if (result.images && result.images.length === 3) {
+              setGeneratedImages(result.images);
+          } else {
+              throw new Error('The AI did not return the expected number of outfit images.');
+          }
+      } catch (err: any) {
+          console.error(err);
+          let friendlyError = err.message || 'An unknown error occurred while generating images.';
+          if (friendlyError.includes('API key expired')) {
+              friendlyError = 'Your Google AI API key has expired. Please create a new one in Google AI Studio and update your .env file.';
+          } else if (friendlyError.includes('API key not valid')) {
+              friendlyError = 'Your Google AI API key is not valid. Please check your .env file.';
+          } else if (friendlyError.includes('permission to access') || friendlyError.includes('PERMISSION_DENIED')) {
+              friendlyError = "The AI service is not enabled. Please enable the 'Vertex AI API' in your Google Cloud project.";
+          } else if (friendlyError.includes('flow/outfitImagesFlow not found')) {
+              friendlyError = "The AI feature isn't ready yet. This can happen during development if the server is restarting. Please try again in a moment.";
+          } else if (friendlyError.includes('Must supply a `model`')) {
+              friendlyError = 'AI model is not specified in the code. This is an application error.';
+          }
+          setError(friendlyError);
+          toast({ variant: 'destructive', title: 'Generation Failed', description: friendlyError });
+      } finally {
+          setIsLoading(false);
+      }
+  }, [capturedImage, toast]);
+  
   useEffect(() => {
-    if (view !== 'result' || !capturedImage) return;
+    // This effect runs only once when a new picture is captured.
+    if (view === 'result' && capturedImage) {
+      handleGenerate();
+    }
+  }, [view, capturedImage, handleGenerate]);
 
-    const handleGenerate = async () => {
-        setIsLoading(true);
-        setError(null);
-        setGeneratedImages([]);
-        try {
-            const result = await generateOutfitImages(capturedImage);
-            if (result.images && result.images.length === 3) {
-                setGeneratedImages(result.images);
-            } else {
-                throw new Error('The AI did not return the expected number of outfit images.');
-            }
-        } catch (err: any) {
-            console.error(err);
-            let friendlyError = err.message || 'An unknown error occurred while generating images.';
-            if (friendlyError.includes('API key expired')) {
-                friendlyError = 'Your Google AI API key has expired. Please create a new one in Google AI Studio and update your .env file.';
-            } else if (friendlyError.includes('API key not valid')) {
-                friendlyError = 'Your Google AI API key is not valid. Please check your .env file.';
-            } else if (friendlyError.includes('permission to access') || friendlyError.includes('PERMISSION_DENIED')) {
-                friendlyError = "The AI service is not enabled. Please enable the 'Vertex AI API' in your Google Cloud project.";
-            } else if (friendlyError.includes('flow/outfitImagesFlow not found')) {
-                friendlyError = "The AI feature isn't ready yet. This can happen during development if the server is restarting. Please try again in a moment.";
-            } else if (friendlyError.includes('Must supply a `model`')) {
-                friendlyError = 'AI model is not specified in the code. This is an application error.';
-            }
-            setError(friendlyError);
-            toast({ variant: 'destructive', title: 'Generation Failed', description: friendlyError });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    handleGenerate();
-  }, [view, capturedImage, toast]);
-
-  const resetStylist = () => {
+  const startOver = () => {
     setCapturedImage(null);
     setGeneratedImages([]);
     setError(null);
@@ -209,10 +214,14 @@ export default function LookbookPage() {
             </div>
         </div>
         <Separator />
-        <div className="flex justify-center">
-            <Button onClick={resetStylist} variant="outline">
-                <RefreshCw className="mr-2 h-4 w-4" />
+        <div className="flex justify-center gap-4">
+            <Button onClick={handleGenerate} disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 Try Again
+            </Button>
+            <Button onClick={startOver} variant="outline" disabled={isLoading}>
+                <Camera className="mr-2 h-4 w-4" />
+                Start Over
             </Button>
         </div>
     </div>
