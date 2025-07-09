@@ -1,14 +1,14 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow for generating a stylish outfit on a person from a photo.
+ * @fileOverview A Genkit flow for generating stylish outfits on a person from a photo.
  *
- * - generateOutfitImage - A function that generates an image based on a user's image.
+ * - generateOutfitImage - A function that generates three images based on a user's photo.
  * - GenerateOutfitImageInput - The input type for the generateOutfitImage function.
  * - GenerateOutfitImageOutput - The return type for the generateOutfitImage function.
  */
-import {ai} from '@/ai/dev';
-import {z} from 'genkit';
+import { ai } from '@/ai/dev';
+import { z } from 'genkit';
 
 const GenerateOutfitImageInputSchema = z.object({
   userImageDataUri: z
@@ -20,7 +20,7 @@ const GenerateOutfitImageInputSchema = z.object({
 export type GenerateOutfitImageInput = z.infer<typeof GenerateOutfitImageInputSchema>;
 
 const GenerateOutfitImageOutputSchema = z.object({
-  imageUrl: z.string().describe('The data URI of the generated image.'),
+  imageUrls: z.array(z.string()).describe('A list of data URIs for the three generated images.'),
 });
 export type GenerateOutfitImageOutput = z.infer<typeof GenerateOutfitImageOutputSchema>;
 
@@ -43,30 +43,43 @@ export async function generateOutfitImage(
     },
     async (flowInput) => {
       try {
-          const {media} = await ai.generate({
-              model: 'googleai/gemini-2.0-flash-preview-image-generation',
-              prompt: [
-                { text: `You are an expert fashion stylist. Your goal is to generate a new image of a person wearing a stylish and modern outfit.
+        const basePrompt = `You are an expert fashion stylist. Your goal is to generate a new image of a person wearing a stylish and modern outfit.
 Critically, the person in the generated image MUST be the same person as in the reference image provided. Do not change their appearance. Place them in a completely new, fashionable outfit.
-The outfit should be something trendy and appropriate for a fashion lookbook (e.g., streetwear, smart casual, or minimalist).
-The final image should be a full-body photograph of the person in the new outfit. The photo should be professional, with a clean, minimalist background.` },
-                { media: { url: flowInput.userImageDataUri } }
-              ],
-              config: {
-                  responseModalities: ['TEXT', 'IMAGE'],
-              },
-          });
+The final image should be a full-body photograph of the person in the new outfit. The photo should be professional, with a clean, minimalist background.`;
 
-          if (!media || !media.url) {
-              throw new Error('Image generation failed to produce an output.');
+        const outfitPrompts = [
+            `${basePrompt} The outfit should be trendy STREETWEAR.`,
+            `${basePrompt} The outfit should be a sharp SMART CASUAL look.`,
+            `${basePrompt} The outfit should be an elegant, MINIMALIST style.`,
+        ];
+
+        const generationPromises = outfitPrompts.map(promptText => 
+          ai.generate({
+            model: 'googleai/gemini-2.0-flash-preview-image-generation',
+            prompt: [
+              { text: promptText },
+              { media: { url: flowInput.userImageDataUri } }
+            ],
+            config: {
+              responseModalities: ['TEXT', 'IMAGE'],
+            },
+          })
+        );
+        
+        const results = await Promise.all(generationPromises);
+        
+        const imageUrls = results.map(result => {
+          if (!result.media || !result.media.url) {
+            throw new Error('One or more image generations failed to produce an output.');
           }
+          return result.media.url;
+        });
 
-          return {
-              imageUrl: media.url,
-          };
+        return { imageUrls };
+
       } catch (error: any) {
-          console.error('Error in generateOutfitImageFlow:', error);
-          throw new Error(`Failed to generate outfit image: ${error.message}`);
+        console.error('Error in generateOutfitImageFlow:', error);
+        throw new Error(`Failed to generate outfit image: ${error.message}`);
       }
     }
   );
@@ -74,4 +87,3 @@ The final image should be a full-body photograph of the person in the new outfit
   // Immediately invoke the just-in-time defined flow.
   return generateOutfitImageFlow(input);
 }
-    

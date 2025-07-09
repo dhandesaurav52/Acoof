@@ -16,17 +16,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function AiStylist() {
   const [userImage, setUserImage] = useState<string | null>(null);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Refs for file input and webcam
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // State for camera controls
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
@@ -58,7 +56,7 @@ function AiStylist() {
         title: 'Camera Access Denied',
         description: 'Please enable camera permissions in your browser settings to use this feature.',
       });
-      setIsCameraOpen(false); // Close dialog if permission is denied
+      setIsCameraOpen(false);
     }
   };
 
@@ -86,27 +84,26 @@ function AiStylist() {
     setIsCameraOpen(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!userImage) {
         toast({
             variant: 'destructive',
-            title: 'No Photo Provided',
-            description: 'Please upload or take a photo to generate an outfit.',
+            title: 'No Selfie Provided',
+            description: 'Please upload or take a selfie to generate your new looks.',
         });
         return;
     }
 
     setIsLoading(true);
     setError(null);
-    setGeneratedImageUrl(null);
+    setGeneratedImageUrls(null);
 
     try {
       const result = await generateOutfitImage({ userImageDataUri: userImage });
-      setGeneratedImageUrl(result.imageUrl);
+      setGeneratedImageUrls(result.imageUrls);
     } catch (err: any) {
       console.error(err);
-      let friendlyError = err.message || 'An unknown error occurred while generating the image.';
+      let friendlyError = err.message || 'An unknown error occurred while generating the images.';
       if (friendlyError.includes('API key not valid')) {
         friendlyError = 'The provided API key is not valid. Please check your .env file.';
       } else if (friendlyError.includes('feature is not configured')) {
@@ -126,18 +123,18 @@ function AiStylist() {
             AI Stylist
         </CardTitle>
         <CardDescription>
-            Provide your photo and our AI will generate a stylish new outfit for you.
+            Take a selfie and our AI will generate three different stylish outfits for you.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8">
             <div className="space-y-4 flex flex-col">
                 <div className="space-y-2 flex-grow flex flex-col">
-                    <Label htmlFor="user-photo">Your Photo</Label>
+                    <Label htmlFor="user-photo">Your Selfie</Label>
                     <Card className="aspect-square flex items-center justify-center p-4 flex-grow">
                         {userImage ? (
                             <div className="relative w-full h-full">
-                                <Image src={userImage} alt="User" fill className="object-contain rounded-md" />
+                                <Image src={userImage} alt="User selfie" fill className="object-contain rounded-md" />
                                 <Button
                                     variant="destructive"
                                     size="icon"
@@ -149,7 +146,7 @@ function AiStylist() {
                             </div>
                         ) : (
                             <div className="text-center space-y-3">
-                                <p className="text-sm text-muted-foreground">Add a photo to get your new look.</p>
+                                <p className="text-sm text-muted-foreground">Add a photo to get your new looks.</p>
                                 <div className="flex justify-center gap-4">
                                     <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                                         <Upload className="mr-2 h-4 w-4" /> Upload
@@ -163,7 +160,7 @@ function AiStylist() {
                                         setIsCameraOpen(isOpen);
                                     }}>
                                         <DialogTrigger asChild>
-                                            <Button type="button" variant="outline"><Camera className="mr-2 h-4 w-4" /> Webcam</Button>
+                                            <Button type="button"><Camera className="mr-2 h-4 w-4" /> Take Selfie</Button>
                                         </DialogTrigger>
                                         <DialogContent>
                                             <DialogHeader>
@@ -195,28 +192,35 @@ function AiStylist() {
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/png, image/jpeg" className="hidden" />
                     <canvas ref={canvasRef} className="hidden" />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading || !userImage}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : "Generate Outfit"}
+                <Button onClick={handleSubmit} className="w-full" disabled={isLoading || !userImage}>
+                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : "Generate 3 Outfits"}
                 </Button>
             </div>
             <div className="relative aspect-square border border-dashed rounded-lg flex items-center justify-center bg-muted/50 p-4">
                 {isLoading && (
                     <div className="space-y-2 flex flex-col items-center text-center">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <p className="text-muted-foreground">Generating your masterpiece...</p>
+                        <p className="text-muted-foreground">Generating your masterpieces...</p>
+                        <p className="text-xs text-muted-foreground">This can take up to 30 seconds.</p>
                     </div>
                 )}
-                {!isLoading && !generatedImageUrl && !error && (
-                    <p className="text-muted-foreground text-center p-4">Your generated image will appear here.</p>
+                {!isLoading && !generatedImageUrls && !error && (
+                    <p className="text-muted-foreground text-center p-4">Your three generated outfits will appear here.</p>
                 )}
-                {generatedImageUrl && (
-                    <Image
-                        src={generatedImageUrl}
-                        alt="AI generated outfit"
-                        fill
-                        className="object-contain rounded-lg"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                    />
+                {generatedImageUrls && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 w-full h-full">
+                        {generatedImageUrls.map((url, index) => (
+                            <div key={index} className="relative w-full h-full rounded-lg overflow-hidden bg-black">
+                                <Image
+                                    src={url}
+                                    alt={`AI generated outfit ${index + 1}`}
+                                    fill
+                                    className="object-contain"
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 15vw"
+                                />
+                            </div>
+                        ))}
+                    </div>
                 )}
                 {error && (
                     <div className="text-destructive text-center p-4 flex flex-col items-center gap-2">
@@ -226,7 +230,7 @@ function AiStylist() {
                     </div>
                 )}
             </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
