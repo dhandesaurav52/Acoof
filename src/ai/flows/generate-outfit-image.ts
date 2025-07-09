@@ -8,12 +8,14 @@
 import { ai } from '@/ai/dev';
 import { z } from 'genkit';
 
-// We define the input and output types directly in the function signature
-// to avoid exporting non-function values from a 'use server' file.
+// By defining the input and output types directly in the function signature
+// and defining the Zod schemas *inside* the function, we avoid exporting
+// non-function values from a 'use server' file, which resolves the build error.
 export async function generateOutfitImage(
   input: { userImageDataUri: string }
 ): Promise<{ imageUrls: string[] }> {
-  // This is the critical check to prevent build failures.
+  // This is a critical safeguard. If the API key is not present, the function
+  // will throw an error at runtime, but it will not crash the build process.
   if (!process.env.GOOGLE_API_KEY) {
     throw new Error("The AI feature is not configured on the server. The GOOGLE_API_KEY may be missing from your project's environment variables.");
   }
