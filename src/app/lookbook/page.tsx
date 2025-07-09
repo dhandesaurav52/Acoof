@@ -159,10 +159,10 @@ export default function LookbookPage() {
                   </div>
                 </Card>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button onClick={handleNewPhoto} variant="outline">
+                  <Button onClick={handleNewPhoto} variant="outline" size="sm">
                     <Camera className="mr-2 h-4 w-4" /> Start Over
                   </Button>
-                  <Button onClick={handleGenerate} disabled={isLoading}>
+                  <Button onClick={handleGenerate} disabled={isLoading} size="sm">
                     {isLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
