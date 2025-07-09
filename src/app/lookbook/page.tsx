@@ -159,10 +159,10 @@ export default function LookbookPage() {
                   </div>
                 </Card>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button onClick={handleNewPhoto} variant="outline" size="lg">
+                  <Button onClick={handleNewPhoto} variant="outline">
                     <Camera className="mr-2 h-4 w-4" /> Start Over
                   </Button>
-                  <Button onClick={handleGenerate} size="lg" disabled={isLoading}>
+                  <Button onClick={handleGenerate} disabled={isLoading}>
                     {isLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -180,7 +180,9 @@ export default function LookbookPage() {
                     <>
                       {Array.from({ length: 3 }).map((_, index) => (
                         <Card key={index} className="overflow-hidden">
-                          <div className="relative aspect-[4/5] w-full bg-muted animate-pulse" />
+                          <div className="relative aspect-[4/5] w-full bg-muted animate-pulse flex items-center justify-center">
+                            <Sparkles className="h-10 w-10 text-muted-foreground/50" />
+                          </div>
                         </Card>
                       ))}
                     </>
@@ -216,8 +218,8 @@ export default function LookbookPage() {
         ) : (
             // START: INITIAL VIEW (before photo is taken)
             <div className="max-w-2xl mx-auto">
-                <Card>
-                    <CardContent className="p-4">
+                <Card className="overflow-hidden">
+                    <CardContent className="p-4 sm:p-6">
                         {isCameraOn ? (
                             // Camera is ON -> show video feed
                             <div className="space-y-4">
@@ -232,29 +234,29 @@ export default function LookbookPage() {
                             </div>
                         ) : (
                             // Camera is OFF -> show placeholder and "Turn On" button
-                            <div className="flex flex-col items-center justify-center text-center h-[450px] gap-4">
-                                <div className="p-6 bg-primary/10 rounded-full">
-                                    <Camera className="h-16 w-16 text-primary" />
+                            <div className="flex flex-col items-center justify-center text-center rounded-lg bg-secondary/30 min-h-[450px] p-8">
+                                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                                    <Camera className="h-10 w-10 text-primary" />
                                 </div>
-                                <h2 className="text-2xl font-bold font-headline">Ready for your close-up?</h2>
-                                <p className="text-muted-foreground max-w-sm">
+                                <h3 className="text-xl font-bold font-headline">Ready for your close-up?</h3>
+                                <p className="text-muted-foreground max-w-xs mt-2 mb-6">
                                     Turn on your camera to get started with the AI Stylist.
                                 </p>
                                 <Button onClick={handleStartCamera} size="lg" disabled={isStartingCamera}>
                                     {isStartingCamera ? (
                                         <>
-                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                            Starting Camera...
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Starting...
                                         </>
                                     ) : (
                                         <>
-                                            <Video className="mr-2 h-5 w-5" />
+                                            <Video className="mr-2 h-4 w-4" />
                                             Turn on Camera
                                         </>
                                     )}
                                 </Button>
                                 {error && !isStartingCamera && (
-                                    <Alert variant="destructive" className="mt-4 text-left">
+                                    <Alert variant="destructive" className="mt-6 text-left max-w-sm">
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertTitle>Camera Error</AlertTitle>
                                         <AlertDescription>
