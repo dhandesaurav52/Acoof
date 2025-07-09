@@ -33,6 +33,12 @@ const generateOutfitImageFlow = ai.defineFlow(
     outputSchema: GenerateOutfitImageOutputSchema,
   },
   async ({prompt}) => {
+    // This is the critical check to prevent build failures.
+    // It ensures that we don't try to use the AI model if the key isn't configured.
+    if (!process.env.GOOGLE_API_KEY) {
+      throw new Error("The AI feature is not configured on the server. The GOOGLE_API_KEY may be missing from your project's environment variables.");
+    }
+    
     try {
         const {media} = await ai.generate({
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
@@ -51,10 +57,6 @@ const generateOutfitImageFlow = ai.defineFlow(
         };
     } catch (error: any) {
         console.error('Error in generateOutfitImageFlow:', error);
-        // Check if the error is due to a missing API key (unconfigured plugin)
-        if (error.message?.includes('model "googleai/gemini-2.0-flash-preview-image-generation" not found')) {
-            throw new Error("The AI feature is not configured on the server. The GOOGLE_API_KEY may be missing from your project's environment variables.");
-        }
         throw new Error(`Failed to generate outfit image: ${error.message}`);
     }
   }
