@@ -41,6 +41,7 @@ export async function generateOutfitIdeas(
         name: 'outfitIdeasPrompt',
         input: { schema: OutfitIdeasInputSchema },
         output: { schema: OutfitIdeasOutputSchema },
+        model: 'googleai/gemini-pro-vision',
         prompt: `You are an expert fashion stylist. Based on the person in the photo, generate three distinct and detailed outfit descriptions.
 
 For each outfit, describe the clothing items, accessories, and a catchy name for the style (e.g., "Urban Explorer", "Coastal Casual", "Monochrome Minimalist"). Be descriptive and inspiring.
