@@ -1,8 +1,10 @@
+
 {
   "apphosting": [
     {
       "backend": "acoof-backend",
-      "region": "asia-east1"
+      "region": "asia-east1",
+      "source": "."
     }
   ]
 }
