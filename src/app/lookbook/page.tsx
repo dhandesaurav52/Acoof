@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, type ChangeEvent } from 'react';
@@ -68,6 +67,9 @@ function AiStylist() {
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
+        // Flip the context horizontally to counteract the mirrored video feed
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUri = canvas.toDataURL('image/jpeg');
         setUserImage(dataUri);
@@ -179,7 +181,7 @@ function AiStylist() {
                                             </Alert>
                                         </div>
                                     )}
-                                    <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                                    <video ref={videoRef} className="w-full h-full object-cover transform scale-x-[-1]" autoPlay muted playsInline />
                                 </div>
                                 <DialogFooter>
                                     <Button onClick={capturePhoto} disabled={!hasCameraPermission}>Take Photo</Button>
