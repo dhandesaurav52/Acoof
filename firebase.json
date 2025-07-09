@@ -1,0 +1,7 @@
+{
+  "apphosting": {
+    "source": ".",
+    "backend": "urban-attire-lookbook",
+    "headers": []
+  }
+}
