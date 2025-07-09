@@ -49,7 +49,7 @@ export async function generateOutfitImage(
       // Generate three images in parallel.
       const imagePromises = stylePrompts.map((promptText) =>
         ai.generate({
-          model: 'googleai/gemini-pro-vision',
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
           prompt: [
             { media: { url: input.photoDataUri } },
             { text: promptText },
