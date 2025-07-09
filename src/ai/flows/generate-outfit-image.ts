@@ -7,7 +7,7 @@
  * - GenerateOutfitImageInput - The input type for the generateOutfitImage function.
  * - GenerateOutfitImageOutput - The return type for the generateOutfitImage function.
  */
-import {ai} from '@/ai/genkit';
+import {ai} from '@/ai/dev';
 import {z} from 'genkit';
 
 const GenerateOutfitImageInputSchema = z.object({
