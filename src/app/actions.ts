@@ -1,7 +1,5 @@
-
 'use server';
 
-import { generateOutfitSuggestions } from '@/ai/flows/generate-outfit-suggestions';
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 
@@ -13,6 +11,8 @@ export async function getAiSuggestions(browsingHistory: string, photoDataUri?: s
   }
   
   try {
+    // Dynamically import the flow only when the key exists to prevent build-time errors.
+    const { generateOutfitSuggestions } = await import('@/ai/flows/generate-outfit-suggestions');
     const result = await generateOutfitSuggestions({ browsingHistory, photoDataUri });
     if (!result || !result.suggestions) {
       return { suggestions: [], error: 'Received an invalid response from the AI.' };
