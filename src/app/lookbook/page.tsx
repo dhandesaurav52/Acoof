@@ -138,8 +138,8 @@ export default function LookbookPage() {
     <div className="container mx-auto py-12 px-4">
       {/* AI STYLIST UI */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-4">
-            <Sparkles className="h-10 w-10 text-primary" />
+        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-3">
+            <Sparkles className="h-8 w-8 text-primary" />
             AI Stylist
         </h1>
         <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
@@ -181,7 +181,7 @@ export default function LookbookPage() {
                       {Array.from({ length: 3 }).map((_, index) => (
                         <Card key={index} className="overflow-hidden">
                           <div className="relative aspect-[4/5] w-full bg-muted animate-pulse flex items-center justify-center">
-                            <Sparkles className="h-10 w-10 text-muted-foreground/50" />
+                            <Sparkles className="h-8 w-8 text-muted-foreground/50" />
                           </div>
                         </Card>
                       ))}
@@ -227,22 +227,22 @@ export default function LookbookPage() {
                                     <video ref={videoRef} className="w-full h-full object-cover transform -scale-x-100" autoPlay muted playsInline />
                                     <canvas ref={canvasRef} className="hidden" />
                                 </div>
-                                <Button onClick={handleCapture} className="w-full" size="lg">
+                                <Button onClick={handleCapture} className="w-full">
                                     <Camera className="mr-2 h-5 w-5" />
                                     Capture Photo
                                 </Button>
                             </div>
                         ) : (
                             // Camera is OFF -> show placeholder and "Turn On" button
-                            <div className="flex flex-col items-center justify-center text-center rounded-lg bg-secondary/30 min-h-[450px] p-8">
-                                <div className="p-4 bg-primary/10 rounded-full mb-4">
-                                    <Camera className="h-10 w-10 text-primary" />
+                            <div className="flex flex-col items-center justify-center text-center rounded-lg bg-secondary/30 min-h-[400px] p-6">
+                                <div className="p-3 bg-primary/10 rounded-full mb-4">
+                                    <Camera className="h-8 w-8 text-primary" />
                                 </div>
-                                <h3 className="text-xl font-bold font-headline">Ready for your close-up?</h3>
-                                <p className="text-muted-foreground max-w-xs mt-2 mb-6">
+                                <h3 className="text-lg font-bold font-headline">Ready for your close-up?</h3>
+                                <p className="text-muted-foreground max-w-xs mt-2 mb-4">
                                     Turn on your camera to get started with the AI Stylist.
                                 </p>
-                                <Button onClick={handleStartCamera} size="lg" disabled={isStartingCamera}>
+                                <Button onClick={handleStartCamera} disabled={isStartingCamera}>
                                     {isStartingCamera ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
