@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview An AI flow to generate an outfit image based on a text prompt.
+ * @fileOverview An AI flow to generate outfit images based on a user's photo.
  *
- * - generateOutfitImage - A function that takes a text prompt and returns a generated image data URI.
+ * - generateOutfitImage - A function that takes a photo data URI and returns three generated outfit image data URIs.
  */
 
 import { ai } from '@/ai/dev';
@@ -10,18 +10,23 @@ import { z } from 'zod';
 
 // This function is the only export. All Genkit definitions are inside it.
 export async function generateOutfitImage(
-  promptText: string
-): Promise<{ imageUrl: string }> {
+  photoDataUri: string
+): Promise<{ imageUrls: string[] }> {
   // Define schemas inside the function so they are not exported.
   const OutfitPromptInputSchema = z.object({
-    prompt: z.string().describe('A detailed description of a fashion outfit.'),
+    photoDataUri: z
+      .string()
+      .describe(
+        "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      ),
   });
 
   const OutfitPromptOutputSchema = z.object({
-    imageUrl: z
-      .string()
+    imageUrls: z
+      .array(z.string())
+      .length(3)
       .describe(
-        "The generated image as a data URI: 'data:image/png;base64,<b64_encoded_image>'"
+        "An array of three generated images as data URIs. Each string should be in the format: 'data:image/png;base64,<b64_encoded_image>'"
       ),
   });
 
@@ -33,23 +38,41 @@ export async function generateOutfitImage(
       outputSchema: OutfitPromptOutputSchema,
     },
     async (input) => {
-      const { media } = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: `A full-body, professional fashion photograph of a male model wearing the following outfit, against a clean, minimalist studio background: ${input.prompt}`,
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
+      // Define three different style prompts to generate varied outfits.
+      const stylePrompts = [
+        'a professional fashion photograph of this person in a stylish streetwear outfit, against a clean, minimalist studio background. The outfit should be trendy and casual.',
+        'a professional fashion photograph of this person in a smart casual outfit, suitable for a day at the office or a casual dinner, against a clean, minimalist studio background.',
+        'a professional fashion photograph of this person in an elegant evening wear outfit, perfect for a formal event, against a clean, minimalist studio background.',
+      ];
+
+      // Generate three images in parallel.
+      const imagePromises = stylePrompts.map((promptText) =>
+        ai.generate({
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          prompt: [
+            { media: { url: input.photoDataUri } },
+            { text: promptText },
+          ],
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        })
+      );
+
+      const results = await Promise.all(imagePromises);
+
+      const imageUrls = results.map((result) => {
+        if (!result.media?.url) {
+          throw new Error('Image generation failed to return an image for one of the styles.');
+        }
+        return result.media.url;
       });
 
-      if (!media?.url) {
-        throw new Error('Image generation failed to return an image.');
-      }
-
-      return { imageUrl: media.url };
+      return { imageUrls };
     }
   );
 
   // Execute the flow.
-  const result = await generateImageFlow({ prompt: promptText });
+  const result = await generateImageFlow({ photoDataUri });
   return result;
 }
