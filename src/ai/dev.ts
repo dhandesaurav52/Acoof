@@ -6,7 +6,7 @@
  * If the key is missing, it will throw an error at runtime when an AI feature is used.
  */
 import {genkit} from 'genkit';
-import {googleai} from '@genkit-ai/googleai';
+import {googleAI} from '@genkit-ai/googleai';
 
 const plugins = [];
 
@@ -15,7 +15,7 @@ const plugins = [];
 // but AI features will fail at runtime if the key is not provided.
 if (process.env.GOOGLE_API_KEY) {
   plugins.push(
-    googleai({
+    googleAI({
       apiKey: process.env.GOOGLE_API_KEY,
     })
   );
