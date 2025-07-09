@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,9 +9,11 @@ import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle, Video } from 'luci
 import { generateOutfitImages } from '@/ai/flows/generate-outfit-image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-
 import { looks, lookCategories } from "@/lib/data";
 import { OutfitCard } from '@/components/OutfitCard';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function LookbookPage() {
   // AI STYLIST STATE AND LOGIC
@@ -22,6 +24,8 @@ export default function LookbookPage() {
   const [error, setError] = useState<string | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
+  const [height, setHeight] = useState('');
+  const [bodyType, setBodyType] = useState('');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -98,13 +102,17 @@ export default function LookbookPage() {
     }
   };
   
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     if (!photoDataUri) return;
     setIsLoading(true);
     setError(null);
     setGeneratedImages([]);
     try {
-      const result = await generateOutfitImages(photoDataUri);
+      const result = await generateOutfitImages({
+        photoDataUri,
+        height,
+        bodyType,
+      });
       if (result.images.length === 0) {
         setError("The AI was unable to generate any outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.");
       } else {
@@ -124,7 +132,7 @@ export default function LookbookPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [photoDataUri, height, bodyType]);
 
   const handleNewPhoto = () => {
     setPhotoDataUri(null);
@@ -138,8 +146,7 @@ export default function LookbookPage() {
     if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
       handleGenerate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photoDataUri]);
+  }, [photoDataUri, generatedImages.length, isLoading, error, handleGenerate]);
   
   // LOOKBOOK LOGIC
   const looksByCategory = lookCategories.map(category => ({
@@ -173,10 +180,10 @@ export default function LookbookPage() {
                         </div>
                     </Card>
                     <div className="flex gap-2">
-                        <Button onClick={handleNewPhoto} variant="outline" className="w-full">
+                        <Button onClick={handleNewPhoto} variant="outline" size="sm" className="w-full">
                             <Camera className="mr-2 h-4 w-4" /> Start Over
                         </Button>
-                        <Button onClick={handleGenerate} disabled={isLoading} className="w-full">
+                        <Button onClick={handleGenerate} disabled={isLoading} size="sm" className="w-full">
                             {isLoading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
@@ -250,6 +257,26 @@ export default function LookbookPage() {
                                     <Camera className="mr-2 h-5 w-5" />
                                     Capture Photo
                                 </Button>
+                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                    <div>
+                                        <Label htmlFor="height" className="text-sm">Height</Label>
+                                        <Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="e.g. 5'10&quot;" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="bodyType" className="text-sm">Body Type</Label>
+                                        <Select value={bodyType} onValueChange={setBodyType}>
+                                            <SelectTrigger id="bodyType">
+                                                <SelectValue placeholder="Select type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Slim">Slim</SelectItem>
+                                                <SelectItem value="Fit">Fit</SelectItem>
+                                                <SelectItem value="Healthy">Healthy</SelectItem>
+                                                <SelectItem value="Fat">Fat</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             // Camera is OFF -> show placeholder and "Turn On" button

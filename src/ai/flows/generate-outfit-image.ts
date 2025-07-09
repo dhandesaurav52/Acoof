@@ -14,7 +14,10 @@ const OutfitImagesInputSchema = z.object({
     .describe(
       "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  height: z.string().optional().describe("The user's height, e.g., 5'10\" or 178cm."),
+  bodyType: z.string().optional().describe("The user's body type, e.g., Slim, Fit, Healthy, Fat."),
 });
+export type OutfitImagesInput = z.infer<typeof OutfitImagesInputSchema>;
 
 const OutfitImagesOutputSchema = z.object({
   images: z
@@ -29,7 +32,7 @@ const OutfitImagesOutputSchema = z.object({
 });
 
 export async function generateOutfitImages(
-  photoDataUri: string
+  input: OutfitImagesInput
 ): Promise<z.infer<typeof OutfitImagesOutputSchema>> {
   const outfitImagesFlow = ai.defineFlow(
     {
@@ -37,14 +40,26 @@ export async function generateOutfitImages(
       inputSchema: OutfitImagesInputSchema,
       outputSchema: OutfitImagesOutputSchema,
     },
-    async (input) => {
+    async (flowInput) => {
       const model = 'googleai/gemini-2.0-flash-preview-image-generation';
       
+      let userDetails = "";
+      if (flowInput.height || flowInput.bodyType) {
+        userDetails += "The user has provided the following physical details to help you tailor the fit of the clothing:\n";
+        if (flowInput.height) {
+            userDetails += `- Height: ${flowInput.height}\n`;
+        }
+        if (flowInput.bodyType) {
+            userDetails += `- Body Type: ${flowInput.bodyType}\n`;
+        }
+      }
+
       const basePrompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes in the user's photo while keeping the person identical.
 
+${userDetails}
 **CRITICAL RULES:**
 1.  **DO NOT CHANGE THE PERSON:** You must use the user's actual face, body, and pose from the provided photo. Do not generate a new person or a new face. All facial features, including beards, glasses, and hairstyle, must be preserved exactly as they are in the original photo.
-2.  **REPLACE THE CLOTHING:** Generate a new, complete, and stylish full-body outfit on the person from the photo as described.
+2.  **REPLACE THE CLOTHING:** Generate a new, complete, and stylish full-body outfit on the person from the photo as described. The outfit should be appropriate for the provided height and body type if specified.
 3.  **SHOW THE FULL OUTFIT:** The final image must show the person from head to toe.
 4.  **MAINTAIN REALISM:** The final image, with the new clothes, must look photorealistic.
 5.  **FACE CLARITY:** The person's face must be clear, in-focus, and not blurry or distorted in any way.
@@ -63,7 +78,7 @@ Generate one new image that follows these rules.`;
             model,
             prompt: [
                 { text: `${basePrompt}\n\n**OUTFIT STYLE:**\n${stylePrompt}` },
-                { media: { url: input.photoDataUri } }
+                { media: { url: flowInput.photoDataUri } }
             ],
             config: {
               responseModalities: ['TEXT', 'IMAGE'],
@@ -92,5 +107,5 @@ Generate one new image that follows these rules.`;
     }
   );
 
-  return await outfitImagesFlow({ photoDataUri });
+  return await outfitImagesFlow(input);
 }
