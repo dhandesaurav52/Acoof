@@ -1,20 +1,19 @@
 
 'use server';
 /**
- * @fileOverview An AI flow to generate outfit images based on a user's photo.
+ * @fileOverview An AI flow to generate outfit descriptions based on a user's photo.
  *
- * - generateOutfitImage - A function that takes a photo data URI and returns three generated outfit image data URIs.
+ * - generateOutfitIdeas - A function that takes a photo data URI and returns three text-based outfit ideas.
  */
 
 import { ai } from '@/ai/dev';
 import { z } from 'zod';
 
-// This function is the only export. All Genkit definitions are inside it.
-export async function generateOutfitImage(
+export async function generateOutfitIdeas(
   photoDataUri: string
-): Promise<{ imageUrls: string[] }> {
-  // Define schemas inside the function so they are not exported.
-  const OutfitPromptInputSchema = z.object({
+): Promise<{ ideas: string[] }> {
+
+  const OutfitIdeasInputSchema = z.object({
     photoDataUri: z
       .string()
       .describe(
@@ -22,58 +21,43 @@ export async function generateOutfitImage(
       ),
   });
 
-  const OutfitPromptOutputSchema = z.object({
-    imageUrls: z
-      .array(z.string())
+  const OutfitIdeasOutputSchema = z.object({
+    ideas: z
+      .array(
+        z.string().describe('A detailed description of a complete outfit, including items of clothing, accessories, and a style name.')
+      )
       .length(3)
-      .describe(
-        "An array of three generated images as data URIs. Each string should be in the format: 'data:image/png;base64,<b64_encoded_image>'"
-      ),
+      .describe('An array of three distinct and detailed outfit descriptions.'),
   });
 
-  // Define the image generation flow inside the function.
-  const generateImageFlow = ai.defineFlow(
+  const outfitIdeasFlow = ai.defineFlow(
     {
-      name: 'generateOutfitImageFlow',
-      inputSchema: OutfitPromptInputSchema,
-      outputSchema: OutfitPromptOutputSchema,
+      name: 'outfitIdeasFlow',
+      inputSchema: OutfitIdeasInputSchema,
+      outputSchema: OutfitIdeasOutputSchema,
     },
     async (input) => {
-      // Define three different style prompts to generate varied outfits.
-      const stylePrompts = [
-        'a professional fashion photograph of this person in a stylish streetwear outfit, against a clean, minimalist studio background. The outfit should be trendy and casual.',
-        'a professional fashion photograph of this person in a smart casual outfit, suitable for a day at the office or a casual dinner, against a clean, minimalist studio background.',
-        'a professional fashion photograph of this person in an elegant evening wear outfit, perfect for a formal event, against a clean, minimalist studio background.',
-      ];
+      const prompt = ai.definePrompt({
+        name: 'outfitIdeasPrompt',
+        input: { schema: OutfitIdeasInputSchema },
+        output: { schema: OutfitIdeasOutputSchema },
+        prompt: `You are an expert fashion stylist. Based on the person in the photo, generate three distinct and detailed outfit descriptions.
 
-      // Generate three images in parallel.
-      const imagePromises = stylePrompts.map((promptText) =>
-        ai.generate({
-          model: 'googleai/gemini-2.0-flash-preview-image-generation',
-          prompt: [
-            { media: { url: input.photoDataUri } },
-            { text: promptText },
-          ],
-          config: {
-            responseModalities: ['TEXT', 'IMAGE'],
-          },
-        })
-      );
+For each outfit, describe the clothing items, accessories, and a catchy name for the style (e.g., "Urban Explorer", "Coastal Casual", "Monochrome Minimalist"). Be descriptive and inspiring.
 
-      const results = await Promise.all(imagePromises);
+Your response must be structured as a JSON object with a single key "ideas" containing an array of three strings.
 
-      const imageUrls = results.map((result) => {
-        if (!result.media?.url) {
-          throw new Error('Image generation failed to return an image for one of the styles.');
-        }
-        return result.media.url;
+Photo: {{media url=photoDataUri}}`,
       });
-
-      return { imageUrls };
+      
+      const { output } = await prompt(input);
+      if (!output) {
+        throw new Error('The AI failed to generate outfit ideas.');
+      }
+      return output;
     }
   );
 
-  // Execute the flow.
-  const result = await generateImageFlow({ photoDataUri });
+  const result = await outfitIdeasFlow({ photoDataUri });
   return result;
 }

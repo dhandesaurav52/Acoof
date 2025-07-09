@@ -6,9 +6,9 @@ import Image from 'next/image';
 import { OutfitCard } from "@/components/OutfitCard";
 import { looks, lookCategories } from "@/lib/data";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wand2, Loader2, AlertCircle, Camera, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
-import { generateOutfitImage } from '@/ai/flows/generate-outfit-image';
+import { generateOutfitIdeas } from '@/ai/flows/generate-outfit-image';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,7 +24,7 @@ export default function LookbookPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
+  const [generatedIdeas, setGeneratedIdeas] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,8 +73,9 @@ export default function LookbookPage() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      const scale = 360 / video.videoWidth;
+      canvas.width = 360;
+      canvas.height = video.videoHeight * scale;
       
       const context = canvas.getContext('2d');
       if (context) {
@@ -93,31 +94,31 @@ export default function LookbookPage() {
       const handleGenerate = async () => {
           setIsLoading(true);
           setError(null);
-          setGeneratedImageUrls([]);
+          setGeneratedIdeas([]);
 
           try {
-              const result = await generateOutfitImage(capturedImage);
-              if (result.imageUrls && result.imageUrls.length === 3) {
-                  setGeneratedImageUrls(result.imageUrls);
+              const result = await generateOutfitIdeas(capturedImage);
+              if (result.ideas && result.ideas.length === 3) {
+                  setGeneratedIdeas(result.ideas);
               } else {
-                  throw new Error('The AI did not return the expected number of images. Please try again.');
+                  throw new Error('The AI did not return the expected number of ideas. Please try again.');
               }
           } catch (err: any) {
               console.error(err);
-              let friendlyError = err.message || 'An unknown error occurred while generating the image.';
+              let friendlyError = err.message || 'An unknown error occurred while generating ideas.';
               
               if (friendlyError.includes('API key not valid')) {
                   friendlyError = 'Your Google AI API key is not valid. Please check your .env file.';
               } else if (friendlyError.includes('permission to access')) {
                   friendlyError = "The AI service is not enabled. Please go to your Google Cloud project and enable the 'Vertex AI API'.";
-              } else if (friendlyError.includes('flow/generateOutfitImageFlow not found')) {
+              } else if (friendlyError.includes('flow/outfitIdeasFlow not found')) {
                   friendlyError = "The AI feature isn't ready yet. This can happen during development if the server is restarting. Please try again in a moment.";
               }
               
               setError(friendlyError);
               toast({
                   variant: 'destructive',
-                  title: 'Image Generation Failed',
+                  title: 'Idea Generation Failed',
                   description: friendlyError,
               });
           } finally {
@@ -130,7 +131,7 @@ export default function LookbookPage() {
 
   const resetStylist = () => {
       setCapturedImage(null);
-      setGeneratedImageUrls([]);
+      setGeneratedIdeas([]);
       setError(null);
       setIsLoading(false);
   };
@@ -159,7 +160,7 @@ export default function LookbookPage() {
                     <div>
                       <h3 className="text-lg font-semibold">AI Stylist</h3>
                       <p className="text-sm text-muted-foreground">
-                        Use your camera to generate new outfits instantly.
+                        Use your camera to generate new outfit ideas instantly.
                       </p>
                     </div>
                   </div>
@@ -197,45 +198,45 @@ export default function LookbookPage() {
                           </div>
                           <Button onClick={handleTakePicture} disabled={!hasCameraPermission} className="w-full">
                               <Camera className="mr-2 h-4 w-4" />
-                              Take Picture
+                              Take Picture & Get Ideas
                           </Button>
                       </div>
                   ) : (
                       <div className="space-y-6">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-start">
-                              <div className="space-y-2 text-center md:text-left">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+                              <div className="space-y-2 text-center md:text-left md:col-span-1">
                                   <h3 className="font-semibold">Your Photo</h3>
                                   <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden border-4 border-primary">
                                       <Image src={capturedImage} alt="Your captured photo" fill className="object-cover"/>
                                   </div>
                               </div>
-                              {isLoading ? (
-                                  Array.from({ length: 3 }).map((_, index) => (
-                                      <div key={index} className="space-y-2">
-                                          <h3 className="font-semibold text-muted-foreground invisible">Look {index + 1}</h3>
-                                          <Skeleton className="aspect-[4/5] w-full" />
-                                      </div>
-                                  ))
-                              ) : error ? (
-                                  <div className="md:col-span-3">
-                                      <Alert variant="destructive" className="h-full flex flex-col justify-center">
-                                          <AlertCircle className="h-4 w-4" />
-                                          <AlertTitle>Generation Failed</AlertTitle>
-                                          <AlertDescription>
-                                              {error}
-                                          </AlertDescription>
-                                      </Alert>
-                                  </div>
-                              ) : (
-                                  generatedImageUrls.map((url, index) => (
-                                      <div key={index} className="space-y-2">
-                                            <h3 className="font-semibold text-muted-foreground">Look {index + 1}</h3>
-                                          <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden">
-                                              <Image src={url} alt={`Generated look ${index + 1}`} fill className="object-cover" data-ai-hint="fashion model" />
-                                          </div>
-                                      </div>
-                                  ))
-                              )}
+                              <div className="md:col-span-3 space-y-4">
+                                <h3 className="font-semibold">AI-Generated Outfit Ideas</h3>
+                                {isLoading ? (
+                                    Array.from({ length: 3 }).map((_, index) => (
+                                      <Skeleton key={index} className="h-24 w-full" />
+                                    ))
+                                ) : error ? (
+                                    <Alert variant="destructive" className="h-full flex flex-col justify-center">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>Generation Failed</AlertTitle>
+                                        <AlertDescription>
+                                            {error}
+                                        </AlertDescription>
+                                    </Alert>
+                                ) : (
+                                    generatedIdeas.map((idea, index) => (
+                                      <Card key={index} className="bg-secondary/50">
+                                        <CardHeader>
+                                          <CardTitle className="text-base">Outfit Idea #{index + 1}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                          <p className="text-sm text-muted-foreground">{idea}</p>
+                                        </CardContent>
+                                      </Card>
+                                    ))
+                                )}
+                              </div>
                           </div>
                           <Button onClick={resetStylist} variant="outline" className="w-full">
                               <RefreshCw className="mr-2 h-4 w-4" />
