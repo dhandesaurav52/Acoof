@@ -126,7 +126,7 @@ export default function LookbookPage() {
       handleGenerate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photoDataUri, error, isLoading]);
+  }, [photoDataUri]);
   
   // LOOKBOOK LOGIC
   const looksByCategory = lookCategories.map(category => ({
