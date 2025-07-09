@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview An AI flow to generate outfit images based on a user's photo.
@@ -48,13 +47,14 @@ export async function generateOutfitImages(
 2.  **REPLACE THE CLOTHING:** Generate a new, complete, and stylish full-body outfit on the person from the photo as described.
 3.  **SHOW THE FULL OUTFIT:** The final image must show the person from head to toe.
 4.  **MAINTAIN REALISM:** The final image, with the new clothes, must look photorealistic.
+5.  **FACE CLARITY:** The person's face must be clear, in-focus, and not blurry or distorted in any way.
 
 Generate one new image that follows these rules.`;
 
       const outfitPrompts = [
-        `The outfit must be **modern men's streetwear**. Think hoodies, sneakers, and graphic tees.`,
-        `The outfit must be **smart casual**. Think blazers, chinos, and clean leather shoes.`,
-        `The outfit must be **minimalist and modern**. Think clean lines, neutral colors, and simple silhouettes.`
+        `The outfit must be a **modern take on classic western wear**. Think a well-fitted denim jacket over a simple t-shirt, dark wash jeans, and stylish leather boots.`,
+        `The outfit must be **elevated rancher style**. Think a clean button-down shirt (perhaps a subtle plaid or chambray), fitted trousers, and a high-quality leather belt.`,
+        `The outfit must be **rugged yet refined**. Think a premium henley shirt, a well-worn leather jacket, and slim-fit jeans. The overall look should feel authentic and stylishly modern.`
       ];
 
       try {
