@@ -41,15 +41,15 @@ export async function generateOutfitImages(
     },
     async (input) => {
       const model = 'googleai/gemini-2.0-flash-preview-image-generation';
-      const prompt = `You are an expert virtual stylist. Your goal is to dress the person in the provided photo with a new outfit, while keeping their original face, pose, and body shape intact.
+      const prompt = `You are a sophisticated AI photo editor specializing in virtual try-on. Your task is to edit the provided photo of a person.
 
-Instructions:
-1.  Analyze the person in the photo.
-2.  **Preserve the person's face and body exactly.** Do not change their identity.
-3.  Replace their current clothing with a complete, stylish, modern streetwear outfit.
-4.  The background of the generated image should be a neutral studio setting to keep the focus on the outfit.
+**CRITICAL INSTRUCTIONS:**
+1.  **DO NOT change the person's face, hair, body shape, or pose.** The original person must be perfectly recognizable.
+2.  **DO NOT change the background of the photo.** Keep the original background intact.
+3.  Your ONLY task is to **replace the clothing** the person is currently wearing with a stylish, complete, modern streetwear outfit.
+4.  The final image should look like a realistic photograph of the original person wearing the new outfit in the original setting.
 
-Photo: {{media url=photoDataUri}}`;
+Photo to edit: {{media url=photoDataUri}}`;
 
       try {
         // Generate three images in parallel
