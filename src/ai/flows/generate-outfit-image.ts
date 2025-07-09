@@ -4,37 +4,35 @@
  * @fileOverview A Genkit flow for generating stylish outfits on a person from a photo.
  *
  * - generateOutfitImage - A function that generates three images based on a user's photo.
- * - GenerateOutfitImageInput - The input type for the generateOutfitImage function.
- * - GenerateOutfitImageOutput - The return type for the generateOutfitImage function.
  */
 import { ai } from '@/ai/dev';
 import { z } from 'genkit';
 
-const GenerateOutfitImageInputSchema = z.object({
-  userImageDataUri: z
-    .string()
-    .describe(
-      "A photo of a person, as a data URI. The generated image will feature this person in a new outfit. Format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type GenerateOutfitImageInput = z.infer<typeof GenerateOutfitImageInputSchema>;
-
-const GenerateOutfitImageOutputSchema = z.object({
-  imageUrls: z.array(z.string()).describe('A list of data URIs for the three generated images.'),
-});
-export type GenerateOutfitImageOutput = z.infer<typeof GenerateOutfitImageOutputSchema>;
-
+// We define the input and output types directly in the function signature
+// to avoid exporting non-function values from a 'use server' file.
 export async function generateOutfitImage(
-  input: GenerateOutfitImageInput
-): Promise<GenerateOutfitImageOutput> {
+  input: { userImageDataUri: string }
+): Promise<{ imageUrls: string[] }> {
   // This is the critical check to prevent build failures.
-  // It ensures that we don't try to use the AI model if the key isn't configured.
   if (!process.env.GOOGLE_API_KEY) {
     throw new Error("The AI feature is not configured on the server. The GOOGLE_API_KEY may be missing from your project's environment variables.");
   }
 
-  // The flow is now defined at runtime, inside the function call.
+  // The Zod schemas are now defined at runtime, inside the function call.
   // This prevents the build process from crashing, as this code is never executed during build.
+  const GenerateOutfitImageInputSchema = z.object({
+    userImageDataUri: z
+      .string()
+      .describe(
+        "A photo of a person, as a data URI. The generated image will feature this person in a new outfit. Format: 'data:<mimetype>;base64,<encoded_data>'."
+      ),
+  });
+
+  const GenerateOutfitImageOutputSchema = z.object({
+    imageUrls: z.array(z.string()).describe('A list of data URIs for the three generated images.'),
+  });
+
+  // The flow is also defined at runtime.
   const generateOutfitImageFlow = ai.defineFlow(
     {
       name: 'generateOutfitImageFlow_runtime',
