@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
 import { ref as storageDbRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage, database } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -19,7 +18,6 @@ export type AppUser = User & {
 interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<UserCredential | undefined>;
   loginWithEmail: (email:string, password:string) => Promise<any>;
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
@@ -80,34 +78,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
   
-  const loginWithGoogle = async () => {
-    if (!auth || !database) throw NOT_CONFIGURED_ERROR;
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      if (user) {
-        const userDbRef = dbRef(database, `users/${user.uid}`);
-        try {
-            const snapshot = await get(userDbRef);
-            if (!snapshot.exists()) {
-                await set(userDbRef, {
-                    email: user.email,
-                    displayName: user.displayName,
-                });
-            }
-        } catch (dbError) {
-            console.error("Database error during Google login:", dbError);
-            // Non-fatal error as user is still logged in. We can proceed.
-        }
-      }
-      return result;
-    } catch (error) {
-      console.error("Error signing in with Google", error);
-      throw error;
-    }
-  };
-
   const loginWithEmail = async (email: string, password: string) => {
     if (!auth) throw NOT_CONFIGURED_ERROR;
     return signInWithEmailAndPassword(auth, email, password);
@@ -243,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, loginWithGoogle, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile };
+  const value = { user, loading, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

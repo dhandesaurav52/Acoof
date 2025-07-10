@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link"
@@ -20,7 +19,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
-  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -48,25 +47,6 @@ export default function LoginPage() {
         });
     }
   };
-
-  const handleGoogleLogin = async () => {
-    try {
-        const userCredential = await loginWithGoogle();
-        if (userCredential?.user) {
-            if (userCredential.user.email === ADMIN_EMAIL) {
-                router.push('/dashboard/admin');
-            } else {
-                router.push('/dashboard/user');
-            }
-        }
-    } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: "Google Login Failed",
-            description: error.message,
-        });
-    }
-  }
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
@@ -122,9 +102,6 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full">
               Login
-            </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin}>
-              Login with Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

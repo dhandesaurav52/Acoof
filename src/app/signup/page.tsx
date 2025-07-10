@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link"
@@ -22,7 +21,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const router = useRouter();
-  const { signupWithEmail, loginWithGoogle } = useAuth();
+  const { signupWithEmail } = useAuth();
   const { toast } = useToast();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -61,19 +60,6 @@ export default function SignupPage() {
       });
     }
   };
-
-  const handleGoogleSignup = async () => {
-    try {
-        await loginWithGoogle();
-        router.push('/dashboard/user');
-    } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: "Google Signup Failed",
-            description: error.message,
-        });
-    }
-  }
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
@@ -152,9 +138,6 @@ export default function SignupPage() {
               </div>
               <Button type="submit" className="w-full">
                 Create an account
-              </Button>
-              <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignup}>
-                Sign up with Google
               </Button>
             </form>
             <div className="mt-4 text-center text-sm">
