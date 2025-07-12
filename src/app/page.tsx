@@ -14,11 +14,6 @@ import { useEffect, useState } from 'react';
 
 export default function Home() {
   const { products, loading } = useProducts();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
   
   const featuredStyles = [
     { name: 'Streetwear', image: 'https://images.pexels.com/photos/32872368/pexels-photo-32872368.jpeg' },
@@ -115,7 +110,7 @@ export default function Home() {
             className="w-full"
           >
             <CarouselContent>
-              {(!isClient || loading) ? <ProductSkeletons /> : (
+              {loading ? <ProductSkeletons /> : (
                 newArrivals.map((product) => (
                   <CarouselItem key={product.id} className="basis-1/2 md:basis-1/4">
                     <div className="p-1">

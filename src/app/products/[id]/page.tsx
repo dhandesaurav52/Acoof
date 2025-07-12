@@ -32,7 +32,6 @@ export default function ProductDetailPage() {
     const { toast } = useToast();
     const { user } = useAuth();
     
-    const [isClient, setIsClient] = useState(false);
     const [selectedColor, setSelectedColor] = useState<string | undefined>();
     const [selectedSize, setSelectedSize] = useState<string | undefined>();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -47,10 +46,6 @@ export default function ProductDetailPage() {
         state: '',
         pincode: ''
     });
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
 
     const product = useMemo(() => products.find(p => p.id === id), [products, id]);
 
@@ -203,7 +198,7 @@ export default function ProductDetailPage() {
         }
     }, [product, selectedColor, selectedSize]);
 
-    if (!isClient || productsLoading) {
+    if (productsLoading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, type ChangeEvent, useEffect } from 'react';
+import { useState, useMemo, type ChangeEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/ProductCard';
 import { ListFilter, Search, SlidersHorizontal } from 'lucide-react';
@@ -18,17 +18,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProductsPage() {
   const { products, loading } = useProducts();
-  const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedColor, setSelectedColor] = useState('All');
   const [selectedAlphaSize, setSelectedAlphaSize] = useState('All');
   const [selectedNumericSize, setSelectedNumericSize] = useState('All');
   const [sortOption, setSortOption] = useState('default');
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -271,7 +266,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {(!isClient || loading) ? (
+      {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           <ProductSkeletons />
         </div>
