@@ -98,7 +98,7 @@ export default function Home() {
            <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl font-headline">New Arrivals</h2>
             <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
-              Fresh threads, just landed. Check out the latest additions to the Urban Attire collection.
+              Fresh threads, just landed. Check out the latest additions to the Acoof collection.
             </p>
           </div>
           <Carousel

@@ -42,8 +42,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
-        <title>Urban Attire Lookbook</title>
-        <meta name="description" content="Urban Attire Lookbook - Modern Menswear" />
+        <title>Acoof</title>
+        <meta name="description" content="Acoof - Modern Menswear" />
         <meta name="theme-color" content="#FF9800" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/icon-192x192.png"></link>

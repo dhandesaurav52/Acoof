@@ -278,7 +278,7 @@ export default function ProductDetailPage() {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
             amount: orderResponse.amount,
             currency: orderResponse.currency,
-            name: 'Urban Attire',
+            name: 'Acoof',
             description: `Payment for ${product.name}`,
             order_id: orderResponse.id,
             handler: async function (response: any) {
