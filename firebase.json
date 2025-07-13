@@ -1,3 +1,4 @@
+
 {
   "hosting": {
     "source": ".",
@@ -9,9 +10,7 @@
     "rewrites": [
       {
         "source": "**",
-        "apphosting": {
-          "backendId": "acoof-8e92d"
-        }
+        "apphosting": "acoof-8e92d"
       }
     ]
   }
