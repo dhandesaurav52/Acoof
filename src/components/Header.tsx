@@ -145,7 +145,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center">
-          <Logo width={240} height={70} className="-mt-8" />
+          <Logo width={156} height={48} />
         </Link>
 
         <div className="hidden md:flex flex-1 items-center justify-start gap-6">
@@ -220,7 +220,7 @@ export function Header() {
                 </SheetHeader>
                 <div className="p-4">
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
-                    <Logo width={160} height={50} className="-mt-1" />
+                    <Logo width={160} height={50} />
                   </Link>
                   <div className="flex flex-col items-start gap-3 text-base">
                     <NavLinks className="flex-col items-start gap-3 text-base"/>
