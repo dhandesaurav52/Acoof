@@ -12,6 +12,7 @@ export function Logo({ width, height, className }: { width: number; height: numb
         height={height}
         priority
         className="object-contain"
+        style={{ height: 'auto', width: 'auto' }}
       />
     </div>
   );
