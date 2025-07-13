@@ -145,7 +145,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container flex h-20 items-center">
         <Link href="/" className="mr-6 flex items-center">
-          <Logo width={180} height={55} />
+          <Logo width={150} height={40} />
         </Link>
 
         <div className="hidden md:flex flex-1 items-center justify-start gap-6">
