@@ -33,7 +33,7 @@ import { useInstallPrompt } from "@/hooks/use-install-prompt";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
-  { href: "/lookbook", label: "Lookbook", icon: Sparkles },
+  { href: "/lookbook", label: "Lookbook" },
 ];
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -77,7 +77,7 @@ export function Header() {
             )}
             onClick={() => setIsMenuOpen(false)}
           >
-            {link.icon && <link.icon className={cn("h-4 w-4", isActive && "text-primary")} />}
+            {link.href === '/lookbook' && <Sparkles className={cn("h-4 w-4", isActive && "text-primary")} />}
             <span>{link.label}</span>
           </Link>
         )

@@ -10,7 +10,6 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useProducts } from '@/hooks/use-products';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useState } from 'react';
 
 export default function Home() {
   const { products, loading } = useProducts();

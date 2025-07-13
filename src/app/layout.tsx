@@ -13,7 +13,7 @@ import { CartProvider } from '@/hooks/use-cart';
 import { useEffect } from 'react';
 import { InstallPromptProvider } from '@/hooks/use-install-prompt';
 import { IosInstallBanner } from '@/components/IosInstallBanner';
-import { Inter, Montserrat } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import Script from 'next/script';
 
 const inter = Inter({
@@ -21,14 +21,6 @@ const inter = Inter({
   display: 'swap',
   variable: '--font-inter',
 });
-
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['800', '900'],
-  display: 'swap',
-  variable: '--font-montserrat',
-});
-
 
 export default function RootLayout({
   children,
@@ -48,15 +40,15 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en" className={`${inter.variable} ${montserrat.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
-        <title>Acoof</title>
-        <meta name="description" content="A new app built in Firebase Studio." />
-        <meta name="theme-color" content="#F54336" />
+        <title>Urban Attire Lookbook</title>
+        <meta name="description" content="Urban Attire Lookbook - Modern Menswear" />
+        <meta name="theme-color" content="#FF9800" />
         <link rel="manifest" href="/manifest.webmanifest" />
-        <link rel="apple-touch-icon" href="https://placehold.co/192x192.png"></link>
-        <link rel="icon" type="image/png" sizes="192x192" href="https://placehold.co/192x192.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="https://placehold.co/512x512.png" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png"></link>
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background overflow-x-hidden">
         <Script
@@ -66,7 +58,7 @@ export default function RootLayout({
         />
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
