@@ -28,7 +28,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCart } from "@/hooks/use-cart";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -44,7 +43,6 @@ export function Header() {
   const { user, loading: authLoading, logout } = useAuth();
   const { wishlist, loading: wishlistLoading } = useWishlist();
   const { cartCount, loading: cartLoading } = useCart();
-  const { installPromptEvent, triggerInstallPrompt } = useInstallPrompt();
   const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {
@@ -53,11 +51,6 @@ export function Header() {
 
   const handleLogout = () => {
     logout();
-    setIsMenuOpen(false);
-  };
-  
-  const handleInstallClick = () => {
-    triggerInstallPrompt();
     setIsMenuOpen(false);
   };
   
@@ -82,12 +75,6 @@ export function Header() {
           </Link>
         )
       })}
-      {isMounted && installPromptEvent && (
-        <button onClick={handleInstallClick} className={cn("transition-colors hover:text-primary flex items-center gap-2", className?.includes('flex-col') ? '' : 'text-foreground/80')}>
-            <Download className="h-4 w-4" />
-            <span>Install App</span>
-        </button>
-      )}
     </nav>
   );
 
