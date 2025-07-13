@@ -63,10 +63,18 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
                         })
                         .filter((p): p is Product => p !== null)
                         .reverse(); // Reverse to show newest products first
-                    setProducts(productsList);
+                    
+                    // If the list is empty after processing, it means the 'products' node exists but is empty.
+                    // In this case, we still want to show the fallback data.
+                    if (productsList.length > 0) {
+                        setProducts(productsList);
+                    } else {
+                        console.log("Firebase 'products' node is empty, loading local fallback data.");
+                        setProducts(localProducts);
+                    }
                 } else {
                     // **FALLBACK LOGIC**
-                    // If the database is empty, load the local products.
+                    // If the database has no 'products' node at all, load the local products.
                     console.log("No products found in Firebase, loading local fallback data.");
                     setProducts(localProducts);
                 }
