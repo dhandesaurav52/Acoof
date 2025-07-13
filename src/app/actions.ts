@@ -2,9 +2,10 @@
 
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
-import type { Order } from '@/types';
+import type { Order, Product } from '@/types';
 import { database } from '@/lib/firebase';
-import { ref as dbRef, update, push } from "firebase/database";
+import { ref as dbRef, update, push, set } from "firebase/database";
+import { products as localProducts } from '@/lib/data';
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -125,6 +126,35 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
             errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders', their own 'users' data path, and the 'notifications' path.";
         }
         console.error("Firebase saveOrder error:", error);
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function seedProductsToDatabase(): Promise<{ success: boolean; error?: string; count?: number }> {
+    if (!database) {
+        return { success: false, error: 'Firebase is not configured. Cannot seed products.' };
+    }
+
+    const productsRef = dbRef(database, 'products');
+
+    try {
+        // We will transform the array of products into an object where keys are the product IDs
+        const productsForFirebase = localProducts.reduce((acc, product) => {
+            const { id, ...productData } = product;
+            acc[id] = productData;
+            return acc;
+        }, {} as Record<string, Omit<Product, 'id'>>);
+        
+        await set(productsRef, productsForFirebase);
+
+        return { success: true, count: localProducts.length };
+
+    } catch (error: any) {
+        let errorMessage = 'An unexpected error occurred while seeding the products.';
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow the admin to write to the 'products' path.";
+        }
+        console.error("Firebase seedProducts error:", error);
         return { success: false, error: errorMessage };
     }
 }

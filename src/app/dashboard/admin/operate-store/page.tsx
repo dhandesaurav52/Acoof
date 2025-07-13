@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, PlusCircle, UploadCloud, Edit, Trash2, Search } from 'lucide-react';
+import { Loader2, PlusCircle, UploadCloud, Edit, Trash2, Search, Database } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { Product } from '@/types';
+import { seedProductsToDatabase } from '@/app/actions';
 
 
 const addProductSchema = z.object({
@@ -51,6 +52,7 @@ export default function ManageStorePage() {
 
     // Add Product States and Form
     const [isAddSubmitting, setIsAddSubmitting] = useState(false);
+    const [isSeeding, setIsSeeding] = useState(false);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const { register: registerAdd, handleSubmit: handleSubmitAdd, control: controlAdd, watch: watchAdd, setValue: setValueAdd, reset: resetAdd, formState: { errors: errorsAdd } } = useForm<AddProductFormValues>({
         resolver: zodResolver(addProductSchema),
@@ -123,6 +125,24 @@ export default function ManageStorePage() {
             });
         }
     }, [productToEdit, resetEdit]);
+
+    const handleSeedProducts = async () => {
+        setIsSeeding(true);
+        const result = await seedProductsToDatabase();
+        if (result.success) {
+            toast({
+                title: "Database Seeded",
+                description: `${result.count} products have been uploaded to Firebase.`,
+            });
+        } else {
+            toast({
+                variant: 'destructive',
+                title: "Seeding Failed",
+                description: result.error,
+            });
+        }
+        setIsSeeding(false);
+    };
 
     const onAddSubmit: SubmitHandler<AddProductFormValues> = async (data) => {
         if (!database || !storage) {
@@ -233,8 +253,16 @@ export default function ManageStorePage() {
 
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle>Manage Existing Products</CardTitle>
-                    <CardDescription>View, edit, or delete products from your store catalog.</CardDescription>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>Manage Existing Products</CardTitle>
+                            <CardDescription>View, edit, or delete products. You can also seed the initial product data.</CardDescription>
+                        </div>
+                        <Button onClick={handleSeedProducts} disabled={isSeeding} variant="secondary">
+                            {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                            {isSeeding ? 'Uploading...' : 'Upload Products'}
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">

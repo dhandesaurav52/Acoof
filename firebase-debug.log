@@ -1,0 +1,87 @@
+[debug] [2025-07-13T05:37:50.566Z] ----------------------------------------------------------------------
+[debug] [2025-07-13T05:37:50.569Z] Command:       /nix/store/rbdrkcs5kkwpalxcd7c6bnm33lk2955n-nodejs-20.19.0/bin/node /nix/store/fprgfkwna33crhc86jqbf5878piivvgw-firebase-tools-14.7.0/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting:github
+[debug] [2025-07-13T05:37:50.569Z] CLI Version:   14.7.0
+[debug] [2025-07-13T05:37:50.570Z] Platform:      linux
+[debug] [2025-07-13T05:37:50.570Z] Node Version:  v20.19.0
+[debug] [2025-07-13T05:37:50.570Z] Time:          Sun Jul 13 2025 05:37:50 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-07-13T05:37:50.570Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-13T05:37:51.166Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"destination"}
+[debug] [2025-07-13T05:37:51.166Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.166Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.167Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"glob"}
+[debug] [2025-07-13T05:37:51.167Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"dynamicLinks"}
+[debug] [2025-07-13T05:37:51.167Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"destination"}
+[debug] [2025-07-13T05:37:51.167Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.167Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.167Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"run"}
+[debug] [2025-07-13T05:37:51.167Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"dynamicLinks"}
+[debug] [2025-07-13T05:37:51.168Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"destination"}
+[debug] [2025-07-13T05:37:51.168Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.168Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.168Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"regex"}
+[debug] [2025-07-13T05:37:51.168Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"dynamicLinks"}
+[debug] [2025-07-13T05:37:51.168Z] Field "/hosting/rewrites/0" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-07-13T05:37:51.168Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-07-13T05:37:51.168Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-07-13T05:37:51.174Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-13T05:37:51.174Z] > authorizing via signed-in user (dhandesaurav52@gmail.com)
+[debug] [2025-07-13T05:37:51.175Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"destination"}
+[debug] [2025-07-13T05:37:51.175Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"glob"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"dynamicLinks"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"destination"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"run"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"dynamicLinks"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"destination"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"function"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"regex"}
+[debug] [2025-07-13T05:37:51.176Z] Object "/hosting/rewrites/0" in "firebase.json" is missing required property: {"missingProperty":"dynamicLinks"}
+[debug] [2025-07-13T05:37:51.176Z] Field "/hosting/rewrites/0" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-07-13T05:37:51.176Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-07-13T05:37:51.176Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-07-13T05:37:51.181Z] Using project from CLI flag: acoof-8e92d
+[debug] [2025-07-13T05:37:51.183Z] No OAuth tokens found
+[debug] [2025-07-13T05:37:51.184Z] No OAuth tokens found
+[debug] [2025-07-13T05:37:51.184Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-13T05:37:51.185Z] > authorizing via signed-in user (dhandesaurav52@gmail.com)
+[debug] [2025-07-13T05:37:51.187Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/acoof-8e92d [none]
+[debug] [2025-07-13T05:37:51.520Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/acoof-8e92d 200
+[debug] [2025-07-13T05:37:51.524Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/acoof-8e92d {"projectId":"acoof-8e92d","projectNumber":"791754268594","displayName":"Acoof","name":"projects/acoof-8e92d","resources":{"hostingSite":"acoof-8e92d","realtimeDatabaseInstance":"acoof-8e92d-default-rtdb"},"state":"ACTIVE","etag":"1_3e58f4a0-ab15-4b1d-acb9-32ef8aae4735"}
+[info] i  Using project acoof-8e92d (Acoof) 
+[info] 
+=== Hosting:github Setup
+[info] 
+[info] i  Detected a .git folder at /home/user/studio 
+[info] i  Authorizing with GitHub to upload your service account to a GitHub repository's secrets store. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://github.com/login/oauth/authorize?client_id=89cf50f02ac6aaed3484&state=260715463&redirect_uri=http%3A%2F%2Flocalhost%3A9005&scope=read%3Auser%20repo%20public_repo
+[info] 
+[info] Waiting for authentication...
