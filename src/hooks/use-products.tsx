@@ -36,39 +36,38 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             try {
                 if (snapshot.exists()) {
                     const productsData = snapshot.val();
-                    const productsList: Product[] = Object.keys(productsData)
-                        .map(key => {
-                            const product = productsData[key];
-                            if (
-                                !product ||
-                                typeof product.name !== 'string' ||
-                                typeof product.price !== 'number' ||
-                                !Array.isArray(product.images)
-                            ) {
-                                console.warn(`Skipping malformed product with key: ${key}`, product);
-                                return null;
-                            }
+                    if (productsData && Object.keys(productsData).length > 0) {
+                        const productsList: Product[] = Object.keys(productsData)
+                            .map(key => {
+                                const product = productsData[key];
+                                if (
+                                    !product ||
+                                    typeof product.name !== 'string' ||
+                                    typeof product.price !== 'number' ||
+                                    !Array.isArray(product.images)
+                                ) {
+                                    console.warn(`Skipping malformed product with key: ${key}`, product);
+                                    return null;
+                                }
 
-                            return {
-                                id: key,
-                                name: product.name,
-                                description: product.description || '',
-                                price: product.price,
-                                category: product.category || 'Tshirts',
-                                images: product.images.length > 0 ? product.images : ['https://placehold.co/600x800.png'],
-                                isNew: product.isNew ?? false,
-                                colors: product.colors || [],
-                                sizes: product.sizes || [],
-                            };
-                        })
-                        .filter((p): p is Product => p !== null)
-                        .reverse(); // Reverse to show newest products first
-                    
-                    // If the list is empty after processing, it means the 'products' node exists but is empty.
-                    // In this case, we still want to show the fallback data.
-                    if (productsList.length > 0) {
+                                return {
+                                    id: key,
+                                    name: product.name,
+                                    description: product.description || '',
+                                    price: product.price,
+                                    category: product.category || 'Tshirts',
+                                    images: product.images.length > 0 ? product.images : ['https://placehold.co/600x800.png'],
+                                    isNew: product.isNew ?? false,
+                                    colors: product.colors || [],
+                                    sizes: product.sizes || [],
+                                };
+                            })
+                            .filter((p): p is Product => p !== null)
+                            .reverse(); // Reverse to show newest products first
+                        
                         setProducts(productsList);
                     } else {
+                        // This case handles when the 'products' node exists but is empty.
                         console.log("Firebase 'products' node is empty, loading local fallback data.");
                         setProducts(localProducts);
                     }
