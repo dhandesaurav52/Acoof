@@ -6,6 +6,7 @@ import type { Product } from '@/types';
 import { database, storage } from '@/lib/firebase';
 import { ref, onValue, remove, update } from 'firebase/database';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
+import { products as localProducts } from '@/lib/data';
 
 interface ProductsContextType {
     products: Product[];
@@ -22,7 +23,8 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         if (!database) {
-            console.warn("Firebase not configured, skipping product fetch.");
+            console.warn("Firebase not configured, using local fallback products.");
+            setProducts(localProducts);
             setLoading(false);
             return;
         }
@@ -63,16 +65,20 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
                         .reverse(); // Reverse to show newest products first
                     setProducts(productsList);
                 } else {
-                    setProducts([]);
+                    // **FALLBACK LOGIC**
+                    // If the database is empty, load the local products.
+                    console.log("No products found in Firebase, loading local fallback data.");
+                    setProducts(localProducts);
                 }
             } catch(error) {
-                console.error("Error processing products snapshot: ", error);
-                setProducts([]);
+                console.error("Error processing products snapshot, using local fallback. Error:", error);
+                setProducts(localProducts);
             } finally {
                 setLoading(false);
             }
         }, (error) => {
-            console.error("Firebase read failed with onValue: ", error);
+            console.error("Firebase read failed with onValue, using local fallback. Error:", error);
+            setProducts(localProducts);
             setLoading(false);
         });
 
@@ -87,9 +93,14 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             throw new Error('Firebase not configured.');
         }
 
+        // If the current products are the local ones, we can't delete from DB
+        if (products === localProducts) {
+            console.warn("Cannot remove product, running on local data.");
+            return;
+        }
+
         const productRef = ref(database, `products/${product.id}`);
         await remove(productRef);
-        // No need to manually update state, the onValue listener will handle it.
 
         const imageDeletePromises = product.images
             .filter(url => url.includes('firebasestorage.googleapis.com'))
@@ -104,15 +115,21 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             });
         
         await Promise.all(imageDeletePromises);
-    }, []);
+    }, [products]);
 
     const updateProduct = useCallback(async (productId: string, data: Partial<Omit<Product, 'id'>>) => {
         if (!database) {
             throw new Error('Firebase not configured.');
         }
+
+        if (products === localProducts) {
+            console.warn("Cannot update product, running on local data.");
+            return;
+        }
+
         const productRef = ref(database, `products/${productId}`);
         await update(productRef, data);
-    }, []);
+    }, [products]);
 
 
     return (
