@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'reac
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle, UploadCloud } from 'lucide-react';
+import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle, Video, ArrowLeft } from 'lucide-react';
 import { generateOutfitImages } from '@/ai/flows/generate-outfit-image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -13,43 +13,76 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
+type CameraState = 'off' | 'starting' | 'on' | 'error';
 
 export function AiStylist() {
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const [height, setHeight] = useState('');
   const [bodyType, setBodyType] = useState('none');
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cameraState, setCameraState] = useState<CameraState>('off');
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  
   const { toast } = useToast();
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 4 * 1024 * 1024) { // 4MB limit
-        toast({
-            variant: 'destructive',
-            title: 'File Too Large',
-            description: 'Please upload an image smaller than 4MB.',
-        });
-        return;
+  const stopCameraStream = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
+  }, []);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUri = e.target?.result as string;
-      setPhotoDataUri(dataUri);
-    };
-    reader.readAsDataURL(file);
+  const startCameraStream = useCallback(async () => {
+    stopCameraStream(); // Ensure any existing stream is stopped
+    setCameraState('starting');
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' } 
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      setError("Camera access denied. Please allow camera permissions in your browser settings.");
+      setCameraState('error');
+    }
+  }, [stopCameraStream]);
+
+  // This is the key to fixing the black screen.
+  // It waits for the video to be ready before changing the state to 'on'.
+  const handleCanPlay = () => {
+    videoRef.current?.play();
+    setCameraState('on');
   };
   
+  const handleCapture = useCallback(() => {
+    if (videoRef.current && canvasRef.current) {
+      const videoNode = videoRef.current;
+      const canvasNode = canvasRef.current;
+      canvasNode.width = videoNode.videoWidth;
+      canvasNode.height = videoNode.videoHeight;
+      canvasNode.getContext('2d')?.drawImage(videoNode, 0, 0, videoNode.videoWidth, videoNode.videoHeight);
+      const dataUri = canvasNode.toDataURL('image/jpeg');
+      setPhotoDataUri(dataUri);
+      stopCameraStream();
+      setCameraState('off');
+    }
+  }, [stopCameraStream]);
+
   const handleGenerate = useCallback(async () => {
     if (!photoDataUri) return;
-    setIsLoading(true);
+    setIsGenerating(true);
     setError(null);
     setGeneratedImages([]);
     try {
@@ -76,25 +109,28 @@ export function AiStylist() {
       }
       setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   }, [photoDataUri, height, bodyType]);
 
-  const handleNewPhoto = () => {
+  useEffect(() => {
+    if (photoDataUri && generatedImages.length === 0 && !isGenerating && !error) {
+      handleGenerate();
+    }
+  }, [photoDataUri, generatedImages.length, isGenerating, error, handleGenerate]);
+  
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      stopCameraStream();
+    };
+  }, [stopCameraStream]);
+
+  const handleRetake = () => {
     setPhotoDataUri(null);
     setGeneratedImages([]);
     setError(null);
-    if(fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
   };
-
-  // Effect to automatically start generation after a photo is uploaded
-  useEffect(() => {
-    if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
-      handleGenerate();
-    }
-  }, [photoDataUri, generatedImages.length, isLoading, error, handleGenerate]);
   
   return (
      <div className="max-w-7xl mx-auto mb-20">
@@ -104,20 +140,20 @@ export function AiStylist() {
                     <h3 className="text-xl font-bold font-headline text-center">Your Photo</h3>
                     <Card className="overflow-hidden">
                         <div className="relative aspect-[4/5] w-full">
-                            <Image src={photoDataUri} alt="Your uploaded photo" fill className="object-cover" sizes="(max-width: 640px) 100vw, 448px" />
+                            <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="(max-width: 640px) 100vw, 448px" />
                         </div>
                     </Card>
                     <div className="flex gap-2">
-                        <Button onClick={handleNewPhoto} variant="outline" size="sm" className="w-full">
-                            <Camera className="mr-2 h-4 w-4" /> Upload New
+                        <Button onClick={handleRetake} variant="outline" size="sm" className="w-full">
+                            <Camera className="mr-2 h-4 w-4" /> Retake Photo
                         </Button>
-                        <Button onClick={handleGenerate} disabled={isLoading} size="sm" className="w-full">
-                            {isLoading ? (
+                        <Button onClick={handleGenerate} disabled={isGenerating} size="sm" className="w-full">
+                            {isGenerating ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
                                 <RefreshCw className="mr-2 h-4 w-4" />
                             )}
-                            {isLoading ? 'Generating...' : 'Regenerate'}
+                            {isGenerating ? 'Generating...' : 'Regenerate'}
                         </Button>
                     </div>
                 </div>
@@ -136,7 +172,7 @@ export function AiStylist() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                            {isLoading || (photoDataUri && generatedImages.length === 0) ? (
+                            {isGenerating || (photoDataUri && generatedImages.length === 0) ? (
                                 <>
                                     {Array.from({ length: 3 }).map((_, index) => (
                                         <Card key={index} className="overflow-hidden">
@@ -167,29 +203,62 @@ export function AiStylist() {
                     )}
                 </div>
             </div>
+        ) : cameraState !== 'off' ? (
+            <div className="max-w-md mx-auto">
+                <Card>
+                    <CardContent className="p-4 sm:p-6 space-y-4">
+                        <div className="relative w-full aspect-[4/5] rounded-md overflow-hidden bg-black flex items-center justify-center">
+                           <video
+                              ref={videoRef}
+                              autoPlay
+                              playsInline
+                              muted
+                              onCanPlay={handleCanPlay}
+                              className={cn(
+                                "w-full h-full object-cover",
+                                cameraState !== 'on' && 'hidden'
+                              )}
+                           />
+                           {cameraState === 'starting' && (
+                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
+                               <Loader2 className="h-8 w-8 animate-spin" />
+                               <p>Starting Camera...</p>
+                             </div>
+                           )}
+                           {cameraState === 'error' && (
+                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-destructive-foreground bg-destructive p-4">
+                                <AlertTriangle className="h-8 w-8" />
+                                <p className="text-center">{error}</p>
+                             </div>
+                           )}
+                        </div>
+                        <div className="flex gap-2">
+                           <Button onClick={() => setCameraState('off')} variant="outline" className="w-full">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back
+                            </Button>
+                           <Button onClick={handleCapture} className="w-full" disabled={cameraState !== 'on'}>
+                                <Camera className="mr-2 h-4 w-4" />
+                                Capture Photo
+                           </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+                <canvas ref={canvasRef} className="hidden" />
+            </div>
         ) : (
             <div className="max-w-md mx-auto">
                 <Card>
                     <CardContent className="p-4 sm:p-6">
                         <div className="space-y-4">
-                            <div 
-                                className="relative w-full aspect-[4/3] rounded-md border-2 border-dashed border-muted flex items-center justify-center text-center p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                                onClick={() => fileInputRef.current?.click()}
+                            <Button 
+                                onClick={startCameraStream} 
+                                className="w-full h-32 text-lg"
+                                variant="outline"
                             >
-                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                    <UploadCloud className="h-10 w-10" />
-                                    <h3 className="text-lg font-bold font-headline text-foreground">Upload a Photo</h3>
-                                    <p className="text-sm">Click here or drag and drop a file.</p>
-                                    <p className="text-xs">PNG, JPG, or WEBP up to 4MB.</p>
-                                </div>
-                                <Input 
-                                    ref={fileInputRef}
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/png, image/jpeg, image/webp"
-                                    onChange={handleFileChange}
-                                />
-                            </div>
+                                <Video className="mr-4 h-8 w-8" />
+                                Use Camera
+                            </Button>
 
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div>
