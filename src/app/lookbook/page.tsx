@@ -171,23 +171,8 @@ export default function LookbookPage() {
     looks: looks.filter(look => look.category === category)
   })).filter(group => group.looks.length > 0);
   
-  if (!isMounted) {
-    return null;
-  }
-
-  return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI Stylist
-        </h1>
-        <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
-          Take a clear, well-lit photo of yourself, and our AI will generate new outfits for you to try on.
-        </p>
-      </div>
-
-      <div className="max-w-7xl mx-auto mb-20">
+  const AiStylist = () => (
+     <div className="max-w-7xl mx-auto mb-20">
         {photoDataUri ? (
             <div className="flex flex-col items-center gap-8">
                 <div className="w-full max-w-sm space-y-4">
@@ -334,6 +319,21 @@ export default function LookbookPage() {
             </div>
         )}
       </div>
+  );
+
+  return (
+    <div className="container mx-auto py-12 px-4">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            AI Stylist
+        </h1>
+        <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
+          Take a clear, well-lit photo of yourself, and our AI will generate new outfits for you to try on.
+        </p>
+      </div>
+
+      {isMounted ? <AiStylist /> : <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}
 
       <Separator className="my-16" />
 
