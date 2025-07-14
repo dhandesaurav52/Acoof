@@ -127,7 +127,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
     } catch (error: any) {
         let errorMessage = 'An unexpected error occurred while saving the order.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow authenticated users to write to the 'orders', their own 'users' data path, and the 'notifications' path.";
+            errorMessage = "Permission Denied: Could not save the order. Please check your Firebase Realtime Database security rules to ensure they allow authenticated users to write to the 'orders', their own 'users' data path, and the 'notifications' path simultaneously.";
         }
         console.error("Firebase saveOrder error:", error);
         return { success: false, error: errorMessage };

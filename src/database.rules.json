@@ -20,18 +20,18 @@
     },
     "orders": {
       ".indexOn": "userId",
-      ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      ".read": "auth.token.email === 'admin@example.com'",
       "$orderId": {
         ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
-        ".write": "auth != null && (auth.token.email === 'admin@example.com' || (newData.child('userId').val() === auth.uid && !data.exists()) || (data.child('userId').val() === auth.uid && newData.child('status').val() === 'Cancelled' && newData.child('cancellationReason').exists()))",
+        ".write": "auth != null && ((newData.child('userId').val() === auth.uid && !data.exists()) || (auth.token.email === 'admin@example.com') || (data.child('userId').val() === auth.uid && newData.child('status').val() === 'Cancelled' && newData.child('cancellationReason').exists()))",
         ".validate": "newData.hasChildren(['id', 'userId', 'user', 'userEmail', 'date', 'total', 'status', 'shippingAddress', 'items', 'paymentMethod'])"
       }
     },
     "notifications": {
-      ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      ".read": "auth.token.email === 'admin@example.com'",
       ".write": "auth != null",
       "$notificationId": {
-         ".validate": "newData.hasChildren(['type', 'message', 'timestamp', 'read', 'orderId', 'userId', 'userEmail']) && (newData.child('type').val() === 'new_order' || newData.child('type').val() === 'order_cancellation' || newData.child('type').val() === 'order_return')"
+        ".validate": "newData.hasChildren(['type', 'message', 'timestamp', 'read', 'orderId', 'userId', 'userEmail']) && (newData.child('type').val() === 'new_order' || newData.child('type').val() === 'order_cancellation' || newData.child('type').val() === 'order_return')"
       }
     }
   }
