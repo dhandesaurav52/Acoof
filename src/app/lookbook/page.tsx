@@ -24,7 +24,6 @@ export default function LookbookPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Consolidate camera state to prevent race conditions
   const [cameraState, setCameraState] = useState<'off' | 'starting' | 'on' | 'error'>('off');
   const [height, setHeight] = useState('');
   const [bodyType, setBodyType] = useState('');
@@ -48,7 +47,6 @@ export default function LookbookPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Ensure camera is turned off when the user navigates away.
     return () => stopCameraStream();
   }, [stopCameraStream]);
   
@@ -69,19 +67,6 @@ export default function LookbookPage() {
       const videoNode = videoRef.current;
       if (videoNode) {
         videoNode.srcObject = stream;
-        
-        // This is the key fix. We wait for the 'oncanplay' event which fires when
-        // the video has downloaded enough data to be playable.
-        videoNode.oncanplay = () => {
-            videoNode.play().then(() => {
-                setCameraState('on');
-            }).catch((err) => {
-                console.error('Video play failed:', err);
-                setError('Could not start the video feed.');
-                setCameraState('error');
-                stopCameraStream();
-            })
-        };
       }
     } catch (err) {
       console.error('Error starting camera stream:', err);
@@ -95,9 +80,24 @@ export default function LookbookPage() {
       }
       setError(errorMessage);
       setCameraState('error');
-      stopCameraStream(); // Clean up on failure
+      stopCameraStream();
     }
   }, [facingMode, cameraState, stopCameraStream]);
+
+  // This useEffect handles playing the video once the stream is ready.
+  useEffect(() => {
+    const videoNode = videoRef.current;
+    if (videoNode && videoNode.srcObject && cameraState === 'starting') {
+      videoNode.play().then(() => {
+        setCameraState('on');
+      }).catch((err) => {
+        console.error('Video play failed:', err);
+        setError('Could not start the video feed.');
+        setCameraState('error');
+        stopCameraStream();
+      });
+    }
+  }, [videoRef.current?.srcObject, cameraState, stopCameraStream]);
 
 
   const handleStartCamera = () => {
@@ -112,7 +112,6 @@ export default function LookbookPage() {
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
-        // Flip the image horizontally if it's the user-facing camera
         if (facingMode === 'user') {
             context.translate(canvas.width, 0);
             context.scale(-1, 1);
@@ -177,11 +176,10 @@ export default function LookbookPage() {
   };
 
   useEffect(() => {
-    // If facing mode changes while the camera is on, restart the stream.
-    if (cameraState === 'on') {
+    if (cameraState === 'on' || cameraState === 'starting') {
         startCameraStream();
     }
-  }, [facingMode, cameraState, startCameraStream]);
+  }, [facingMode]);
 
 
   useEffect(() => {
