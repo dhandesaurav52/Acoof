@@ -132,7 +132,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
-            <Link href="/" className="mr-6">
+            <Link href="/">
                 <Logo width={200} height={52} />
             </Link>
             <div className="hidden md:flex">
