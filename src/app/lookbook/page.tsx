@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle, Video, User, Check, Ban } from 'lucide-react';
+import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
 import { generateOutfitImages } from '@/ai/flows/generate-outfit-image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -19,11 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function LookbookPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [height, setHeight] = useState('');
@@ -34,16 +34,6 @@ export default function LookbookPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setIsMounted(true);
-    // Cleanup on unmount
-    return () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-        }
-    };
-  }, []);
 
   const stopCameraStream = useCallback(() => {
     if (streamRef.current) {
@@ -56,41 +46,48 @@ export default function LookbookPage() {
     setIsCameraOn(false);
   }, []);
 
+  useEffect(() => {
+    setIsMounted(true);
+    // Ensure camera is turned off when the user navigates away.
+    return () => stopCameraStream();
+  }, [stopCameraStream]);
+  
   const startCameraStream = useCallback(async () => {
-    if (isCameraOn || isStartingCamera) return;
+    if (isStartingCamera || isCameraOn) return;
 
     setIsStartingCamera(true);
     setError(null);
-
+  
     if (streamRef.current) {
       stopCameraStream();
     }
-
-    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      setError("This browser does not support camera access.");
-      setHasCameraPermission(false);
-      setIsStartingCamera(false);
-      return;
-    }
-
+  
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(e => console.error("Video play failed:", e));
+        // The play() method returns a promise. We should handle it.
+        videoRef.current.play().then(() => {
+            setIsCameraOn(true);
+        }).catch(e => {
+            console.error("Video play failed:", e);
+            setError("Could not start the video feed.");
+            stopCameraStream();
+        });
       }
-      setHasCameraPermission(true);
-      setIsCameraOn(true);
     } catch (err) {
       console.error('Error accessing camera:', err);
-      setError('Camera access was denied. Please enable permissions in your browser settings.');
-      setHasCameraPermission(false);
+      if (err instanceof DOMException && err.name === "NotAllowedError") {
+          setError('Camera access was denied. Please enable permissions in your browser settings.');
+      } else {
+          setError('Could not access the camera. Please ensure it is not in use by another application.');
+      }
       setIsCameraOn(false);
     } finally {
       setIsStartingCamera(false);
     }
-  }, [facingMode, isCameraOn, isStartingCamera, stopCameraStream]);
+  }, [facingMode, isStartingCamera, isCameraOn, stopCameraStream]);
 
 
   const handleStartCamera = () => {
@@ -105,6 +102,7 @@ export default function LookbookPage() {
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
+        // Flip the image horizontally if it's the user-facing camera
         if (facingMode === 'user') {
             context.translate(canvas.width, 0);
             context.scale(-1, 1);
@@ -166,15 +164,15 @@ export default function LookbookPage() {
 
   const handleToggleCamera = () => {
     setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
-    // Restart the camera with the new facing mode
-    if (isCameraOn) {
-        stopCameraStream();
-        // Use a timeout to allow the old stream to fully release before starting the new one
-        setTimeout(() => {
-            startCameraStream();
-        }, 100);
-    }
   };
+
+  useEffect(() => {
+    // If facing mode changes while the camera is on, restart the stream.
+    if (isCameraOn) {
+        startCameraStream();
+    }
+  }, [facingMode, isCameraOn, startCameraStream]);
+
 
   useEffect(() => {
     if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
@@ -292,7 +290,7 @@ export default function LookbookPage() {
                                     </div>
                                 )}
                                 
-                                {hasCameraPermission === false && !isStartingCamera && (
+                                {error && !isStartingCamera && !isCameraOn && (
                                     <Alert variant="destructive" className="absolute bottom-4 left-4 right-4 text-left max-w-sm mx-auto">
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertTitle>Camera Error</AlertTitle>
