@@ -39,18 +39,16 @@ export function AiStylist() {
   }, []);
 
   const startCamera = useCallback(async () => {
-    if (cameraState !== 'off') return;
-
+    stopCameraStream();
     setCameraState('starting');
     setError(null);
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
       const videoNode = videoRef.current;
       if (videoNode) {
         videoNode.srcObject = stream;
-        // The play logic is handled by the useEffect hook watching the ref
+        // The play logic is handled by the useEffect hook below
       } else {
         throw new Error("Video element not found");
       }
@@ -58,7 +56,7 @@ export function AiStylist() {
       console.error('Error starting camera stream:', err);
       let errorMessage = 'Could not access the camera. Please ensure it is not in use by another application.';
       if (err instanceof DOMException) {
-        if (err.name === "NotAllowedError") {
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
           errorMessage = 'Camera access was denied. Please enable permissions in your browser settings.';
         }
       }
@@ -66,12 +64,12 @@ export function AiStylist() {
       setCameraState('error');
       stopCameraStream();
     }
-  }, [facingMode, cameraState, stopCameraStream]);
+  }, [facingMode, stopCameraStream]);
 
-  // This effect correctly handles playing the video when the stream is ready
+  // This effect correctly handles playing the video when the stream is ready and the component is mounted
   useEffect(() => {
     const videoNode = videoRef.current;
-    if (videoNode && videoNode.srcObject && cameraState === 'starting') {
+    if (videoNode && videoNode.srcObject) {
       const handleCanPlay = async () => {
         try {
           await videoNode.play();
@@ -83,15 +81,20 @@ export function AiStylist() {
           stopCameraStream();
         }
       };
-
+      
       videoNode.addEventListener('canplay', handleCanPlay);
+      // If video is already playable, trigger it manually
+      if (videoNode.readyState >= 3) {
+          handleCanPlay();
+      }
+      
       return () => {
         videoNode.removeEventListener('canplay', handleCanPlay);
       };
     }
   }, [cameraState, stopCameraStream]);
   
-  // Cleanup effect
+  // Cleanup effect to stop the camera when the component unmounts
   useEffect(() => {
     return () => {
       stopCameraStream();
@@ -142,7 +145,8 @@ export function AiStylist() {
       } else {
         setGeneratedImages(result.images);
       }
-    } catch (err: any) {
+    } catch (err: any)
+{
       console.error("AI Generation Error:", err);
       let errorMessage = "The AI failed to generate outfits. Please try again.";
       if (err.message?.includes('400') && err.message?.includes('Unsupported MIME type')) {
@@ -169,8 +173,10 @@ export function AiStylist() {
 
   const handleToggleCamera = () => {
     setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
-    stopCameraStream();
-    setCameraState('off'); // Reset state to allow `startCamera` to re-trigger
+    // Setting state to 'off' triggers a re-run of startCamera in the parent component
+    setCameraState('off'); 
+    // This effect will be triggered by parent component state change
+    setTimeout(startCamera, 50);
   };
   
   useEffect(() => {

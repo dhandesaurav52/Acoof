@@ -44,17 +44,14 @@ export function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
-        // This is a robust guard clause. It ensures that we don't proceed until:
-        // 1. Authentication is no longer loading.
-        // 2. Product data is no longer loading.
-        // 3. There is an authenticated user who is the admin.
-        // 4. The list of all products is not empty (critical for preventing race conditions).
-        if (authLoading || productsLoading || !user || user.email !== ADMIN_EMAIL || allProducts.length === 0) {
-            // If any of these are true, we are not ready. If loading is finished and there's still
-            // no data, we will show the "no data" state, so we set loading to false.
-            if (!authLoading && !productsLoading) {
-                setLoadingData(false);
-            }
+        // This is a robust guard clause. It ensures that we don't proceed until all data is ready.
+        if (authLoading || productsLoading) {
+            return;
+        }
+        
+        // This check ensures we have an authenticated admin and product data before fetching.
+        if (!user || user.email !== ADMIN_EMAIL || allProducts.length === 0) {
+            setLoadingData(false);
             return;
         }
         
@@ -153,7 +150,7 @@ export function AdminDashboardContent() {
         fetchAdminData();
     }, [user, authLoading, allProducts, productsLoading]);
     
-    if (authLoading || loadingData) {
+    if (authLoading || loadingData || productsLoading) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -320,3 +317,5 @@ export function AdminDashboardContent() {
         </div>
     );
 }
+
+    
