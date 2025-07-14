@@ -6,47 +6,61 @@
  * - generateOutfitImages - A function that takes a photo data URI and returns three generated outfit images.
  */
 
-import { genkit, AIMedia, TextPart } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+import { AIMedia, TextPart } from 'genkit';
 import { z } from 'zod';
 import type { OutfitImagesInput } from '@/types';
 import { OutfitImagesInputSchema, OutfitImagesOutputSchema } from '@/types';
+import { ai } from '@/ai/genkit'; // Import the central AI instance
 
-// Initialize Genkit directly within the 'use server' file.
-// This is the correct pattern for Next.js Server Actions to prevent build errors.
-const ai = genkit({
-  plugins: [googleAI()],
-  // For production, we don't want to store flow state. In dev, we can use 'local'.
-  flowStateStore: process.env.NODE_ENV === 'production' ? 'none' : 'local',
-  // In production, we don't need verbose logging. In dev, it's helpful.
-  logLevel: process.env.NODE_ENV === 'production' ? 'silent' : 'debug',
-});
-
-
-export async function generateOutfitImages(
-  input: OutfitImagesInput
-): Promise<z.infer<typeof OutfitImagesOutputSchema>> {
-  const outfitImagesFlow = ai.defineFlow(
-    {
-      name: 'outfitImagesFlow',
-      inputSchema: OutfitImagesInputSchema,
-      outputSchema: OutfitImagesOutputSchema,
+// Define the generation prompt as a separate object for clarity and reusability.
+const outfitImagePrompt = ai.definePrompt(
+  {
+    name: 'outfitImagePrompt',
+    input: {
+      schema: z.object({
+        basePrompt: z.string(),
+        stylePrompt: z.string(),
+        photoDataUri: z.string(),
+      }),
     },
-    async (flowInput) => {
-      const model = googleAI.model('gemini-2.0-flash-preview-image-generation');
-      
-      let userDetails = "";
-      if (flowInput.height || flowInput.bodyType) {
-        userDetails += "The user has provided the following physical details to help you tailor the fit of the clothing:\n";
-        if (flowInput.height) {
-            userDetails += `- Height: ${flowInput.height}\n`;
-        }
-        if (flowInput.bodyType) {
-            userDetails += `- Body Type: ${flowInput.bodyType}\n`;
-        }
-      }
+    // No output schema is needed here as we are expecting an image.
+  },
+  async (input) => {
+    return {
+      prompt: [
+        { text: `${input.basePrompt}\n\n**OUTFIT STYLE:**\n${input.stylePrompt}` },
+        { media: { url: input.photoDataUri } },
+      ] as (TextPart | AIMedia)[],
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+    };
+  }
+);
 
-      const basePrompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes on the person in the photo while keeping the person identical.
+
+// Define the main flow for generating outfits.
+const outfitImagesFlow = ai.defineFlow(
+  {
+    name: 'outfitImagesFlow',
+    inputSchema: OutfitImagesInputSchema,
+    outputSchema: OutfitImagesOutputSchema,
+  },
+  async (flowInput) => {
+    
+    let userDetails = "";
+    if (flowInput.height || flowInput.bodyType) {
+      userDetails += "The user has provided the following physical details to help you tailor the fit of the clothing:\n";
+      if (flowInput.height) {
+          userDetails += `- Height: ${flowInput.height}\n`;
+      }
+      if (flowInput.bodyType) {
+          userDetails += `- Body Type: ${flowInput.bodyType}\n`;
+      }
+    }
+
+    const basePrompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes on the person in the photo while keeping the person identical.
 
 ${userDetails}
 **CRITICAL RULES:**
@@ -57,52 +71,52 @@ ${userDetails}
 
 Generate one new image that follows these rules.`;
 
-      const outfitPrompts = [
-        `A stylish **jacket-centric outfit**. This could feature a sleek leather jacket, a modern bomber jacket, or a classic denim jacket. Pair it with good, stylish jeans or pants and appropriate fashionable footwear for a complete, fashionable look.`,
-        `A sophisticated **blazer outfit**. The look should be modern and sharp, suitable for a smart-casual setting. The blazer should be the centerpiece, paired with well-fitting trousers or smart jeans and stylish shoes.`,
-        `A fashionable **hip-hop style outfit**. This should reflect modern streetwear trends. Think designer hoodies, graphic tees, baggy or distressed hip-hop style jeans, and iconic sneakers. The overall vibe should be cool, confident, and on-trend.`
-      ];
+    const outfitPrompts = [
+      `A stylish **jacket-centric outfit**. This could feature a sleek leather jacket, a modern bomber jacket, or a classic denim jacket. Pair it with good, stylish jeans or pants and appropriate fashionable footwear for a complete, fashionable look.`,
+      `A sophisticated **blazer outfit**. The look should be modern and sharp, suitable for a smart-casual setting. The blazer should be the centerpiece, paired with well-fitting trousers or smart jeans and stylish shoes.`,
+      `A fashionable **hip-hop style outfit**. This should reflect modern streetwear trends. Think designer hoodies, graphic tees, baggy or distressed hip-hop style jeans, and iconic sneakers. The overall vibe should be cool, confident, and on-trend.`
+    ];
 
-      const generatedImages: string[] = [];
+    const generatedImages: string[] = [];
 
-      try {
-        // Generate images sequentially to avoid timeouts and rate limiting issues on deployed environment.
-        for (const stylePrompt of outfitPrompts) {
-          const result = await ai.generate({
-            model,
-            prompt: [
-                { text: `${basePrompt}\n\n**OUTFIT STYLE:**\n${stylePrompt}` },
-                { media: { url: flowInput.photoDataUri } }
-            ] as (TextPart | AIMedia)[],
-            config: {
-              responseModalities: ['TEXT', 'IMAGE'],
-            },
-          });
+    try {
+      // Generate images sequentially to avoid timeouts and rate limiting issues on deployed environment.
+      for (const stylePrompt of outfitPrompts) {
+        const { media } = await outfitImagePrompt({
+            basePrompt,
+            stylePrompt,
+            photoDataUri: flowInput.photoDataUri,
+        });
 
-          const imageUrl = result.media?.url;
-          if (imageUrl) {
-            generatedImages.push(imageUrl);
-          } else {
-             // Log the partial failure but continue
-             console.error(`AI Generation failed for one style. API Result:`, JSON.stringify(result, null, 2));
-          }
+        const imageUrl = media?.url;
+        if (imageUrl) {
+          generatedImages.push(imageUrl);
+        } else {
+            // Log the partial failure but continue
+            console.error(`AI Generation failed for one style. Result did not contain a media URL.`);
         }
-        
-        if (generatedImages.length < 3) {
-            console.error(`AI Generation Incomplete. Expected 3 images, but got ${generatedImages.length}.`);
-            // We still return what we have, but throw an error so the user knows it was incomplete.
-            throw new Error(`The AI was unable to generate all 3 outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.`);
-        }
-
-        return { images: generatedImages };
-
-      } catch (error: any) {
-        console.error("Error in image generation flow:", error);
-        // Re-throw the error to be caught by the frontend for user feedback
-        throw error;
       }
-    }
-  );
+      
+      if (generatedImages.length < 3) {
+          console.error(`AI Generation Incomplete. Expected 3 images, but got ${generatedImages.length}.`);
+          // We still return what we have, but throw an error so the user knows it was incomplete.
+          throw new Error(`The AI was unable to generate all 3 outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.`);
+      }
 
-  return await outfitImagesFlow(input);
+      return { images: generatedImages };
+
+    } catch (error: any) {
+      console.error("Error in image generation flow:", error);
+      // Re-throw the error to be caught by the frontend for user feedback
+      throw error;
+    }
+  }
+);
+
+
+// This is the exported function that the client component will call.
+export async function generateOutfitImages(
+  input: OutfitImagesInput
+): Promise<z.infer<typeof OutfitImagesOutputSchema>> {
+    return await outfitImagesFlow(input);
 }
