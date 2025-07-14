@@ -1,4 +1,3 @@
-
 {
   "rules": {
     "products": {
@@ -13,15 +12,16 @@
       }
     },
     "orders": {
-      ".indexOn": ["userId"],
-      ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      ".indexOn": "userId",
+      ".read": "auth != null && (auth.token.email === 'admin@example.com' || root.child('users').child(auth.uid).child('orders').hasChild($orderId))",
       "$orderId": {
-        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
-        ".write": "auth != null && ((newData.child('userId').val() === auth.uid && !data.exists()) || auth.token.email === 'admin@example.com' || (data.child('userId').val() === auth.uid && (newData.child('status').val() === 'Cancelled' || newData.child('cancellationReason').val() != null)))"
+        // Allow write if user is admin OR if user is creating a new order OR if user is cancelling their own existing order
+        ".write": "auth != null && (auth.token.email === 'admin@example.com' || (newData.child('userId').val() === auth.uid && !data.exists()) || (data.child('userId').val() === auth.uid && (newData.child('status').val() === 'Cancelled' || newData.child('cancellationReason').val() != null)))"
       }
     },
     "notifications": {
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      // Allow write if user is authenticated (e.g., placing an order, cancelling)
       ".write": "auth != null"
     }
   }
