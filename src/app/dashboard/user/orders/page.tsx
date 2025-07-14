@@ -134,7 +134,6 @@ export default function UserOrdersPage() {
         if (!orderToCancel || !database || !user) return;
         setIsCancelling(true);
     
-        const orderRef = ref(database, `orders/${orderToCancel.id}`);
         const updates: { [key: string]: any } = {};
     
         const newStatus: OrderStatus = 'Cancelled';
