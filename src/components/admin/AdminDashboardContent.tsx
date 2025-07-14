@@ -44,25 +44,28 @@ export function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
+        // Wait for both authentication and product data to finish loading.
         if (authLoading || productsLoading) {
             return;
         }
 
+        // Ensure we have an admin user before proceeding.
         if (!user || user.email !== ADMIN_EMAIL) {
             setLoadingData(false);
             return;
         }
         
         async function fetchAdminData() {
+            // This condition is a crucial guard against a race condition.
+            // It prevents running analytics on an empty product list, which can happen briefly on load.
+            if (allProducts.length === 0) {
+                setLoadingData(false); // No products to analyze, so stop loading.
+                return;
+            }
+
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
-                }
-
-                // This condition prevents running analytics on an empty product list, which can happen briefly on load.
-                if (allProducts.length === 0) {
-                    setLoadingData(false);
-                    return;
                 }
 
                 const usersRef = ref(database, 'users');
