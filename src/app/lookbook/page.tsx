@@ -54,7 +54,7 @@ export default function LookbookPage() {
   
   const startCameraStream = useCallback(async () => {
     if (isStartingCamera || isCameraOn) return;
-
+  
     setIsStartingCamera(true);
     setError(null);
   
@@ -65,25 +65,26 @@ export default function LookbookPage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
+  
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // The play() method returns a promise. We should handle it.
-        videoRef.current.play().then(() => {
-            setIsCameraOn(true);
-        }).catch(e => {
-            console.error("Video play failed:", e);
-            setError("Could not start the video feed.");
-            stopCameraStream();
-        });
+        await videoRef.current.play(); // Wait for the video to start playing
+        setIsCameraOn(true); // Now update the state
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      if (err instanceof DOMException && err.name === "NotAllowedError") {
+      console.error('Error starting camera stream:', err);
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
           setError('Camera access was denied. Please enable permissions in your browser settings.');
-      } else {
+        } else if (err.name === "NotReadableError") {
           setError('Could not access the camera. Please ensure it is not in use by another application.');
+        } else {
+           setError('Could not start the video feed.');
+        }
+      } else {
+        setError('An unexpected error occurred while accessing the camera.');
       }
-      setIsCameraOn(false);
+      stopCameraStream(); // Clean up on failure
     } finally {
       setIsStartingCamera(false);
     }
