@@ -6,39 +6,23 @@
  * - generateOutfitImages - A function that takes a photo data URI and returns three generated outfit images.
  */
 
-import { AIMedia, TextPart } from 'genkit';
+import type { AIMedia, TextPart } from 'genkit';
 import { z } from 'zod';
 import type { OutfitImagesInput } from '@/types';
 import { OutfitImagesInputSchema, OutfitImagesOutputSchema } from '@/types';
 import { ai } from '@/ai/genkit'; // Import the central AI instance
 
-// Define the generation prompt as a separate object for clarity and reusability.
-const outfitImagePrompt = ai.definePrompt(
-  {
-    name: 'outfitImagePrompt',
-    input: {
-      schema: z.object({
-        basePrompt: z.string(),
-        stylePrompt: z.string(),
-        photoDataUri: z.string(),
-      }),
-    },
-    // No output schema is needed here as we are expecting an image.
-  },
-  async (input) => {
-    return {
-      prompt: [
-        { text: `${input.basePrompt}\n\n**OUTFIT STYLE:**\n${input.stylePrompt}` },
-        { media: { url: input.photoDataUri } },
-      ] as (TextPart | AIMedia)[],
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-    };
-  }
-);
-
+// This helper function constructs the multi-modal prompt for the AI.
+const getOutfitImagePrompt = (
+  basePrompt: string,
+  stylePrompt: string,
+  photoDataUri: string
+): (TextPart | AIMedia)[] => {
+  return [
+    { text: `${basePrompt}\n\n**OUTFIT STYLE:**\n${stylePrompt}` },
+    { media: { url: photoDataUri } },
+  ];
+};
 
 // Define the main flow for generating outfits.
 const outfitImagesFlow = ai.defineFlow(
@@ -82,10 +66,12 @@ Generate one new image that follows these rules.`;
     try {
       // Generate images sequentially to avoid timeouts and rate limiting issues on deployed environment.
       for (const stylePrompt of outfitPrompts) {
-        const { media } = await outfitImagePrompt({
-            basePrompt,
-            stylePrompt,
-            photoDataUri: flowInput.photoDataUri,
+        const { media } = await ai.generate({
+            model: 'googleai/gemini-2.0-flash-preview-image-generation',
+            prompt: getOutfitImagePrompt(basePrompt, stylePrompt, flowInput.photoDataUri),
+            config: {
+                responseModalities: ['TEXT', 'IMAGE'],
+            },
         });
 
         const imageUrl = media?.url;
