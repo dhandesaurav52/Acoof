@@ -14,37 +14,19 @@
     },
     "orders": {
       ".indexOn": "userId",
-      // Admin can read all orders
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
       "$orderId": {
-        // Users can read their own order
         ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
-        // Write rule for a single order
         ".write": "auth != null && (
-          // Admin can write anything
           auth.token.email === 'admin@example.com' ||
-          // A user can create a new order (multi-path write is validated at root)
           (!data.exists() && newData.child('userId').val() === auth.uid) ||
-          // A user can update their own existing order to cancel it
-          (data.child('userId').val() === auth.uid && (newData.child('status').val() === 'Cancelled' || newData.child('cancellationReason').val() != null))
+          (data.exists() && data.child('userId').val() === auth.uid && (newData.child('status').val() === 'Cancelled' || newData.child('cancellationReason').val() != null))
         )"
       }
     },
     "notifications": {
-      // Admin can read all notifications
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
-      // Anyone authenticated can write a notification (e.g., for new orders).
-      // This is safe because the multi-path update for order creation is validated as a whole.
       ".write": "auth != null"
-    },
-    // This root write rule is the key to allowing the multi-path update for order creation
-    ".write": "auth != null && auth.token.email !== 'admin@example.com' &&
-              // Validate that the user is creating a new order in their own name
-              newData.child('orders').child(newData.child('users').child(auth.uid).child('orders').val().keys()[0]).child('userId').val() === auth.uid &&
-              // Validate that they are only adding one order to their user profile
-              newData.child('users').child(auth.uid).child('orders').val().keys().length === 1 &&
-              // Validate that they are only adding one notification
-              newData.child('notifications').val().keys().length === 1
-             "
+    }
   }
 }
