@@ -72,6 +72,14 @@ export default function LookbookPage() {
       };
     }
   }, [isCameraOn, facingMode]);
+  
+  // This cleanup effect ensures that if the user navigates away, all state is reset.
+  useEffect(() => {
+    return () => {
+        setPhotoDataUri(null);
+        setGeneratedImages([]);
+    };
+  }, []);
 
 
   const handleStartCamera = () => {
