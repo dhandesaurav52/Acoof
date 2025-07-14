@@ -12,13 +12,9 @@
     ],
     "frameworksBackend": {
       "region": "us-central1"
-    },
-    "rewrites": [
-      {
-        "source": "**",
-        "apphosting": "acoof-app"
-      }
-    ]
+    }
+  },
+  "database": {
+    "rules": "database.rules.json"
   }
 }
-
