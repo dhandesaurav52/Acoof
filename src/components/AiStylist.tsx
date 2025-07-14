@@ -72,7 +72,13 @@ export function AiStylist() {
       const canvasNode = canvasRef.current;
       canvasNode.width = videoNode.videoWidth;
       canvasNode.height = videoNode.videoHeight;
-      canvasNode.getContext('2d')?.drawImage(videoNode, 0, 0, videoNode.videoWidth, videoNode.videoHeight);
+      const context = canvasNode.getContext('2d');
+      if (context) {
+        // Flip the context horizontally to match the mirrored video preview
+        context.translate(videoNode.videoWidth, 0);
+        context.scale(-1, 1);
+        context.drawImage(videoNode, 0, 0, videoNode.videoWidth, videoNode.videoHeight);
+      }
       const dataUri = canvasNode.toDataURL('image/jpeg');
       setPhotoDataUri(dataUri);
       stopCameraStream();
@@ -215,7 +221,7 @@ export function AiStylist() {
                               muted
                               onCanPlay={handleCanPlay}
                               className={cn(
-                                "w-full h-full object-cover",
+                                "w-full h-full object-cover -scale-x-100",
                                 cameraState !== 'on' && 'hidden'
                               )}
                            />
