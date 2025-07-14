@@ -46,7 +46,7 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
               alt={product.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             />
           </div>
           {product.isNew && (
@@ -73,7 +73,7 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
         <p className="text-xl font-semibold text-primary">₹{product.price.toFixed(2)}</p>
-        <Button onClick={handleAddToCartClick} size="sm" className="opacity-0 group-hover/card:opacity-100 transition-opacity">
+        <Button onClick={handleAddToCartClick} size="sm" className="opacity-0 group-hover/card:opacity-100 transition-opacity focus:opacity-100 md:opacity-0">
             <ShoppingCart className="mr-2 h-4 w-4" />
             Add
         </Button>
