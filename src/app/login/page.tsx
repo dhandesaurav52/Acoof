@@ -116,10 +116,11 @@ export default function LoginPage() {
       <div className="hidden bg-muted lg:block">
         <Image
           src="https://images.pexels.com/photos/322207/pexels-photo-322207.jpeg"
-          alt="Image"
+          alt="A stylish man in a leather jacket"
           width="1920"
           height="1080"
           className="h-full w-full object-cover dark:brightness-[0.4]"
+          data-ai-hint="man fashion"
         />
       </div>
     </div>

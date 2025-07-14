@@ -73,7 +73,7 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
         <p className="text-xl font-semibold text-primary">₹{product.price.toFixed(2)}</p>
-        <Button onClick={handleAddToCartClick} size="sm" className="opacity-0 group-hover/card:opacity-100 transition-opacity focus:opacity-100 md:opacity-0">
+        <Button onClick={handleAddToCartClick} size="sm" className="opacity-100 md:opacity-0 group-hover/card:opacity-100 transition-opacity focus:opacity-100">
             <ShoppingCart className="mr-2 h-4 w-4" />
             Add
         </Button>
