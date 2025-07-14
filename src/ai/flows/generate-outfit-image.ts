@@ -6,10 +6,19 @@
  * - generateOutfitImages - A function that takes a photo data URI and returns three generated outfit images.
  */
 
-import { ai } from '@/ai/dev';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 import type { OutfitImagesInput } from '@/types';
 import { OutfitImagesInputSchema, OutfitImagesOutputSchema } from '@/types';
+
+// Initialize Genkit directly within the 'use server' file.
+// This is the correct pattern for Next.js Server Actions.
+const ai = genkit({
+  plugins: [googleAI()],
+  flowStateStore: process.env.NODE_ENV === 'production' ? 'none' : 'local',
+  logLevel: process.env.NODE_ENV === 'production' ? 'silent' : 'debug',
+});
 
 
 export async function generateOutfitImages(
