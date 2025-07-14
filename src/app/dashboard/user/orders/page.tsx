@@ -372,7 +372,7 @@ export default function UserOrdersPage() {
                     <AlertDialogCancel onClick={() => { setOrderToCancel(null); setCancellationReason(''); }} disabled={isCancelling}>Back</AlertDialogCancel>
                     <AlertDialogAction 
                         onClick={handleConfirmCancel} 
-                        disabled={isCancelling} 
+                        disabled={isCancelling || !cancellationReason} 
                         className={buttonVariants({ variant: "destructive" })}
                     >
                         {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

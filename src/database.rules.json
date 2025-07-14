@@ -20,18 +20,17 @@
     },
     "orders": {
       ".indexOn": ["userId"],
-      ".read": "auth != null && auth.token.email === 'admin@example.com'",
       "$orderId": {
         ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
-        ".write": "auth != null && ((data.exists() && (newData.child('status').val() !== data.child('status').val() || newData.child('cancellationReason').val() !== data.child('cancellationReason').val())) || (!data.exists() && newData.child('userId').val() === auth.uid))",
-        ".validate": "newData.hasChildren(['id', 'userId', 'user', 'userEmail', 'date', 'total', 'status', 'shippingAddress', 'items', 'paymentMethod']) && newData.child('id').isString() && newData.child('id').val() === $orderId && newData.child('userId').isString() && newData.child('user').isString() && newData.child('userEmail').isString() && newData.child('date').isString() && newData.child('total').isNumber() && newData.child('status').isString() && newData.child('shippingAddress').isString() && newData.child('items').hasChildren() && newData.child('paymentMethod').isString()"
+        ".write": "auth != null && (auth.token.email === 'admin@example.com' || newData.child('userId').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['id', 'userId', 'user', 'userEmail', 'date', 'total', 'status', 'shippingAddress', 'items', 'paymentMethod'])"
       }
     },
     "notifications": {
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
-      ".write": "auth != null",
       "$notificationId": {
-         ".validate": "newData.hasChildren(['id', 'type', 'message', 'timestamp', 'read', 'orderId', 'userId', 'userEmail']) && (newData.child('type').val() === 'new_order' || newData.child('type').val() === 'order_cancellation' || newData.child('type').val() === 'order_return')"
+        ".write": "auth !== null",
+        ".validate": "newData.hasChildren(['id', 'type', 'message', 'timestamp', 'read', 'orderId', 'userId', 'userEmail'])"
       }
     }
   }
