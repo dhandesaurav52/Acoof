@@ -133,7 +133,7 @@ export default function LookbookPage() {
       const result = await generateOutfitImages({
         photoDataUri,
         height,
-        bodyType,
+        bodyType: bodyType === 'none' ? '' : bodyType,
       });
       if (result.images.length < 3) {
         setError("The AI was unable to generate all outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.");
@@ -325,7 +325,7 @@ export default function LookbookPage() {
                                                 <SelectValue placeholder="Select type" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">None</SelectItem>
+                                                <SelectItem value="none">None</SelectItem>
                                                 <SelectItem value="Slim">Slim</SelectItem>
                                                 <SelectItem value="Fit">Fit</SelectItem>
                                                 <SelectItem value="Healthy">Healthy</SelectItem>
