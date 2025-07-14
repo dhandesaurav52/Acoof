@@ -1,0 +1,28 @@
+
+{
+  "rules": {
+    "products": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email === 'admin@example.com'"
+    },
+    "users": {
+      ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')"
+      }
+    },
+    "orders": {
+      ".indexOn": "userId",
+      ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      "$orderId": {
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
+        ".write": "auth != null && (auth.token.email === 'admin@example.com' || (newData.child('userId').val() === auth.uid && !data.exists()) || (data.child('userId').val() === auth.uid && (newData.child('status').val() === 'Cancelled' || newData.child('cancellationReason').val() != null)))"
+      }
+    },
+    "notifications": {
+      ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      ".write": "auth != null"
+    }
+  }
+}
