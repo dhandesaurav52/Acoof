@@ -1,3 +1,4 @@
+
 'use server';
 
 import Razorpay from 'razorpay';
@@ -108,15 +109,19 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
         // Add notification for admin
         const notificationMessage = `New order #${newId} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
         const newNotificationRef = push(dbRef(database, 'notifications'));
-        updates[`/notifications/${newNotificationRef.key}`] = {
-            type: 'new_order',
-            message: notificationMessage,
-            timestamp: new Date().toISOString(),
-            read: false,
-            orderId: newId,
-            userId: orderData.userId,
-            userEmail: orderData.userEmail,
-        };
+        const notificationId = newNotificationRef.key;
+
+        if (notificationId) {
+            updates[`/notifications/${notificationId}`] = {
+                type: 'new_order',
+                message: notificationMessage,
+                timestamp: new Date().toISOString(),
+                read: false,
+                orderId: newId,
+                userId: orderData.userId,
+                userEmail: orderData.userEmail,
+            };
+        }
 
         await update(dbRef(database), updates);
         return { success: true, orderId: newId };
