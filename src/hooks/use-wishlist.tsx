@@ -22,13 +22,13 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         try {
-            const savedWishlist = localStorage.getItem('acoof-wishlist');
+            const savedWishlist = localStorage.getItem('urban-attire-wishlist');
             if (savedWishlist) {
                 setWishlist(JSON.parse(savedWishlist));
             }
         } catch (error) {
             console.error("Failed to parse wishlist from localStorage", error);
-            localStorage.removeItem('acoof-wishlist');
+            localStorage.removeItem('urban-attire-wishlist');
         } finally {
             setLoading(false);
         }
@@ -36,7 +36,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     
     useEffect(() => {
         if (!loading) {
-            localStorage.setItem('acoof-wishlist', JSON.stringify(wishlist));
+            localStorage.setItem('urban-attire-wishlist', JSON.stringify(wishlist));
         }
     }, [wishlist, loading]);
 

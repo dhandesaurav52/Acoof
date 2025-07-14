@@ -132,12 +132,12 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container flex h-20 items-center justify-between">
         <div className="flex items-center gap-6">
-            <Link href="/">
-                <Logo width={156} height={48} />
-            </Link>
-            <div className="hidden md:flex">
-                <NavLinks />
-            </div>
+          <Link href="/">
+            <Logo width={156} height={48} />
+          </Link>
+          <div className="hidden md:flex">
+            <NavLinks />
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2">

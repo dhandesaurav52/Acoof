@@ -1,3 +1,4 @@
+
  'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -44,7 +45,8 @@ export default function ProductDetailPage() {
         address: '',
         city: '',
         state: '',
-        pincode: ''
+        pincode: '',
+        phone: ''
     });
 
     const product = useMemo(() => products.find(p => p.id === id), [products, id]);
@@ -83,15 +85,15 @@ export default function ProductDetailPage() {
     }, [product, products]);
 
     const isNewAddressValid = useMemo(() => {
-        return newAddress.address.trim() && newAddress.city.trim() && newAddress.state.trim() && newAddress.pincode.trim();
+        return newAddress.address.trim() && newAddress.city.trim() && newAddress.state.trim() && newAddress.pincode.trim() && newAddress.phone.trim();
     }, [newAddress]);
 
     const isCheckoutDisabled = useMemo(() => {
         if (isProcessing || isCodProcessing || isFetchingLocation) return true;
-        if (shippingAddressOption === 'default') return !user?.address;
+        if (shippingAddressOption === 'default') return !user?.address || !user?.phone;
         if (shippingAddressOption === 'new') return !isNewAddressValid;
         return true;
-    }, [isProcessing, isCodProcessing, shippingAddressOption, user?.address, isNewAddressValid, isFetchingLocation]);
+    }, [isProcessing, isCodProcessing, shippingAddressOption, user?.address, user?.phone, isNewAddressValid, isFetchingLocation]);
 
     const handleNewAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
@@ -133,12 +135,13 @@ export default function ProductDetailPage() {
                 const address = data.results[0].formatted_address;
                 const addressComponents = data.results[0].address_components;
                 const getAddressComponent = (type: string) => addressComponents.find((c: any) => c.types.includes(type))?.long_name || '';
-                setNewAddress({
+                setNewAddress(prev => ({
+                  ...prev,
                   address: address,
                   city: getAddressComponent('locality'),
                   state: getAddressComponent('administrative_area_level_1'),
                   pincode: getAddressComponent('postal_code'),
-                });
+                }));
                 toast({
                   title: 'Location Updated',
                   description: 'Your address has been populated.',
@@ -228,17 +231,17 @@ export default function ProductDetailPage() {
     const getFinalShippingAddress = (): string | null => {
         if (shippingAddressOption === 'new') {
             if (!isNewAddressValid) {
-                toast({ variant: 'destructive', title: 'Address Incomplete', description: 'Please fill all fields for the new shipping address.' });
+                toast({ variant: 'destructive', title: 'Address Incomplete', description: 'Please fill all fields for the new shipping address, including phone number.' });
                 return null;
             }
-            return `${newAddress.address}, ${newAddress.city}, ${newAddress.state} ${newAddress.pincode}`;
+            return `${newAddress.address}, ${newAddress.city}, ${newAddress.state} ${newAddress.pincode}\nPhone: ${newAddress.phone}`;
         }
         
-        if (!user?.address) {
-            toast({ variant: 'destructive', title: 'Address Missing', description: 'Please add a shipping address to your profile before proceeding.' });
+        if (!user?.address || !user?.phone) {
+            toast({ variant: 'destructive', title: 'Address or Phone Missing', description: 'Please add a shipping address and phone number to your profile before proceeding.' });
             return null;
         }
-        return user.address;
+        return `${user.address}, ${user.city}, ${user.state} ${user.pincode}\nPhone: ${user.phone}`;
     };
 
 
@@ -278,7 +281,7 @@ export default function ProductDetailPage() {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
             amount: orderResponse.amount,
             currency: orderResponse.currency,
-            name: 'Acoof',
+            name: 'Urban Attire',
             description: `Payment for ${product.name}`,
             order_id: orderResponse.id,
             handler: async function (response: any) {
@@ -531,16 +534,15 @@ export default function ProductDetailPage() {
                                                     Change
                                                 </Button>
                                             </div>
-                                            {user?.address ? (
-                                                <address className="text-sm text-muted-foreground not-italic pl-6">
+                                            {user?.address && user?.phone ? (
+                                                <address className="text-sm text-muted-foreground not-italic pl-6 whitespace-pre-wrap">
                                                     <p className="font-medium text-foreground">{user.displayName}</p>
-                                                    <p>{user.address}</p>
-                                                    <p>{user.city}, {user.state} {user.pincode}</p>
-                                                    <p>{user.phone}</p>
+                                                    <p>{user.address}, {user.city}, {user.state} {user.pincode}</p>
+                                                    <p>Phone: {user.phone}</p>
                                                 </address>
                                             ) : (
                                                 <div className="text-sm text-destructive pl-6">
-                                                    No default address found. Please add one in your profile.
+                                                    No default address and/or phone number found. Please add them in your profile.
                                                 </div>
                                             )}
                                         </div>
@@ -556,7 +558,10 @@ export default function ProductDetailPage() {
                                                         <Input id="city" placeholder="City" value={newAddress.city} onChange={handleNewAddressChange} />
                                                         <Input id="state" placeholder="State" value={newAddress.state} onChange={handleNewAddressChange} />
                                                     </div>
-                                                    <Input id="pincode" placeholder="Pincode" value={newAddress.pincode} onChange={handleNewAddressChange} />
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <Input id="pincode" placeholder="Pincode" value={newAddress.pincode} onChange={handleNewAddressChange} />
+                                                        <Input id="phone" placeholder="Phone Number" value={newAddress.phone} onChange={handleNewAddressChange} />
+                                                    </div>
                                                     <div className="flex justify-end pt-1">
                                                         <Button variant="link" size="sm" onClick={handleCurrentLocation} type="button" className="p-0 h-auto text-sm text-primary" disabled={isFetchingLocation}>
                                                             {isFetchingLocation ? (

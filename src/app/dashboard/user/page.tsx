@@ -131,13 +131,18 @@ export default function UserDashboardPage() {
           const data = await response.json();
 
           if (data.status === 'OK' && data.results[0]) {
-            const address = data.results[0].formatted_address;
             const addressComponents = data.results[0].address_components;
             const getAddressComponent = (type: string) => addressComponents.find((c: any) => c.types.includes(type))?.long_name || '';
+            
+            const streetNumber = getAddressComponent('street_number');
+            const route = getAddressComponent('route');
+            const sublocality = getAddressComponent('sublocality_level_1');
+
+            const fullAddress = [streetNumber, route, sublocality].filter(Boolean).join(', ');
 
             setEditedUser(prev => ({
               ...prev,
-              address: address,
+              address: fullAddress,
               city: getAddressComponent('locality'),
               state: getAddressComponent('administrative_area_level_1'),
               pincode: getAddressComponent('postal_code'),
