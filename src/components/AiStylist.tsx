@@ -50,7 +50,7 @@ export function AiStylist() {
       const videoNode = videoRef.current;
       if (videoNode) {
         videoNode.srcObject = stream;
-        // The play logic is now handled by the useEffect hook watching the ref
+        // The play logic is handled by the useEffect hook watching the ref
       } else {
         throw new Error("Video element not found");
       }
@@ -101,7 +101,7 @@ export function AiStylist() {
   const handleCapture = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (video && canvas && cameraState === 'on') {
+    if (video && canvas && cameraState === 'on' && video.videoWidth > 0) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
@@ -334,3 +334,5 @@ export function AiStylist() {
       </div>
   );
 }
+
+    
