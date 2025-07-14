@@ -6,7 +6,7 @@
  * - generateOutfitImages - A function that takes a photo data URI and returns three generated outfit images.
  */
 
-import { genkit } from 'genkit';
+import { genkit, AIMedia, GenerationCommon, TextPart } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 import type { OutfitImagesInput } from '@/types';
@@ -33,7 +33,7 @@ export async function generateOutfitImages(
       outputSchema: OutfitImagesOutputSchema,
     },
     async (flowInput) => {
-      const model = 'googleai/gemini-2.0-flash-preview-image-generation';
+      const model = googleAI.model('gemini-2.0-flash-preview-image-generation');
       
       let userDetails = "";
       if (flowInput.height || flowInput.bodyType) {
@@ -73,7 +73,7 @@ Generate one new image that follows these rules.`;
             prompt: [
                 { text: `${basePrompt}\n\n**OUTFIT STYLE:**\n${stylePrompt}` },
                 { media: { url: flowInput.photoDataUri } }
-            ],
+            ] as (TextPart | AIMedia)[],
             config: {
               responseModalities: ['TEXT', 'IMAGE'],
             },

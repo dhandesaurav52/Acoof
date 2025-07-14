@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle, Video } from 'lucide-react';
+import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle, Video, User, Check, Ban } from 'lucide-react';
 import { generateOutfitImages } from '@/ai/flows/generate-outfit-image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LookbookPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -31,68 +32,73 @@ export default function LookbookPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
     // Cleanup on unmount
     return () => {
-        setPhotoDataUri(null);
-        setGeneratedImages([]);
-        setError(null);
-        if (videoRef.current && videoRef.current.srcObject) {
-            const currentStream = videoRef.current.srcObject as MediaStream;
-            currentStream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null;
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
         }
     };
   }, []);
 
-  useEffect(() => {
-    // This effect handles turning the stream on and off
-    let stream: MediaStream | null = null;
-    if (isCameraOn && isMounted) {
-      const enableStream = async () => {
-        setIsStartingCamera(true);
-        setError(null);
-        if (typeof window === 'undefined' || !navigator.mediaDevices) {
-            setError("This browser does not support camera access.");
-            setHasCameraPermission(false);
-            setIsStartingCamera(false);
-            setIsCameraOn(false);
-            return;
-        }
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
-          setHasCameraPermission(true);
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } catch (err) {
-          console.error('Error accessing camera:', err);
-          setError('Camera access was denied. Please enable permissions in your browser settings.');
-          setHasCameraPermission(false);
-          setIsCameraOn(false);
-        } finally {
-            setIsStartingCamera(false);
-        }
-      };
-      enableStream();
+  const stopCameraStream = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraOn(false);
+  }, []);
+
+  const startCameraStream = useCallback(async () => {
+    if (isCameraOn || isStartingCamera) return;
+
+    setIsStartingCamera(true);
+    setError(null);
+
+    if (streamRef.current) {
+      stopCameraStream();
     }
 
-    // Cleanup function to stop the stream
-    return () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
-    };
-  }, [isCameraOn, facingMode, isMounted]);
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setError("This browser does not support camera access.");
+      setHasCameraPermission(false);
+      setIsStartingCamera(false);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => console.error("Video play failed:", e));
+      }
+      setHasCameraPermission(true);
+      setIsCameraOn(true);
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      setError('Camera access was denied. Please enable permissions in your browser settings.');
+      setHasCameraPermission(false);
+      setIsCameraOn(false);
+    } finally {
+      setIsStartingCamera(false);
+    }
+  }, [facingMode, isCameraOn, isStartingCamera, stopCameraStream]);
+
 
   const handleStartCamera = () => {
-    setIsCameraOn(true);
+    startCameraStream();
   };
 
   const handleCapture = () => {
-    if (videoRef.current && canvasRef.current) {
+    if (videoRef.current && canvasRef.current && videoRef.current.readyState >= 3) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       canvas.width = video.videoWidth;
@@ -107,12 +113,14 @@ export default function LookbookPage() {
         const dataUri = canvas.toDataURL('image/jpeg');
         setPhotoDataUri(dataUri);
         
-        if (video.srcObject) {
-            const stream = video.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-        }
-        setIsCameraOn(false);
+        stopCameraStream();
       }
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Camera Not Ready",
+            description: "Please wait a moment for the camera feed to start.",
+        })
     }
   };
   
@@ -158,6 +166,14 @@ export default function LookbookPage() {
 
   const handleToggleCamera = () => {
     setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
+    // Restart the camera with the new facing mode
+    if (isCameraOn) {
+        stopCameraStream();
+        // Use a timeout to allow the old stream to fully release before starting the new one
+        setTimeout(() => {
+            startCameraStream();
+        }, 100);
+    }
   };
 
   useEffect(() => {
@@ -246,32 +262,70 @@ export default function LookbookPage() {
             <div className="max-w-md mx-auto">
                 <Card className="overflow-hidden">
                     <CardContent className="p-4 sm:p-6">
-                        {isCameraOn ? (
-                            <div className="space-y-4">
-                                <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-muted">
-                                    <video ref={videoRef} className={cn("w-full h-full object-cover", facingMode === 'user' && "transform -scale-x-100")} autoPlay muted playsInline />
-                                    <canvas ref={canvasRef} className="hidden" />
-                                     <Button onClick={handleToggleCamera} variant="outline" size="icon" className="absolute top-2 right-2 z-10 bg-background/50 backdrop-blur-sm rounded-full">
+                        <div className="space-y-4">
+                            <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                                <video 
+                                    ref={videoRef} 
+                                    className={cn(
+                                        "w-full h-full object-cover transition-opacity duration-300",
+                                        facingMode === 'user' && "transform -scale-x-100",
+                                        isCameraOn ? "opacity-100" : "opacity-0"
+                                    )}
+                                    autoPlay 
+                                    muted 
+                                    playsInline 
+                                />
+                                <canvas ref={canvasRef} className="hidden" />
+
+                                {!isCameraOn && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                                        <div className="p-3 bg-primary/10 rounded-full mb-4">
+                                            {isStartingCamera ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Camera className="h-6 w-6 text-primary" />}
+                                        </div>
+                                        <h3 className="text-lg font-bold font-headline">Ready for your close-up?</h3>
+                                        <p className="text-muted-foreground max-w-xs mt-2 mb-4">
+                                            Turn on your camera to get started with the AI Stylist.
+                                        </p>
+                                        <Button onClick={handleStartCamera} disabled={isStartingCamera}>
+                                            {isStartingCamera ? 'Starting...' : 'Turn on Camera'}
+                                        </Button>
+                                    </div>
+                                )}
+                                
+                                {hasCameraPermission === false && !isStartingCamera && (
+                                    <Alert variant="destructive" className="absolute bottom-4 left-4 right-4 text-left max-w-sm mx-auto">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <AlertTitle>Camera Error</AlertTitle>
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
+
+                                {isCameraOn && (
+                                    <Button onClick={handleToggleCamera} variant="outline" size="icon" className="absolute top-2 right-2 z-10 bg-background/50 backdrop-blur-sm rounded-full">
                                         <RefreshCw className="h-5 w-5" />
                                         <span className="sr-only">Flip Camera</span>
                                     </Button>
-                                </div>
-                                <Button onClick={handleCapture} className="w-full">
+                                )}
+                            </div>
+
+                            <div className={cn("transition-opacity", isCameraOn ? 'opacity-100' : 'opacity-50 pointer-events-none')}>
+                                <Button onClick={handleCapture} className="w-full" disabled={!isCameraOn}>
                                     <Camera className="mr-2 h-5 w-5" />
                                     Capture Photo
                                 </Button>
-                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div className="grid grid-cols-2 gap-4 pt-4">
                                     <div>
-                                        <Label htmlFor="height" className="text-sm">Height</Label>
+                                        <Label htmlFor="height" className="text-sm">Height (Optional)</Label>
                                         <Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="e.g. 5'10&quot;" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="bodyType" className="text-sm">Body Type</Label>
+                                        <Label htmlFor="bodyType" className="text-sm">Body Type (Optional)</Label>
                                         <Select value={bodyType} onValueChange={setBodyType}>
                                             <SelectTrigger id="bodyType">
                                                 <SelectValue placeholder="Select type" />
                                             </SelectTrigger>
                                             <SelectContent>
+                                                <SelectItem value="">None</SelectItem>
                                                 <SelectItem value="Slim">Slim</SelectItem>
                                                 <SelectItem value="Fit">Fit</SelectItem>
                                                 <SelectItem value="Healthy">Healthy</SelectItem>
@@ -281,39 +335,7 @@ export default function LookbookPage() {
                                     </div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center text-center rounded-lg bg-secondary/30 min-h-[350px] p-6">
-                                <div className="p-3 bg-primary/10 rounded-full mb-4">
-                                    <Camera className="h-6 w-6 text-primary" />
-                                </div>
-                                <h3 className="text-lg font-bold font-headline">Ready for your close-up?</h3>
-                                <p className="text-muted-foreground max-w-xs mt-2 mb-4">
-                                    Turn on your camera to get started with the AI Stylist.
-                                </p>
-                                <Button onClick={handleStartCamera} disabled={isStartingCamera}>
-                                    {isStartingCamera ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Starting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Video className="mr-2 h-4 w-4" />
-                                            Turn on Camera
-                                        </>
-                                    )}
-                                </Button>
-                                {error && !isStartingCamera && (
-                                    <Alert variant="destructive" className="mt-6 text-left max-w-sm">
-                                        <AlertTriangle className="h-4 w-4" />
-                                        <AlertTitle>Camera Error</AlertTitle>
-                                        <AlertDescription>
-                                            {error}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-                            </div>
-                        )}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
