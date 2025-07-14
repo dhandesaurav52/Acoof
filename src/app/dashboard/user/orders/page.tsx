@@ -145,7 +145,7 @@ export default function UserOrdersPage() {
         
         // Path to add an admin notification
         const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
-        const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id}.`;
+        const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id.slice(-6).toUpperCase()}.`;
         const newNotificationRef = push(ref(database, 'notifications'));
         updates[`/notifications/${newNotificationRef.key}`] = {
             type: notificationType,
@@ -337,7 +337,7 @@ export default function UserOrdersPage() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will {orderToCancel?.status === 'Delivered' ? 'initiate a return for' : 'cancel'} your order <span className="font-semibold">#{orderToCancel?.id}</span>.
+                        This action cannot be undone. This will {orderToCancel?.status === 'Delivered' ? 'initiate a return for' : 'cancel'} your order <span className="font-semibold">#{orderToCancel?.id.slice(-6).toUpperCase()}</span>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="py-2">
@@ -368,5 +368,3 @@ export default function UserOrdersPage() {
     </div>
   );
 }
-
-    
