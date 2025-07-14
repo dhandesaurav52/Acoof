@@ -3,7 +3,7 @@
 
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
-import type { Order, Product } from '@/types';
+import type { Order, Product, Notification } from '@/types';
 import { database } from '@/lib/firebase';
 import { ref as dbRef, update, push, set } from "firebase/database";
 import { products as localProducts } from '@/lib/data';
@@ -106,12 +106,12 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
-        const notificationMessage = `New order #${newId.slice(-6).toUpperCase()} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
         const newNotificationRef = push(dbRef(database, 'notifications'));
         const notificationId = newNotificationRef.key;
 
         if (notificationId) {
-            updates[`/notifications/${notificationId}`] = {
+            const notificationMessage = `New order #${newId.slice(-6).toUpperCase()} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
+            const newNotification: Notification = {
                 id: notificationId,
                 type: 'new_order',
                 message: notificationMessage,
@@ -121,6 +121,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
                 userId: orderData.userId,
                 userEmail: orderData.userEmail,
             };
+            updates[`/notifications/${notificationId}`] = newNotification;
         }
 
         await update(dbRef(database), updates);

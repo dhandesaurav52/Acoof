@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderStatus, Notification } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { auth, database } from '@/lib/firebase';
 import { ref, get, update, push } from 'firebase/database';
@@ -155,12 +155,12 @@ export default function UserOrdersPage() {
         
         // Path to add an admin notification
         const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
-        const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id.slice(-6).toUpperCase()}.`;
         const newNotificationRef = push(ref(database, 'notifications'));
         const notificationId = newNotificationRef.key;
 
         if (notificationId) {
-            updates[`/notifications/${notificationId}`] = {
+            const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id.slice(-6).toUpperCase()}.`;
+            const newNotification: Notification = {
                 id: notificationId,
                 type: notificationType,
                 message: notificationMessage,
@@ -170,6 +170,7 @@ export default function UserOrdersPage() {
                 userId: user.uid,
                 userEmail: user.email,
             };
+            updates[`/notifications/${notificationId}`] = newNotification;
         }
     
         try {
