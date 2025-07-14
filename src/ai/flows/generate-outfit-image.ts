@@ -52,9 +52,11 @@ Generate one new image that follows these rules.`;
         `A fashionable **hip-hop style outfit**. This should reflect modern streetwear trends. Think designer hoodies, graphic tees, baggy or distressed hip-hop style jeans, and iconic sneakers. The overall vibe should be cool, confident, and on-trend.`
       ];
 
+      const generatedImages: string[] = [];
+
       try {
-        const imagePromises = outfitPrompts.map((stylePrompt) => 
-          ai.generate({
+        for (const stylePrompt of outfitPrompts) {
+          const result = await ai.generate({
             model,
             prompt: [
                 { text: `${basePrompt}\n\n**OUTFIT STYLE:**\n${stylePrompt}` },
@@ -63,21 +65,24 @@ Generate one new image that follows these rules.`;
             config: {
               responseModalities: ['TEXT', 'IMAGE'],
             },
-          })
-        );
-        
-        const results = await Promise.all(imagePromises);
+          });
 
-        const images = results
-            .map(result => result.media?.url)
-            .filter((url): url is string => !!url);
+          const imageUrl = result.media?.url;
+          if (imageUrl) {
+            generatedImages.push(imageUrl);
+          } else {
+             // Log the partial failure but continue
+             console.error(`AI Generation failed for one style. API Result:`, JSON.stringify(result, null, 2));
+          }
+        }
         
-        if (images.length < 3) {
-            console.error(`AI Generation Incomplete. Expected 3 images, but got ${images.length}. API Results:`, JSON.stringify(results, null, 2));
+        if (generatedImages.length < 3) {
+            console.error(`AI Generation Incomplete. Expected 3 images, but got ${generatedImages.length}.`);
+            // We still return what we have, but throw an error so the user knows it was incomplete.
             throw new Error(`The AI was unable to generate all 3 outfits. This can happen if the photo is unclear or triggers a safety filter. Please try again with a different photo.`);
         }
 
-        return { images };
+        return { images: generatedImages };
 
       } catch (error: any) {
         console.error("Error in image generation flow:", error);
