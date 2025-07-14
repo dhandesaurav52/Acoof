@@ -133,7 +133,8 @@ export function Header() {
       <div className="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <Logo width={160} height={50} />
+            <Logo width={120} height={40} className="md:hidden" />
+            <Logo width={160} height={50} className="hidden md:block" />
           </Link>
           <div className="hidden md:flex">
             <NavLinks />
@@ -208,7 +209,7 @@ export function Header() {
                 </SheetHeader>
                 <div className="p-4">
                   <Link href="/" className="mb-8 flex items-center" onClick={() => setIsMenuOpen(false)}>
-                    <Logo width={160} height={50} />
+                    <Logo width={120} height={40} />
                   </Link>
                   <div className="flex flex-col items-start gap-3 text-base">
                     <NavLinks className="flex-col items-start gap-3 text-base"/>

@@ -19,6 +19,11 @@ export function Footer() {
 
   const year = new Date().getFullYear();
 
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Logic for subscription can be added here
+  };
+
   return (
     <footer className="border-t bg-secondary">
       <div className="container py-12">
@@ -31,10 +36,10 @@ export function Footer() {
              <div className="space-y-2">
                 <h4 className="font-semibold text-foreground">Join Our Newsletter</h4>
                 <p className="text-sm text-muted-foreground">Get exclusive updates and offers straight to your inbox.</p>
-                <div className="flex w-full max-w-sm items-center space-x-2">
-                    <Input type="email" placeholder="Email" />
+                <form onSubmit={handleSubscribe} className="flex w-full max-w-sm items-center space-x-2">
+                    <Input type="email" placeholder="Email" required />
                     <Button type="submit">Subscribe</Button>
-                </div>
+                </form>
             </div>
           </div>
           
