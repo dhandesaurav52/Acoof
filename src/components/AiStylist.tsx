@@ -39,6 +39,8 @@ export function AiStylist() {
   }, []);
 
   const startCamera = useCallback(async () => {
+    if (cameraState !== 'off') return;
+
     stopCameraStream();
     setCameraState('starting');
     setError(null);
@@ -48,7 +50,7 @@ export function AiStylist() {
       const videoNode = videoRef.current;
       if (videoNode) {
         videoNode.srcObject = stream;
-        // The play logic is handled by the useEffect hook below
+        // The `onloadedmetadata` event listener in the useEffect hook will handle play().
       } else {
         throw new Error("Video element not found");
       }
@@ -64,16 +66,18 @@ export function AiStylist() {
       setCameraState('error');
       stopCameraStream();
     }
-  }, [facingMode, stopCameraStream]);
+  }, [facingMode, stopCameraStream, cameraState]);
 
-  // This effect correctly handles playing the video when the stream is ready and the component is mounted
+  // This effect correctly handles playing the video when the stream is ready
   useEffect(() => {
     const videoNode = videoRef.current;
     if (videoNode && videoNode.srcObject) {
-      const handleCanPlay = async () => {
+      // This event fires when the browser has loaded metadata for the video,
+      // which includes its dimensions and duration. This is the safest point to call play().
+      const handleMetadataLoaded = async () => {
         try {
           await videoNode.play();
-          setCameraState('on');
+          setCameraState('on'); // Set state to 'on' only after play is successful
         } catch (playError) {
           console.error("Video play failed:", playError);
           setError("Could not start video playback.");
@@ -81,19 +85,15 @@ export function AiStylist() {
           stopCameraStream();
         }
       };
-      
-      videoNode.addEventListener('canplay', handleCanPlay);
-      // If video is already playable, trigger it manually
-      if (videoNode.readyState >= 3) {
-          handleCanPlay();
-      }
+
+      videoNode.addEventListener('loadedmetadata', handleMetadataLoaded);
       
       return () => {
-        videoNode.removeEventListener('canplay', handleCanPlay);
+        videoNode.removeEventListener('loadedmetadata', handleMetadataLoaded);
       };
     }
-  }, [cameraState, stopCameraStream]);
-  
+  }, []); // The empty dependency array ensures this setup runs only once. `videoRef.current` is stable.
+
   // Cleanup effect to stop the camera when the component unmounts
   useEffect(() => {
     return () => {
@@ -104,17 +104,18 @@ export function AiStylist() {
   const handleCapture = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (video && canvas && cameraState === 'on' && video.videoWidth > 0) {
+    if (video && canvas && cameraState === 'on' && video.readyState >= 3) { // Check if video has enough data
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
+        // Flip the image horizontally if it's the user-facing camera
         if (facingMode === 'user') {
             context.translate(canvas.width, 0);
             context.scale(-1, 1);
         }
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUri = canvas.toDataURL('image/jpeg');
+        const dataUri = canvas.toDataURL('image/jpeg'); // Explicitly set MIME type
         setPhotoDataUri(dataUri);
         stopCameraStream();
         setCameraState('off');
@@ -145,8 +146,7 @@ export function AiStylist() {
       } else {
         setGeneratedImages(result.images);
       }
-    } catch (err: any)
-{
+    } catch (err: any) {
       console.error("AI Generation Error:", err);
       let errorMessage = "The AI failed to generate outfits. Please try again.";
       if (err.message?.includes('400') && err.message?.includes('Unsupported MIME type')) {
@@ -173,12 +173,12 @@ export function AiStylist() {
 
   const handleToggleCamera = () => {
     setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
-    // Setting state to 'off' triggers a re-run of startCamera in the parent component
+    // Setting state to 'off' will allow startCamera to run again
     setCameraState('off'); 
-    // This effect will be triggered by parent component state change
-    setTimeout(startCamera, 50);
+    setTimeout(startCamera, 50); // Give a brief moment for cleanup before restarting
   };
   
+  // Effect to automatically start generation after a photo is captured
   useEffect(() => {
     if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
       handleGenerate();
@@ -340,5 +340,3 @@ export function AiStylist() {
       </div>
   );
 }
-
-    
