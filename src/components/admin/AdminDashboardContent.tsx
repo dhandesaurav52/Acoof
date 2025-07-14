@@ -36,7 +36,7 @@ const categoryChartConfig = {
 
 export function AdminDashboardContent() {
     const { user, loading: authLoading } = useAuth();
-    const { products: allProducts } = useProducts();
+    const { products: allProducts, loading: productsLoading } = useProducts();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [salesData, setSalesData] = useState<{ name: string; sales: number }[]>([]);
     const [categorySalesData, setCategorySalesData] = useState<{ name: string; sales: number }[]>([]);
@@ -44,24 +44,25 @@ export function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
-        // Guard 1: Wait until authentication is resolved.
-        if (authLoading) {
+        if (authLoading || productsLoading) {
             return;
         }
 
-        // Guard 2: If auth is done, but the user is not the admin, stop immediately.
-        // The AdminLayout will handle the redirect. This prevents any data fetch attempt.
         if (!user || user.email !== ADMIN_EMAIL) {
             setLoadingData(false);
             return;
         }
         
         async function fetchAdminData() {
-            // At this point, we are certain the user is an authenticated admin.
-            // It is now safe to fetch data.
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
+                }
+
+                if (allProducts.length === 0) {
+                     // This condition prevents running analytics on an empty product list, which can happen briefly on load.
+                    setLoadingData(false);
+                    return;
                 }
 
                 const usersRef = ref(database, 'users');
@@ -76,9 +77,11 @@ export function AdminDashboardContent() {
                 if (usersSnapshot.exists()) {
                     const usersData = usersSnapshot.val();
                     if (typeof usersData === 'object' && usersData !== null) {
-                        const totalUsers = Object.keys(usersData).length;
-                        const hasAdmin = Object.values(usersData).some((u: any) => u && typeof u === 'object' && u.email === ADMIN_EMAIL);
-                        usersCount = hasAdmin ? totalUsers - 1 : totalUsers;
+                        usersCount = Object.keys(usersData).length;
+                        if (usersCount > 0) {
+                            const hasAdmin = Object.values(usersData).some((u: any) => u && typeof u === 'object' && u.email === ADMIN_EMAIL);
+                            if (hasAdmin) usersCount--;
+                        }
                     }
                 }
                 
@@ -100,11 +103,15 @@ export function AdminDashboardContent() {
 
                         deliveredOrders.forEach((order: any) => {
                             if (!order.date) return;
-                            const orderDate = new Date(order.date);
-                            if (isNaN(orderDate.getTime())) return;
-                            const orderKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
-                            const monthData = monthlySalesData.find(d => d.key === orderKey);
-                            if (monthData) monthData.sales++;
+                            try {
+                                const orderDate = new Date(order.date);
+                                if (isNaN(orderDate.getTime())) return;
+                                const orderKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
+                                const monthData = monthlySalesData.find(d => d.key === orderKey);
+                                if (monthData) monthData.sales++;
+                            } catch (e) {
+                                console.warn(`Could not parse date for order ${order.id}: ${order.date}`);
+                            }
                         });
                         setSalesData(monthlySalesData.reverse().map(d => ({ name: d.name, sales: d.sales })));
                         
@@ -144,7 +151,7 @@ export function AdminDashboardContent() {
         }
 
         fetchAdminData();
-    }, [user, authLoading, allProducts]);
+    }, [user, authLoading, allProducts, productsLoading]);
     
     if (loadingData) {
         return (
