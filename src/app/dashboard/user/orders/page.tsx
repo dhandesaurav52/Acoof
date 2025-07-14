@@ -133,50 +133,56 @@ export default function UserOrdersPage() {
     const handleConfirmCancel = async () => {
         if (!orderToCancel || !database || !user) return;
         setIsCancelling(true);
+
         const orderRef = ref(database, `orders/${orderToCancel.id}`);
+        const updates: { [key: string]: any } = {};
+
+        // Prepare updates for the order itself
+        updates[`/orders/${orderToCancel.id}/status`] = 'Cancelled';
+        updates[`/orders/${orderToCancel.id}/cancellationReason`] = cancellationReason || 'No reason provided';
+        
+        // Prepare updates for the admin notification
+        const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
+        const notificationMessage = `User ${user.displayName || user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id}.`;
+        const newNotificationRef = push(ref(database, 'notifications'));
+        updates[`/notifications/${newNotificationRef.key}`] = {
+            type: notificationType,
+            message: notificationMessage,
+            timestamp: new Date().toISOString(),
+            read: false,
+            orderId: orderToCancel.id,
+            userId: user.uid,
+            userEmail: user.email,
+        };
+
         try {
-            await update(orderRef, { status: 'Cancelled', cancellationReason: cancellationReason || 'No reason provided' });
+            await update(ref(database), updates);
 
-            // Add notification for admin
-            const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
-            const notificationMessage = `User ${user.displayName || user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id}.`;
-            
-            const notificationsRef = ref(database, 'notifications');
-            const newNotificationRef = push(notificationsRef);
-            
-            await set(newNotificationRef, {
-                type: notificationType,
-                message: notificationMessage,
-                timestamp: new Date().toISOString(),
-                read: false,
-                orderId: orderToCancel.id,
-                userId: user.uid,
-                userEmail: user.email,
-            });
-
+            // Update local state on success
             setOrders(prevOrders =>
                 prevOrders.map(order =>
                     order.id === orderToCancel.id ? { ...order, status: 'Cancelled' as OrderStatus, cancellationReason: cancellationReason || 'No reason provided' } : order
                 )
             );
+
             toast({ 
                 title: orderToCancel.status === 'Delivered' ? "Return Initiated" : "Order Cancelled", 
                 description: orderToCancel.status === 'Delivered' ? "Your return request has been submitted." : "Your order has been successfully cancelled." 
             });
+
         } catch (error: any) {
-            // This is a special check to handle a "race condition" where the user
-            // logs out immediately after cancelling. The update fails with a
-            // permission error, but we don't want to show a confusing error
-            // toast on the login screen. We check the live auth state.
             if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
                 console.warn("Order cancellation permission denied, user has logged out.");
             } else {
-                // If we are here, it's a genuine error.
                 console.error('Failed to cancel order:', error);
+                let errorMessage = 'An unexpected error occurred while cancelling the order.';
+                if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                    errorMessage = "Permission Denied: Could not update order status. Please check your Firebase Database security rules to ensure you can modify your own orders.";
+                }
                 toast({
                     variant: 'destructive',
                     title: 'Cancellation Failed',
-                    description: 'An unexpected error occurred while cancelling the order.',
+                    description: errorMessage,
                 });
             }
         } finally {
