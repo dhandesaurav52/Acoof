@@ -6,9 +6,8 @@
       ".write": "auth != null && auth.token.email === 'admin@example.com'"
     },
     "users": {
-      ".read": "auth != null && auth.token.email === 'admin@example.com'",
+      ".read": "auth != null",
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
         ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
         ".validate": "newData.hasChildren(['email'])"
       }

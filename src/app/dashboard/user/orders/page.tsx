@@ -149,11 +149,9 @@ export default function UserOrdersPage() {
         const newStatus: OrderStatus = 'Cancelled';
         const reason = cancellationReason;
     
-        // Path to update order status and cancellation reason
         updates[`/orders/${orderToCancel.id}/status`] = newStatus;
         updates[`/orders/${orderToCancel.id}/cancellationReason`] = reason;
         
-        // Path to add an admin notification
         const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
         const newNotificationRef = push(ref(database, 'notifications'));
         const notificationId = newNotificationRef.key;
