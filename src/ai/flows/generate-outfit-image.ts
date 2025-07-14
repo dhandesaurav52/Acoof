@@ -44,21 +44,21 @@ const outfitImagesFlow = ai.defineFlow(
       }
     }
 
-    const basePrompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes on the person in the photo while keeping the person identical.
+    const basePrompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes on the person in the photo while keeping the person and the background identical.
 
 ${userDetails}
 **CRITICAL RULES:**
 1.  **DO NOT CHANGE THE PERSON:** You must use the user's actual face, body, and pose from the provided photo. Do not generate a new person. All facial features (including glasses, beards, makeup) and hairstyle must be preserved exactly as they are in the original photo. The original person must be clearly recognizable.
-2.  **SHOW THE FULL OUTFIT:** Generate a new, complete, stylish, and full-body outfit. The final image MUST show the person from head to toe, including fashionable shoes that match the outfit.
+2.  **SHOW THE FULL OUTFIT:** Generate a new, complete, stylish, and full-body outfit. The final image MUST show the person from head to toe, including cool, fashionable shoes that match the outfit.
 3.  **FACE CLARITY & REALISM:** The person's face MUST be clear, in-focus, and not blurry, distorted, or changed in any way. The final image, with the new clothes, must look photorealistic and high-quality.
-4.  **BACKGROUND:** Keep the background simple and neutral, like a plain studio backdrop, to keep the focus on the person and the outfit. Do not use the original background.
+4.  **BACKGROUND:** Keep the background identical to the original photo. Do not change it.
 
 Generate one new image that follows these rules.`;
 
     const outfitPrompts = [
-      `A stylish **jacket-centric outfit**. This could feature a sleek leather jacket, a modern bomber jacket, or a classic denim jacket. Pair it with good, stylish jeans or pants and appropriate fashionable footwear for a complete, fashionable look.`,
-      `A sophisticated **blazer outfit**. The look should be modern and sharp, suitable for a smart-casual setting. The blazer should be the centerpiece, paired with well-fitting trousers or smart jeans and stylish shoes.`,
-      `A fashionable **hip-hop style outfit**. This should reflect modern streetwear trends. Think designer hoodies, graphic tees, baggy or distressed hip-hop style jeans, and iconic sneakers. The overall vibe should be cool, confident, and on-trend.`
+      `A cool, modern **jacket-centric outfit**. This could feature a sleek leather jacket, a contemporary bomber jacket, or a stylish denim jacket. Pair it with well-fitting, fashionable jeans or pants and appropriate trendy footwear for a complete, cool look.`,
+      `A sophisticated and cool **blazer outfit**. The look should be modern, sharp, and stylish, suitable for a smart-casual or evening setting. The blazer should be the centerpiece, paired with well-fitting trousers or smart jeans and stylish shoes.`,
+      `A cool, modern **hip-hop style outfit**. This should reflect current streetwear trends. Think designer hoodies, graphic tees, baggy or distressed hip-hop style jeans, and iconic sneakers. The overall vibe should be confident, on-trend, and effortlessly cool.`
     ];
 
     const generatedImages: string[] = [];
