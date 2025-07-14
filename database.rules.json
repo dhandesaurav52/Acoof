@@ -13,15 +13,21 @@
     },
     "orders": {
       ".indexOn": "userId",
-      ".read": "auth != null && (auth.token.email === 'admin@example.com' || root.child('users').child(auth.uid).child('orders').hasChild($orderId))",
+      // IMPORTANT: Only admins can list all orders. Users can only access their specific orders.
+      ".read": "auth != null && auth.token.email === 'admin@example.com'",
       "$orderId": {
-        // Allow write if user is admin OR if user is creating a new order OR if user is cancelling their own existing order
+        // Allow a user to read their own order
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
+        
+        // Allow write if user is admin, OR if the user is creating a new order for themselves,
+        // OR if the user is cancelling/returning their own existing order.
         ".write": "auth != null && (auth.token.email === 'admin@example.com' || (newData.child('userId').val() === auth.uid && !data.exists()) || (data.child('userId').val() === auth.uid && (newData.child('status').val() === 'Cancelled' || newData.child('cancellationReason').val() != null)))"
       }
     },
     "notifications": {
+      // Only admin can read all notifications
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
-      // Allow write if user is authenticated (e.g., placing an order, cancelling)
+      // Any authenticated user can write a new notification (e.g., for placing an order)
       ".write": "auth != null"
     }
   }
