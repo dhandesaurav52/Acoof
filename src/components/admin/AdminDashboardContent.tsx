@@ -59,8 +59,8 @@ export function AdminDashboardContent() {
                     throw new Error("Firebase is not configured correctly.");
                 }
 
+                // This condition prevents running analytics on an empty product list, which can happen briefly on load.
                 if (allProducts.length === 0) {
-                     // This condition prevents running analytics on an empty product list, which can happen briefly on load.
                     setLoadingData(false);
                     return;
                 }
