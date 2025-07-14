@@ -84,7 +84,7 @@ export async function verifyRazorpayPayment(data: {
 }
 
 async function createAdminNotification(order: Order): Promise<void> {
-    if (!database) return;
+    if (!database || !order.userEmail) return;
     try {
         const newNotificationRef = push(dbRef(database, 'notifications'));
         const notificationId = newNotificationRef.key;
@@ -128,17 +128,18 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
     const finalOrderData: Order = { ...orderData, id: newId };
     
     try {
-        // Step 1: Save the primary order data.
+        // Step 1: Save the primary order data. This is the most critical part.
         await set(newOrderRef, finalOrderData);
 
-        // Step 2: Update the user's order list (less critical, can fail silently if needed).
+        // Step 2 (Non-blocking): Update the user's order list. This can fail silently if needed.
         try {
-            await update(dbRef(database, `users/${orderData.userId}/orders`), { [newId]: true });
+            const userOrdersRef = dbRef(database, `users/${orderData.userId}/orders`);
+            await update(userOrdersRef, { [newId]: true });
         } catch (userUpdateError) {
-             console.error(`Failed to add order ${newId} to user ${orderData.userId} list:`, userUpdateError);
+             console.error(`Non-critical error: Failed to add order ${newId} to user ${orderData.userId} list:`, userUpdateError);
         }
         
-        // Step 3: Create the admin notification (non-blocking).
+        // Step 3 (Non-blocking): Create the admin notification.
         await createAdminNotification(finalOrderData);
 
         return { success: true, orderId: newId };
