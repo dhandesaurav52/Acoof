@@ -44,12 +44,10 @@ export function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
-        // This is a robust guard clause. It ensures that we don't proceed until all data is ready.
         if (authLoading || productsLoading) {
             return;
         }
         
-        // This check ensures we have an authenticated admin and product data before fetching.
         if (!user || user.email !== ADMIN_EMAIL || allProducts.length === 0) {
             setLoadingData(false);
             return;
@@ -74,11 +72,10 @@ export function AdminDashboardContent() {
                 if (usersSnapshot.exists()) {
                     const usersData = usersSnapshot.val();
                     if (typeof usersData === 'object' && usersData !== null) {
-                        usersCount = Object.keys(usersData).length;
-                        if (usersCount > 0) {
-                            const hasAdmin = Object.values(usersData).some((u: any) => u && typeof u === 'object' && u.email === ADMIN_EMAIL);
-                            if (hasAdmin) usersCount--;
-                        }
+                        const userList = Object.values(usersData);
+                        // Filter out the admin user from the count
+                        const regularUsers = userList.filter((u: any) => u && u.email && u.email !== ADMIN_EMAIL);
+                        usersCount = regularUsers.length;
                     }
                 }
                 
