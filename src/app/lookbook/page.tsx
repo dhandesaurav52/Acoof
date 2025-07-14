@@ -26,7 +26,7 @@ export default function LookbookPage() {
   
   const [cameraState, setCameraState] = useState<'off' | 'starting' | 'on' | 'error'>('off');
   const [height, setHeight] = useState('');
-  const [bodyType, setBodyType] = useState('');
+  const [bodyType, setBodyType] = useState('none');
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -47,7 +47,10 @@ export default function LookbookPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    return () => stopCameraStream();
+    // This is a cleanup function that runs when the component unmounts.
+    return () => {
+      stopCameraStream();
+    };
   }, [stopCameraStream]);
   
   const startCameraStream = useCallback(async () => {
@@ -66,8 +69,10 @@ export default function LookbookPage() {
   
       const videoNode = videoRef.current;
       if (videoNode) {
+        // This is the definitive fix. We attach the stream and let the useEffect handle playback.
         videoNode.srcObject = stream;
-        // The play logic is now handled by the useEffect below
+      } else {
+        throw new Error("Video element not found.");
       }
     } catch (err) {
       console.error('Error starting camera stream:', err);
@@ -85,24 +90,26 @@ export default function LookbookPage() {
     }
   }, [facingMode, cameraState, stopCameraStream]);
 
-  // This useEffect correctly handles playing the video once the stream is attached.
-  // This is the definitive fix for the black screen issue.
+  // This useEffect is the final, correct way to handle video playback.
+  // It waits for the video element to be ready and have a stream.
   useEffect(() => {
     const videoNode = videoRef.current;
     if (videoNode && videoNode.srcObject) {
       const handleCanPlay = () => {
         videoNode.play().then(() => {
-            setCameraState('on');
+          setCameraState('on');
         }).catch((err) => {
-            console.error('Video play failed:', err);
-            setError('Could not start the video feed.');
-            setCameraState('error');
-            stopCameraStream();
+          console.error('Video play failed:', err);
+          setError('Could not start the video feed.');
+          setCameraState('error');
+          stopCameraStream();
         });
       };
       
+      // We listen for the 'canplay' event, which fires when the video has enough data to start playing.
       videoNode.addEventListener('canplay', handleCanPlay);
-
+      
+      // Cleanup: remove the event listener when the component or stream changes.
       return () => {
         videoNode.removeEventListener('canplay', handleCanPlay);
       };
@@ -136,7 +143,7 @@ export default function LookbookPage() {
         toast({
             variant: "destructive",
             title: "Camera Not Ready",
-            description: "Please wait a moment for the camera feed to start.",
+            description: "Please wait a moment for the camera feed to start before capturing.",
         })
     }
   };
@@ -161,7 +168,9 @@ export default function LookbookPage() {
     } catch (err: any) {
       console.error("AI Generation Error:", err);
       let errorMessage = "The AI failed to generate outfits. Please try again.";
-      if (err.message?.includes('429')) {
+      if (err.message?.includes('400') && err.message?.includes('Unsupported MIME type')) {
+        errorMessage = "There was an issue with the captured photo format. Please try again.";
+      } else if (err.message?.includes('429')) {
         errorMessage = "The service is busy. Please wait a moment and try again.";
       } else if (err.message?.includes('key')) {
         errorMessage = "The AI service is not configured correctly. Please check the API key.";
@@ -186,6 +195,7 @@ export default function LookbookPage() {
   };
 
   useEffect(() => {
+    // This effect ensures the camera stream restarts if the user flips the camera.
     if (cameraState === 'on' || cameraState === 'starting') {
         startCameraStream();
     }
@@ -194,6 +204,7 @@ export default function LookbookPage() {
 
 
   useEffect(() => {
+    // This effect automatically triggers generation once a photo is captured.
     if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
       handleGenerate();
     }

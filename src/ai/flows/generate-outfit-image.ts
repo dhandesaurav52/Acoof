@@ -46,14 +46,13 @@ export async function generateOutfitImages(
         }
       }
 
-      const basePrompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes in the user's photo while keeping the person identical.
+      const basePrompt = `You are an expert AI photo editor performing a virtual try-on. Your only job is to change the clothes on the person in the photo while keeping the person identical.
 
 ${userDetails}
 **CRITICAL RULES:**
-1.  **DO NOT CHANGE THE PERSON:** You must use the user's actual face, body, and pose from the provided photo. Do not generate a new person or a new face. All facial features, including beards, glasses, and hairstyle, must be preserved exactly as they are in the original photo.
-2.  **SHOW THE FULL OUTFIT:** Generate a new, complete, stylish, and full-body outfit. The final image MUST show the person from head to toe, including good shoes.
-3.  **FACE CLARITY:** The person's face MUST be clear, in-focus, and not blurry or distorted in any way.
-4.  **MAINTAIN REALISM:** The final image, with the new clothes, must look photorealistic.
+1.  **DO NOT CHANGE THE PERSON:** You must use the user's actual face, body, and pose from the provided photo. Do not generate a new person. All facial features (including glasses, beards, makeup) and hairstyle must be preserved exactly as they are in the original photo. The original person must be clearly recognizable.
+2.  **SHOW THE FULL OUTFIT:** Generate a new, complete, stylish, and full-body outfit. The final image MUST show the person from head to toe, including fashionable shoes that match the outfit.
+3.  **FACE CLARITY & REALISM:** The person's face MUST be clear, in-focus, and not blurry, distorted, or changed in any way. The final image, with the new clothes, must look photorealistic and high-quality.
 
 Generate one new image that follows these rules.`;
 
