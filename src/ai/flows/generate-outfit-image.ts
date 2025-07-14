@@ -55,6 +55,7 @@ Generate one new image that follows these rules.`;
       const generatedImages: string[] = [];
 
       try {
+        // Generate images sequentially to avoid timeouts and rate limiting issues on deployed environment.
         for (const stylePrompt of outfitPrompts) {
           const result = await ai.generate({
             model,
