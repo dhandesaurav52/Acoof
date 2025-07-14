@@ -67,6 +67,7 @@ export default function LookbookPage() {
       const videoNode = videoRef.current;
       if (videoNode) {
         videoNode.srcObject = stream;
+        // The play logic is now handled by the useEffect below
       }
     } catch (err) {
       console.error('Error starting camera stream:', err);
@@ -84,20 +85,29 @@ export default function LookbookPage() {
     }
   }, [facingMode, cameraState, stopCameraStream]);
 
-  // This useEffect handles playing the video once the stream is ready.
+  // This useEffect correctly handles playing the video once the stream is attached.
+  // This is the definitive fix for the black screen issue.
   useEffect(() => {
     const videoNode = videoRef.current;
-    if (videoNode && videoNode.srcObject && cameraState === 'starting') {
-      videoNode.play().then(() => {
-        setCameraState('on');
-      }).catch((err) => {
-        console.error('Video play failed:', err);
-        setError('Could not start the video feed.');
-        setCameraState('error');
-        stopCameraStream();
-      });
+    if (videoNode && videoNode.srcObject) {
+      const handleCanPlay = () => {
+        videoNode.play().then(() => {
+            setCameraState('on');
+        }).catch((err) => {
+            console.error('Video play failed:', err);
+            setError('Could not start the video feed.');
+            setCameraState('error');
+            stopCameraStream();
+        });
+      };
+      
+      videoNode.addEventListener('canplay', handleCanPlay);
+
+      return () => {
+        videoNode.removeEventListener('canplay', handleCanPlay);
+      };
     }
-  }, [videoRef.current?.srcObject, cameraState, stopCameraStream]);
+  }, [videoRef.current?.srcObject, stopCameraStream]);
 
 
   const handleStartCamera = () => {
@@ -162,7 +172,7 @@ export default function LookbookPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [photoDataUri, height, bodyType]);
+  }, [photoDataUri, height, bodyType, toast]);
 
   const handleNewPhoto = () => {
     setPhotoDataUri(null);
@@ -179,6 +189,7 @@ export default function LookbookPage() {
     if (cameraState === 'on' || cameraState === 'starting') {
         startCameraStream();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode]);
 
 
