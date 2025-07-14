@@ -35,7 +35,6 @@ export default function RootLayout({
       <head>
         <title>Acoof</title>
         <meta name="description" content="Acoof - Modern Menswear" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background overflow-x-hidden">
         <Script
