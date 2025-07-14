@@ -78,7 +78,7 @@ export default function ProductDetailPage() {
         
         const shuffled = recommended.sort(() => 0.5 - Math.random());
         
-        return shuffled.slice(0, 8);
+        return shuffled.slice(0, 12);
     
     }, [product, products]);
 
