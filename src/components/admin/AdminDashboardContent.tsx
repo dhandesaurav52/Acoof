@@ -44,25 +44,22 @@ export function AdminDashboardContent() {
     const [error, setError] = useState<string | null>(null);
     
     useEffect(() => {
-        // Wait for both authentication and product data to finish loading.
-        if (authLoading || productsLoading) {
-            return;
-        }
-
-        // Ensure we have an admin user before proceeding.
-        if (!user || user.email !== ADMIN_EMAIL) {
-            setLoadingData(false);
+        // This is a robust guard clause. It ensures that we don't proceed until:
+        // 1. Authentication is no longer loading.
+        // 2. Product data is no longer loading.
+        // 3. There is an authenticated user who is the admin.
+        // 4. The list of all products is not empty (critical for preventing race conditions).
+        if (authLoading || productsLoading || !user || user.email !== ADMIN_EMAIL || allProducts.length === 0) {
+            // If any of these are true, we are not ready. If loading is finished and there's still
+            // no data, we will show the "no data" state, so we set loading to false.
+            if (!authLoading && !productsLoading) {
+                setLoadingData(false);
+            }
             return;
         }
         
         async function fetchAdminData() {
-            // This condition is a crucial guard against a race condition.
-            // It prevents running analytics on an empty product list, which can happen briefly on load.
-            if (allProducts.length === 0) {
-                setLoadingData(false); // No products to analyze, so stop loading.
-                return;
-            }
-
+            setLoadingData(true);
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
@@ -156,7 +153,7 @@ export function AdminDashboardContent() {
         fetchAdminData();
     }, [user, authLoading, allProducts, productsLoading]);
     
-    if (loadingData || authLoading || productsLoading) {
+    if (authLoading || loadingData) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
