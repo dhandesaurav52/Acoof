@@ -1,20 +1,11 @@
+
 'use client';
 
-import dynamic from 'next/dynamic';
-import { Loader2 } from 'lucide-react';
+import { AdminDashboardContent } from '@/components/admin/AdminDashboardContent';
 
-const AdminDashboardContent = dynamic(
-  () => import('@/components/admin/AdminDashboardContent').then((mod) => mod.AdminDashboardContent),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-);
-
+// The authorization check is now completely handled by the AdminLayout.
+// This page can now simply render the component responsible for the dashboard,
+// trusting that it will only be mounted for a verified admin.
 export default function AdminDashboardPage() {
     return <AdminDashboardContent />;
 }

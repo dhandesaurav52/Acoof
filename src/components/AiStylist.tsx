@@ -36,27 +36,21 @@ export function AiStylist() {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    const videoNode = videoRef.current;
-    if (videoNode) {
-      videoNode.srcObject = null;
-    }
-    setCameraState('off');
   }, []);
 
   const startCamera = useCallback(async () => {
-    if (streamRef.current) {
-      stopCameraStream();
-    }
-    
+    if (cameraState !== 'off') return;
+
     setCameraState('starting');
     setError(null);
-    
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
       const videoNode = videoRef.current;
       if (videoNode) {
         videoNode.srcObject = stream;
+        // The play logic is now handled by the useEffect hook watching the ref
       } else {
         throw new Error("Video element not found");
       }
@@ -72,35 +66,37 @@ export function AiStylist() {
       setCameraState('error');
       stopCameraStream();
     }
-  }, [facingMode, stopCameraStream]);
+  }, [facingMode, cameraState, stopCameraStream]);
 
-
+  // This effect correctly handles playing the video when the stream is ready
   useEffect(() => {
     const videoNode = videoRef.current;
-    if (!videoNode) return;
+    if (videoNode && videoNode.srcObject && cameraState === 'starting') {
+      const handleCanPlay = async () => {
+        try {
+          await videoNode.play();
+          setCameraState('on');
+        } catch (playError) {
+          console.error("Video play failed:", playError);
+          setError("Could not start video playback.");
+          setCameraState('error');
+          stopCameraStream();
+        }
+      };
 
-    const handleCanPlay = () => {
-      videoNode.play().then(() => {
-        setCameraState('on');
-      }).catch(playError => {
-        console.error("Video play failed:", playError);
-        setError("Could not start video playback.");
-        setCameraState('error');
-      });
-    };
-    
-    // When the srcObject (the stream) is attached, the 'canplay' event will fire.
-    // We listen for it to safely start playback.
-    if (videoNode.srcObject) {
-      videoNode.addEventListener('canplay', handleCanPlay, { once: true });
+      videoNode.addEventListener('canplay', handleCanPlay);
+      return () => {
+        videoNode.removeEventListener('canplay', handleCanPlay);
+      };
     }
-
+  }, [cameraState, stopCameraStream]);
+  
+  // Cleanup effect
+  useEffect(() => {
     return () => {
-      videoNode.removeEventListener('canplay', handleCanPlay);
       stopCameraStream();
     };
-  }, [videoRef.current?.srcObject, stopCameraStream]);
-
+  }, [stopCameraStream]);
 
   const handleCapture = () => {
     const video = videoRef.current;
@@ -118,6 +114,7 @@ export function AiStylist() {
         const dataUri = canvas.toDataURL('image/jpeg');
         setPhotoDataUri(dataUri);
         stopCameraStream();
+        setCameraState('off');
       }
     } else {
         toast({
@@ -172,15 +169,10 @@ export function AiStylist() {
 
   const handleToggleCamera = () => {
     setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
+    stopCameraStream();
+    setCameraState('off'); // Reset state to allow `startCamera` to re-trigger
   };
-
-  useEffect(() => {
-    if (cameraState === 'on' || cameraState === 'starting') {
-        startCamera();
-    }
-  }, [facingMode, cameraState, startCamera]);
-
-
+  
   useEffect(() => {
     if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
       handleGenerate();
@@ -271,7 +263,6 @@ export function AiStylist() {
                                         facingMode === 'user' && "transform -scale-x-100",
                                         cameraState === 'on' ? "opacity-100" : "opacity-0"
                                     )}
-                                    autoPlay 
                                     muted 
                                     playsInline 
                                 />

@@ -153,7 +153,7 @@ export function AdminDashboardContent() {
         fetchAdminData();
     }, [user, authLoading, allProducts, productsLoading]);
     
-    if (loadingData) {
+    if (loadingData || authLoading || productsLoading) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
