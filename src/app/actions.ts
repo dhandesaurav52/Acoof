@@ -107,7 +107,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
         // Add notification for admin
-        const notificationMessage = `New order #${newId} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
+        const notificationMessage = `New order #${newId.slice(-6).toUpperCase()} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
         const newNotificationRef = push(dbRef(database, 'notifications'));
         const notificationId = newNotificationRef.key;
 
