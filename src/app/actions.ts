@@ -99,18 +99,13 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
         return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
     }
     
-    // Ensure the main order data includes the Razorpay orderId if it exists
     const finalOrderData: Order = { ...orderData, id: newId };
-    if (orderData.paymentMethod === 'Razorpay' && orderData.orderId) {
-        finalOrderData.orderId = orderData.orderId;
-    }
     
     try {
         const updates: { [key: string]: any } = {};
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
-        // Add notification for admin
         const notificationMessage = `New order #${newId.slice(-6).toUpperCase()} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
         const newNotificationRef = push(dbRef(database, 'notifications'));
         const notificationId = newNotificationRef.key;
@@ -147,7 +142,6 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
     const productsRef = dbRef(database, 'products');
 
     try {
-        // We will transform the array of products into an object where keys are the product IDs
         const productsForFirebase = localProducts.reduce((acc, product) => {
             const { id, ...productData } = product;
             acc[id] = productData;
