@@ -66,11 +66,22 @@ export default function LookbookPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
   
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Key fix: Wait for the video to start playing before setting state to 'on'
-        await videoRef.current.play(); 
-        setCameraState('on');
+      const videoNode = videoRef.current;
+      if (videoNode) {
+        videoNode.srcObject = stream;
+        
+        // This is the key fix. We wait for the 'oncanplay' event which fires when
+        // the video has downloaded enough data to be playable.
+        videoNode.oncanplay = () => {
+            videoNode.play().then(() => {
+                setCameraState('on');
+            }).catch((err) => {
+                console.error('Video play failed:', err);
+                setError('Could not start the video feed.');
+                setCameraState('error');
+                stopCameraStream();
+            })
+        };
       }
     } catch (err) {
       console.error('Error starting camera stream:', err);
@@ -94,7 +105,7 @@ export default function LookbookPage() {
   };
 
   const handleCapture = () => {
-    if (videoRef.current && canvasRef.current && videoRef.current.readyState >= 3) {
+    if (videoRef.current && canvasRef.current && cameraState === 'on') {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       canvas.width = video.videoWidth;
