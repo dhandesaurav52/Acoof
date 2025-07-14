@@ -1,5 +1,8 @@
 
 {
+  "storage": {
+    "rules": "storage.rules"
+  },
   "hosting": {
     "source": ".",
     "ignore": [
@@ -18,3 +21,4 @@
     ]
   }
 }
+
