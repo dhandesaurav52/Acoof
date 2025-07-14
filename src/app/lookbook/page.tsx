@@ -24,8 +24,8 @@ export default function LookbookPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const [isCameraOn, setIsCameraOn] = useState(false);
-  const [isStartingCamera, setIsStartingCamera] = useState(false);
+  // Consolidate camera state to prevent race conditions
+  const [cameraState, setCameraState] = useState<'off' | 'starting' | 'on' | 'error'>('off');
   const [height, setHeight] = useState('');
   const [bodyType, setBodyType] = useState('');
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
@@ -43,7 +43,7 @@ export default function LookbookPage() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    setIsCameraOn(false);
+    setCameraState('off');
   }, []);
 
   useEffect(() => {
@@ -53,9 +53,9 @@ export default function LookbookPage() {
   }, [stopCameraStream]);
   
   const startCameraStream = useCallback(async () => {
-    if (isStartingCamera || isCameraOn) return;
+    if (cameraState === 'starting' || cameraState === 'on') return;
   
-    setIsStartingCamera(true);
+    setCameraState('starting');
     setError(null);
   
     if (streamRef.current) {
@@ -68,27 +68,25 @@ export default function LookbookPage() {
   
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play(); // Wait for the video to start playing
-        setIsCameraOn(true); // Now update the state
+        // Key fix: Wait for the video to start playing before setting state to 'on'
+        await videoRef.current.play(); 
+        setCameraState('on');
       }
     } catch (err) {
       console.error('Error starting camera stream:', err);
+      let errorMessage = 'Could not start the video feed.';
       if (err instanceof DOMException) {
         if (err.name === "NotAllowedError") {
-          setError('Camera access was denied. Please enable permissions in your browser settings.');
+          errorMessage = 'Camera access was denied. Please enable permissions in your browser settings.';
         } else if (err.name === "NotReadableError") {
-          setError('Could not access the camera. Please ensure it is not in use by another application.');
-        } else {
-           setError('Could not start the video feed.');
+          errorMessage = 'Could not access the camera. Please ensure it is not in use by another application.';
         }
-      } else {
-        setError('An unexpected error occurred while accessing the camera.');
       }
+      setError(errorMessage);
+      setCameraState('error');
       stopCameraStream(); // Clean up on failure
-    } finally {
-      setIsStartingCamera(false);
     }
-  }, [facingMode, isStartingCamera, isCameraOn, stopCameraStream]);
+  }, [facingMode, cameraState, stopCameraStream]);
 
 
   const handleStartCamera = () => {
@@ -160,7 +158,7 @@ export default function LookbookPage() {
     setPhotoDataUri(null);
     setGeneratedImages([]);
     setError(null);
-    setIsCameraOn(false);
+    setCameraState('off');
   };
 
   const handleToggleCamera = () => {
@@ -169,10 +167,10 @@ export default function LookbookPage() {
 
   useEffect(() => {
     // If facing mode changes while the camera is on, restart the stream.
-    if (isCameraOn) {
+    if (cameraState === 'on') {
         startCameraStream();
     }
-  }, [facingMode, isCameraOn, startCameraStream]);
+  }, [facingMode, cameraState, startCameraStream]);
 
 
   useEffect(() => {
@@ -268,7 +266,7 @@ export default function LookbookPage() {
                                     className={cn(
                                         "w-full h-full object-cover transition-opacity duration-300",
                                         facingMode === 'user' && "transform -scale-x-100",
-                                        isCameraOn ? "opacity-100" : "opacity-0"
+                                        cameraState === 'on' ? "opacity-100" : "opacity-0"
                                     )}
                                     autoPlay 
                                     muted 
@@ -276,22 +274,22 @@ export default function LookbookPage() {
                                 />
                                 <canvas ref={canvasRef} className="hidden" />
 
-                                {!isCameraOn && (
+                                {cameraState !== 'on' && (
                                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
                                         <div className="p-3 bg-primary/10 rounded-full mb-4">
-                                            {isStartingCamera ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Camera className="h-6 w-6 text-primary" />}
+                                            {cameraState === 'starting' ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Camera className="h-6 w-6 text-primary" />}
                                         </div>
                                         <h3 className="text-lg font-bold font-headline">Ready for your close-up?</h3>
                                         <p className="text-muted-foreground max-w-xs mt-2 mb-4">
                                             Turn on your camera to get started with the AI Stylist.
                                         </p>
-                                        <Button onClick={handleStartCamera} disabled={isStartingCamera}>
-                                            {isStartingCamera ? 'Starting...' : 'Turn on Camera'}
+                                        <Button onClick={handleStartCamera} disabled={cameraState === 'starting'}>
+                                            {cameraState === 'starting' ? 'Starting...' : 'Turn on Camera'}
                                         </Button>
                                     </div>
                                 )}
                                 
-                                {error && !isStartingCamera && !isCameraOn && (
+                                {error && cameraState === 'error' && (
                                     <Alert variant="destructive" className="absolute bottom-4 left-4 right-4 text-left max-w-sm mx-auto">
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertTitle>Camera Error</AlertTitle>
@@ -299,7 +297,7 @@ export default function LookbookPage() {
                                     </Alert>
                                 )}
 
-                                {isCameraOn && (
+                                {cameraState === 'on' && (
                                     <Button onClick={handleToggleCamera} variant="outline" size="icon" className="absolute top-2 right-2 z-10 bg-background/50 backdrop-blur-sm rounded-full">
                                         <RefreshCw className="h-5 w-5" />
                                         <span className="sr-only">Flip Camera</span>
@@ -307,8 +305,8 @@ export default function LookbookPage() {
                                 )}
                             </div>
 
-                            <div className={cn("transition-opacity", isCameraOn ? 'opacity-100' : 'opacity-50 pointer-events-none')}>
-                                <Button onClick={handleCapture} className="w-full" disabled={!isCameraOn}>
+                            <div className={cn("transition-opacity", cameraState === 'on' ? 'opacity-100' : 'opacity-50 pointer-events-none')}>
+                                <Button onClick={handleCapture} className="w-full" disabled={cameraState !== 'on'}>
                                     <Camera className="mr-2 h-5 w-5" />
                                     Capture Photo
                                 </Button>
