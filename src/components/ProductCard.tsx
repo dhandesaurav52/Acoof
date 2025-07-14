@@ -55,7 +55,7 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
            <Button 
             variant="secondary" 
             size="icon" 
-            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-background/60 backdrop-blur-sm text-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-background/60 backdrop-blur-sm text-foreground opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
             onClick={handleFavoriteClick}
             aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
            >
