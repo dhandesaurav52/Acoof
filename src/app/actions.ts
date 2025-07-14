@@ -99,7 +99,11 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
         return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
     }
     
+    // Ensure the main order data includes the Razorpay orderId if it exists
     const finalOrderData: Order = { ...orderData, id: newId };
+    if (orderData.paymentMethod === 'Razorpay' && orderData.orderId) {
+        finalOrderData.orderId = orderData.orderId;
+    }
     
     try {
         const updates: { [key: string]: any } = {};
