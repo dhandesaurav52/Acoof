@@ -13,10 +13,12 @@ import type { OutfitImagesInput } from '@/types';
 import { OutfitImagesInputSchema, OutfitImagesOutputSchema } from '@/types';
 
 // Initialize Genkit directly within the 'use server' file.
-// This is the correct pattern for Next.js Server Actions.
+// This is the correct pattern for Next.js Server Actions to prevent build errors.
 const ai = genkit({
   plugins: [googleAI()],
+  // For production, we don't want to store flow state. In dev, we can use 'local'.
   flowStateStore: process.env.NODE_ENV === 'production' ? 'none' : 'local',
+  // In production, we don't need verbose logging. In dev, it's helpful.
   logLevel: process.env.NODE_ENV === 'production' ? 'silent' : 'debug',
 });
 
