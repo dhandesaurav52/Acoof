@@ -1,18 +1,17 @@
 
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
+import { Loader2, Camera, RefreshCw, Sparkles, AlertTriangle, UploadCloud } from 'lucide-react';
 import { generateOutfitImages } from '@/ai/flows/generate-outfit-image';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 export function AiStylist() {
@@ -21,112 +20,31 @@ export function AiStylist() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const [cameraState, setCameraState] = useState<'off' | 'starting' | 'on' | 'error'>('off');
   const [height, setHeight] = useState('');
   const [bodyType, setBodyType] = useState('none');
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const stopCameraStream = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-  }, []);
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  const startCamera = useCallback(async () => {
-    if (cameraState !== 'off') return;
-
-    stopCameraStream();
-    setCameraState('starting');
-    setError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
-      streamRef.current = stream;
-      const videoNode = videoRef.current;
-      if (videoNode) {
-        videoNode.srcObject = stream;
-        // The `onloadedmetadata` event listener in the useEffect hook will handle play().
-      } else {
-        throw new Error("Video element not found");
-      }
-    } catch (err) {
-      console.error('Error starting camera stream:', err);
-      let errorMessage = 'Could not access the camera. Please ensure it is not in use by another application.';
-      if (err instanceof DOMException) {
-        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-          errorMessage = 'Camera access was denied. Please enable permissions in your browser settings.';
-        }
-      }
-      setError(errorMessage);
-      setCameraState('error');
-      stopCameraStream();
-    }
-  }, [facingMode, stopCameraStream, cameraState]);
-
-  // This effect correctly handles playing the video when the stream is ready
-  useEffect(() => {
-    const videoNode = videoRef.current;
-    if (!videoNode || !videoNode.srcObject) return;
-
-    // This event fires when the browser has loaded metadata for the video,
-    // which includes its dimensions and duration. This is the safest point to call play().
-    const handleMetadataLoaded = async () => {
-      try {
-        await videoNode.play();
-        setCameraState('on'); // Set state to 'on' only after play is successful
-      } catch (playError) {
-        console.error("Video play failed:", playError);
-        setError("Could not start video playback.");
-        setCameraState('error');
-        stopCameraStream();
-      }
-    };
-
-    videoNode.addEventListener('loadedmetadata', handleMetadataLoaded);
-    
-    return () => {
-      videoNode.removeEventListener('loadedmetadata', handleMetadataLoaded);
-    };
-  }, [videoRef.current?.srcObject]); // Re-run when the stream is attached
-
-  // Cleanup effect to stop the camera when the component unmounts
-  useEffect(() => {
-    return () => {
-      stopCameraStream();
-    };
-  }, [stopCameraStream]);
-
-  const handleCapture = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (video && canvas && cameraState === 'on' && video.readyState >= 3 && video.videoWidth > 0) { // Check if video has enough data and has dimensions
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const context = canvas.getContext('2d');
-      if (context) {
-        // Flip the image horizontally if it's the user-facing camera
-        if (facingMode === 'user') {
-            context.translate(canvas.width, 0);
-            context.scale(-1, 1);
-        }
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUri = canvas.toDataURL('image/jpeg'); // Explicitly set MIME type
-        setPhotoDataUri(dataUri);
-        stopCameraStream();
-        setCameraState('off');
-      }
-    } else {
+    if (file.size > 4 * 1024 * 1024) { // 4MB limit
         toast({
-            variant: "destructive",
-            title: "Camera Not Ready",
-            description: "Please wait a moment for the camera feed to start before capturing.",
-        })
+            variant: 'destructive',
+            title: 'File Too Large',
+            description: 'Please upload an image smaller than 4MB.',
+        });
+        return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUri = e.target?.result as string;
+      setPhotoDataUri(dataUri);
+    };
+    reader.readAsDataURL(file);
   };
   
   const handleGenerate = useCallback(async () => {
@@ -149,9 +67,7 @@ export function AiStylist() {
     } catch (err: any) {
       console.error("AI Generation Error:", err);
       let errorMessage = "The AI failed to generate outfits. Please try again.";
-      if (err.message?.includes('400') && err.message?.includes('Unsupported MIME type')) {
-        errorMessage = "There was an issue with the captured photo format. Please try again.";
-      } else if (err.message?.includes('429')) {
+      if (err.message?.includes('429')) {
         errorMessage = "The service is busy. Please wait a moment and try again.";
       } else if (err.message?.includes('key')) {
         errorMessage = "The AI service is not configured correctly. Please check the API key.";
@@ -168,17 +84,12 @@ export function AiStylist() {
     setPhotoDataUri(null);
     setGeneratedImages([]);
     setError(null);
-    setCameraState('off');
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   };
 
-  const handleToggleCamera = () => {
-    setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
-    // Setting state to 'off' will allow startCamera to run again
-    setCameraState('off'); 
-    setTimeout(startCamera, 50); // Give a brief moment for cleanup before restarting
-  };
-  
-  // Effect to automatically start generation after a photo is captured
+  // Effect to automatically start generation after a photo is uploaded
   useEffect(() => {
     if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
       handleGenerate();
@@ -193,12 +104,12 @@ export function AiStylist() {
                     <h3 className="text-xl font-bold font-headline text-center">Your Photo</h3>
                     <Card className="overflow-hidden">
                         <div className="relative aspect-[4/5] w-full">
-                            <Image src={photoDataUri} alt="Your captured photo" fill className="object-cover" sizes="(max-width: 640px) 100vw, 448px" />
+                            <Image src={photoDataUri} alt="Your uploaded photo" fill className="object-cover" sizes="(max-width: 640px) 100vw, 448px" />
                         </div>
                     </Card>
                     <div className="flex gap-2">
                         <Button onClick={handleNewPhoto} variant="outline" size="sm" className="w-full">
-                            <Camera className="mr-2 h-4 w-4" /> Start Over
+                            <Camera className="mr-2 h-4 w-4" /> Upload New
                         </Button>
                         <Button onClick={handleGenerate} disabled={isLoading} size="sm" className="w-full">
                             {isLoading ? (
@@ -206,7 +117,7 @@ export function AiStylist() {
                             ) : (
                                 <RefreshCw className="mr-2 h-4 w-4" />
                             )}
-                            {isLoading ? 'Generating...' : 'Try Again'}
+                            {isLoading ? 'Generating...' : 'Regenerate'}
                         </Button>
                     </div>
                 </div>
@@ -258,78 +169,47 @@ export function AiStylist() {
             </div>
         ) : (
             <div className="max-w-md mx-auto">
-                <Card className="overflow-hidden">
+                <Card>
                     <CardContent className="p-4 sm:p-6">
                         <div className="space-y-4">
-                            <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-muted flex items-center justify-center">
-                                <video 
-                                    ref={videoRef} 
-                                    className={cn(
-                                        "w-full h-full object-cover transition-opacity duration-300",
-                                        facingMode === 'user' && "transform -scale-x-100",
-                                        cameraState === 'on' ? "opacity-100" : "opacity-0"
-                                    )}
-                                    muted 
-                                    playsInline 
+                            <div 
+                                className="relative w-full aspect-[4/3] rounded-md border-2 border-dashed border-muted flex items-center justify-center text-center p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                    <UploadCloud className="h-10 w-10" />
+                                    <h3 className="text-lg font-bold font-headline text-foreground">Upload a Photo</h3>
+                                    <p className="text-sm">Click here or drag and drop a file.</p>
+                                    <p className="text-xs">PNG, JPG, or WEBP up to 4MB.</p>
+                                </div>
+                                <Input 
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/png, image/jpeg, image/webp"
+                                    onChange={handleFileChange}
                                 />
-                                <canvas ref={canvasRef} className="hidden" />
-
-                                {cameraState !== 'on' && (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                                        <div className="p-3 bg-primary/10 rounded-full mb-4">
-                                            {cameraState === 'starting' ? <Loader2 className="h-6 w-6 text-primary animate-spin" /> : <Camera className="h-6 w-6 text-primary" />}
-                                        </div>
-                                        <h3 className="text-lg font-bold font-headline">Ready for your close-up?</h3>
-                                        <p className="text-muted-foreground max-w-xs mt-2 mb-4">
-                                            Turn on your camera to get started with the AI Stylist.
-                                        </p>
-                                        <Button onClick={startCamera} disabled={cameraState === 'starting'}>
-                                            {cameraState === 'starting' ? 'Starting...' : 'Turn on Camera'}
-                                        </Button>
-                                    </div>
-                                )}
-                                
-                                {error && cameraState === 'error' && (
-                                    <Alert variant="destructive" className="absolute bottom-4 left-4 right-4 text-left max-w-sm mx-auto">
-                                        <AlertTriangle className="h-4 w-4" />
-                                        <AlertTitle>Camera Error</AlertTitle>
-                                        <AlertDescription>{error}</AlertDescription>
-                                    </Alert>
-                                )}
-
-                                {cameraState === 'on' && (
-                                    <Button onClick={handleToggleCamera} variant="outline" size="icon" className="absolute top-2 right-2 z-10 bg-background/50 backdrop-blur-sm rounded-full">
-                                        <RefreshCw className="h-5 w-5" />
-                                        <span className="sr-only">Flip Camera</span>
-                                    </Button>
-                                )}
                             </div>
 
-                            <div className={cn("transition-opacity", cameraState === 'on' ? 'opacity-100' : 'opacity-50 pointer-events-none')}>
-                                <Button onClick={handleCapture} className="w-full" disabled={cameraState !== 'on'}>
-                                    <Camera className="mr-2 h-5 w-5" />
-                                    Capture Photo
-                                </Button>
-                                <div className="grid grid-cols-2 gap-4 pt-4">
-                                    <div>
-                                        <Label htmlFor="height" className="text-sm">Height (Optional)</Label>
-                                        <Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="e.g. 5'10&quot;" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="bodyType" className="text-sm">Body Type (Optional)</Label>
-                                        <Select value={bodyType} onValueChange={setBodyType}>
-                                            <SelectTrigger id="bodyType">
-                                                <SelectValue placeholder="Select type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
-                                                <SelectItem value="Slim">Slim</SelectItem>
-                                                <SelectItem value="Fit">Fit</SelectItem>
-                                                <SelectItem value="Healthy">Healthy</SelectItem>
-                                                <SelectItem value="Fat">Fat</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div>
+                                    <Label htmlFor="height" className="text-sm">Height (Optional)</Label>
+                                    <Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="e.g. 5'10&quot;" />
+                                </div>
+                                <div>
+                                    <Label htmlFor="bodyType" className="text-sm">Body Type (Optional)</Label>
+                                    <Select value={bodyType} onValueChange={setBodyType}>
+                                        <SelectTrigger id="bodyType">
+                                            <SelectValue placeholder="Select type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
+                                            <SelectItem value="Slim">Slim</SelectItem>
+                                            <SelectItem value="Fit">Fit</SelectItem>
+                                            <SelectItem value="Healthy">Healthy</SelectItem>
+                                            <SelectItem value="Fat">Fat</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         </div>

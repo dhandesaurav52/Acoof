@@ -67,7 +67,7 @@ ${userDetails}
 1.  **DO NOT CHANGE THE PERSON:** You must use the user's actual face, body, and pose from the provided photo. Do not generate a new person. All facial features (including glasses, beards, makeup) and hairstyle must be preserved exactly as they are in the original photo. The original person must be clearly recognizable.
 2.  **SHOW THE FULL OUTFIT:** Generate a new, complete, stylish, and full-body outfit. The final image MUST show the person from head to toe, including fashionable shoes that match the outfit.
 3.  **FACE CLARITY & REALISM:** The person's face MUST be clear, in-focus, and not blurry, distorted, or changed in any way. The final image, with the new clothes, must look photorealistic and high-quality.
-4.  **BACKGROUND:** Keep the background simple and neutral, like a plain studio backdrop, to keep the focus on the person and the outfit. Do not change the original background.
+4.  **BACKGROUND:** Keep the background simple and neutral, like a plain studio backdrop, to keep the focus on the person and the outfit. Do not use the original background.
 
 Generate one new image that follows these rules.`;
 
