@@ -71,28 +71,28 @@ export function AiStylist() {
   // This effect correctly handles playing the video when the stream is ready
   useEffect(() => {
     const videoNode = videoRef.current;
-    if (videoNode && videoNode.srcObject) {
-      // This event fires when the browser has loaded metadata for the video,
-      // which includes its dimensions and duration. This is the safest point to call play().
-      const handleMetadataLoaded = async () => {
-        try {
-          await videoNode.play();
-          setCameraState('on'); // Set state to 'on' only after play is successful
-        } catch (playError) {
-          console.error("Video play failed:", playError);
-          setError("Could not start video playback.");
-          setCameraState('error');
-          stopCameraStream();
-        }
-      };
+    if (!videoNode || !videoNode.srcObject) return;
 
-      videoNode.addEventListener('loadedmetadata', handleMetadataLoaded);
-      
-      return () => {
-        videoNode.removeEventListener('loadedmetadata', handleMetadataLoaded);
-      };
-    }
-  }, []); // The empty dependency array ensures this setup runs only once. `videoRef.current` is stable.
+    // This event fires when the browser has loaded metadata for the video,
+    // which includes its dimensions and duration. This is the safest point to call play().
+    const handleMetadataLoaded = async () => {
+      try {
+        await videoNode.play();
+        setCameraState('on'); // Set state to 'on' only after play is successful
+      } catch (playError) {
+        console.error("Video play failed:", playError);
+        setError("Could not start video playback.");
+        setCameraState('error');
+        stopCameraStream();
+      }
+    };
+
+    videoNode.addEventListener('loadedmetadata', handleMetadataLoaded);
+    
+    return () => {
+      videoNode.removeEventListener('loadedmetadata', handleMetadataLoaded);
+    };
+  }, [videoRef.current?.srcObject]); // Re-run when the stream is attached
 
   // Cleanup effect to stop the camera when the component unmounts
   useEffect(() => {
@@ -104,7 +104,7 @@ export function AiStylist() {
   const handleCapture = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (video && canvas && cameraState === 'on' && video.readyState >= 3) { // Check if video has enough data
+    if (video && canvas && cameraState === 'on' && video.readyState >= 3 && video.videoWidth > 0) { // Check if video has enough data and has dimensions
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
