@@ -164,16 +164,19 @@ export default function ManageStorePage() {
             }
             const textSizes = data.sizesText ? data.sizesText.split(',').map(s => s.trim()).filter(Boolean) : [];
             const numericSizes = data.sizesNumeric ? data.sizesNumeric.split(',').map(s => s.trim()).filter(Boolean) : [];
-            await set(newProductRef, {
+            
+            const newProduct: Omit<Product, 'id'> = {
                 name: data.name,
                 description: data.description,
                 price: data.price,
-                category: data.category,
+                category: data.category as Product['category'],
                 isNew: data.isNew,
                 images: imageUrls,
                 colors: data.colors ? data.colors.split(',').map(s => s.trim()).filter(Boolean) : [],
                 sizes: [...textSizes, ...numericSizes],
-            });
+            };
+
+            await set(newProductRef, newProduct);
             toast({ title: "Product Added", description: `"${data.name}" has been successfully added.` });
             resetAdd();
             setImagePreviews([]);
@@ -194,7 +197,7 @@ export default function ManageStorePage() {
                 name: data.name,
                 description: data.description,
                 price: data.price,
-                category: data.category,
+                category: data.category as Product['category'],
                 isNew: data.isNew,
                 colors: data.colors ? data.colors.split(',').map(s => s.trim()).filter(Boolean) : [],
                 sizes: [...textSizes, ...numericSizes],

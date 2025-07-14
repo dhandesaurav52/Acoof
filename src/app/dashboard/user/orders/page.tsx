@@ -12,7 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import type { Order, OrderStatus } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { auth, database } from '@/lib/firebase';
-import { ref, get, update, push, set } from 'firebase/database';
+import { ref, get, update, push } from 'firebase/database';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -133,13 +133,16 @@ export default function UserOrdersPage() {
     const handleConfirmCancel = async () => {
         if (!orderToCancel || !database || !user) return;
         setIsCancelling(true);
-
+    
         const orderRef = ref(database, `orders/${orderToCancel.id}`);
         const updates: { [key: string]: any } = {};
-
-        // Prepare updates for the order itself
-        updates[`/orders/${orderToCancel.id}/status`] = 'Cancelled';
-        updates[`/orders/${orderToCancel.id}/cancellationReason`] = cancellationReason || 'No reason provided';
+    
+        const newStatus: OrderStatus = 'Cancelled';
+        const reason = cancellationReason || 'No reason provided';
+    
+        // Prepare updates for the order itself based on the security rules
+        updates[`/orders/${orderToCancel.id}/status`] = newStatus;
+        updates[`/orders/${orderToCancel.id}/cancellationReason`] = reason;
         
         // Prepare updates for the admin notification
         const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
@@ -154,22 +157,24 @@ export default function UserOrdersPage() {
             userId: user.uid,
             userEmail: user.email,
         };
-
+    
         try {
+            // This single `update` call writes to multiple locations atomically.
+            // The database rules are structured to allow this specific multi-path update.
             await update(ref(database), updates);
-
+    
             // Update local state on success
             setOrders(prevOrders =>
                 prevOrders.map(order =>
-                    order.id === orderToCancel.id ? { ...order, status: 'Cancelled' as OrderStatus, cancellationReason: cancellationReason || 'No reason provided' } : order
+                    order.id === orderToCancel.id ? { ...order, status: newStatus, cancellationReason: reason } : order
                 )
             );
-
+    
             toast({ 
                 title: orderToCancel.status === 'Delivered' ? "Return Initiated" : "Order Cancelled", 
                 description: orderToCancel.status === 'Delivered' ? "Your return request has been submitted." : "Your order has been successfully cancelled." 
             });
-
+    
         } catch (error: any) {
             if (error.code === 'PERMISSION_DENIED' && !auth?.currentUser) {
                 console.warn("Order cancellation permission denied, user has logged out.");
