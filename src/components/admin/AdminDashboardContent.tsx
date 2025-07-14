@@ -48,13 +48,15 @@ export function AdminDashboardContent() {
             return;
         }
         
-        if (!user || user.email !== ADMIN_EMAIL || allProducts.length === 0) {
+        if (!user || user.email !== ADMIN_EMAIL) {
             setLoadingData(false);
             return;
         }
         
         async function fetchAdminData() {
             setLoadingData(true);
+            setError(null);
+            
             try {
                 if (!database) {
                     throw new Error("Firebase is not configured correctly.");
@@ -68,26 +70,28 @@ export function AdminDashboardContent() {
                     get(ordersRef)
                 ]);
                 
+                // Process Users
                 let usersCount = 0;
                 if (usersSnapshot.exists()) {
                     const usersData = usersSnapshot.val();
                     if (typeof usersData === 'object' && usersData !== null) {
-                        const userList = Object.values(usersData);
-                        // Filter out the admin user from the count
-                        const regularUsers = userList.filter((u: any) => u && u.email && u.email !== ADMIN_EMAIL);
+                        const regularUsers = Object.values(usersData).filter((u: any) => u && u.email !== ADMIN_EMAIL);
                         usersCount = regularUsers.length;
                     }
                 }
                 
+                // Process Orders
                 let totalRevenue = 0;
                 let salesCount = 0;
                 if (ordersSnapshot.exists()) {
                     const ordersData = ordersSnapshot.val();
                     if (typeof ordersData === 'object' && ordersData !== null) {
-                        const deliveredOrders = Object.values(ordersData).filter((order: any) => order?.status === 'Delivered');
+                        const allOrders = Object.values(ordersData);
+                        const deliveredOrders = allOrders.filter((order: any) => order?.status === 'Delivered');
                         salesCount = deliveredOrders.length;
                         totalRevenue = deliveredOrders.reduce((acc: number, order: any) => acc + (order?.total || 0), 0);
 
+                        // Monthly Sales Chart
                         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                         const monthlySalesData = Array.from({ length: 12 }, (_, i) => {
                             const d = new Date();
@@ -109,29 +113,32 @@ export function AdminDashboardContent() {
                         });
                         setSalesData(monthlySalesData.reverse().map(d => ({ name: d.name, sales: d.sales })));
                         
-                        const salesByCategory: { [category: string]: number } = {};
-                        deliveredOrders.forEach((order: any) => {
-                            if (!order.items || !Array.isArray(order.items)) return;
-                            order.items.forEach((item: OrderItem) => {
-                                if (!item.productId) return;
-                                const product = allProducts.find(p => p.id === item.productId);
-                                if (product) {
-                                    const category = product.category;
-                                    salesByCategory[category] = (salesByCategory[category] || 0) + (item.quantity || 1);
-                                }
+                        // Category Sales Chart
+                        if (allProducts.length > 0) {
+                            const salesByCategory: { [category: string]: number } = {};
+                            deliveredOrders.forEach((order: any) => {
+                                if (!order.items || !Array.isArray(order.items)) return;
+                                order.items.forEach((item: OrderItem) => {
+                                    if (!item.productId) return;
+                                    const product = allProducts.find(p => p.id === item.productId);
+                                    if (product) {
+                                        const category = product.category;
+                                        salesByCategory[category] = (salesByCategory[category] || 0) + (item.quantity || 1);
+                                    }
+                                });
                             });
-                        });
 
-                        const categoryData = Object.keys(salesByCategory).map(category => ({
-                            name: category,
-                            sales: salesByCategory[category]
-                        })).sort((a, b) => b.sales - a.sales); 
-                        setCategorySalesData(categoryData);
+                            const categoryData = Object.keys(salesByCategory).map(category => ({
+                                name: category,
+                                sales: salesByCategory[category]
+                            })).sort((a, b) => b.sales - a.sales); 
+                            setCategorySalesData(categoryData);
+                        }
                     }
                 }
 
                 setStats({ totalRevenue, salesCount, usersCount });
-                setError(null);
+
             } catch (e: any) {
                 console.error("Failed to fetch admin data:", e);
                 if (e.code === 'PERMISSION_DENIED' || e.message?.includes('permission_denied')) {
@@ -314,5 +321,7 @@ export function AdminDashboardContent() {
         </div>
     );
 }
+
+    
 
     
