@@ -144,38 +144,40 @@ export default function UserOrdersPage() {
 
         setIsCancelling(true);
     
-        const updates: { [key: string]: any } = {};
         const newStatus: OrderStatus = 'Cancelled';
         const reason = cancellationReason;
-    
-        updates[`/orders/${orderToCancel.id}/status`] = newStatus;
-        updates[`/orders/${orderToCancel.id}/cancellationReason`] = reason;
+        const orderUpdate = {
+            status: newStatus,
+            cancellationReason: reason
+        };
     
         try {
             // Step 1: Update the order status. This is the critical operation.
-            await update(ref(database), updates);
+            const orderRef = ref(database, `orders/${orderToCancel.id}`);
+            await update(orderRef, orderUpdate);
 
             // Step 2: Create the admin notification (non-blocking).
-            const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
-            const newNotificationRef = push(ref(database, 'notifications'));
-            const notificationId = newNotificationRef.key;
+            try {
+                const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
+                const newNotificationRef = push(ref(database, 'notifications'));
+                const notificationId = newNotificationRef.key;
 
-            if (notificationId) {
-                const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id.slice(-6).toUpperCase()}.`;
-                const newNotification: Notification = {
-                    id: notificationId,
-                    type: notificationType,
-                    message: notificationMessage,
-                    timestamp: new Date().toISOString(),
-                    read: false,
-                    orderId: orderToCancel.id,
-                    userId: user.uid,
-                    userEmail: user.email,
-                };
-                // Use `set` for the new notification.
-                set(newNotificationRef, newNotification).catch(err => {
-                    console.error("Failed to create cancellation notification:", err);
-                });
+                if (notificationId) {
+                    const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id.slice(-6).toUpperCase()}.`;
+                    const newNotification: Notification = {
+                        id: notificationId,
+                        type: notificationType,
+                        message: notificationMessage,
+                        timestamp: new Date().toISOString(),
+                        read: false,
+                        orderId: orderToCancel.id,
+                        userId: user.uid,
+                        userEmail: user.email,
+                    };
+                    await set(newNotificationRef, newNotification);
+                }
+            } catch (notificationError) {
+                 console.error("Non-critical: Failed to create cancellation notification:", notificationError);
             }
     
             // Update local state to reflect the change immediately

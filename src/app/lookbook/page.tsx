@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 
 export default function LookbookPage() {
-  // AI STYLIST STATE AND LOGIC
+  const [isMounted, setIsMounted] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -33,8 +33,24 @@ export default function LookbookPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    setIsMounted(true);
+    // Cleanup on unmount
+    return () => {
+        setPhotoDataUri(null);
+        setGeneratedImages([]);
+        setError(null);
+        if (videoRef.current && videoRef.current.srcObject) {
+            const currentStream = videoRef.current.srcObject as MediaStream;
+            currentStream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null;
+        }
+    };
+  }, []);
+
+  useEffect(() => {
     // This effect handles turning the stream on and off
-    if (isCameraOn) {
+    let stream: MediaStream | null = null;
+    if (isCameraOn && isMounted) {
       const enableStream = async () => {
         setIsStartingCamera(true);
         setError(null);
@@ -46,7 +62,7 @@ export default function LookbookPage() {
             return;
         }
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
           setHasCameraPermission(true);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -61,26 +77,15 @@ export default function LookbookPage() {
         }
       };
       enableStream();
-
-      // Cleanup function to stop the stream
-      return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const currentStream = videoRef.current.srcObject as MediaStream;
-            currentStream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null;
-        }
-      };
     }
-  }, [isCameraOn, facingMode]);
-  
-  // This cleanup effect ensures that if the user navigates away, all state is reset.
-  useEffect(() => {
-    return () => {
-        setPhotoDataUri(null);
-        setGeneratedImages([]);
-    };
-  }, []);
 
+    // Cleanup function to stop the stream
+    return () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    };
+  }, [isCameraOn, facingMode, isMounted]);
 
   const handleStartCamera = () => {
     setIsCameraOn(true);
@@ -94,7 +99,6 @@ export default function LookbookPage() {
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
-        // We flip the context horizontally to get the non-mirrored image for the front camera
         if (facingMode === 'user') {
             context.translate(canvas.width, 0);
             context.scale(-1, 1);
@@ -103,13 +107,11 @@ export default function LookbookPage() {
         const dataUri = canvas.toDataURL('image/jpeg');
         setPhotoDataUri(dataUri);
         
-        // Explicitly stop the camera tracks to turn off the light
         if (video.srcObject) {
             const stream = video.srcObject as MediaStream;
             stream.getTracks().forEach(track => track.stop());
         }
-
-        setIsCameraOn(false); // Update state to hide video UI
+        setIsCameraOn(false);
       }
     }
   };
@@ -151,29 +153,30 @@ export default function LookbookPage() {
     setPhotoDataUri(null);
     setGeneratedImages([]);
     setError(null);
-    setIsCameraOn(false); // Ensure camera is off
+    setIsCameraOn(false);
   };
 
   const handleToggleCamera = () => {
     setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
   };
 
-  // Automatically trigger generation once a photo is captured
   useEffect(() => {
     if (photoDataUri && generatedImages.length === 0 && !isLoading && !error) {
       handleGenerate();
     }
   }, [photoDataUri, generatedImages.length, isLoading, error, handleGenerate]);
   
-  // LOOKBOOK LOGIC
   const looksByCategory = lookCategories.map(category => ({
     category,
     looks: looks.filter(look => look.category === category)
   })).filter(group => group.looks.length > 0);
   
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <div className="container mx-auto py-12 px-4">
-      {/* AI STYLIST UI */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline flex items-center justify-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -186,7 +189,6 @@ export default function LookbookPage() {
 
       <div className="max-w-7xl mx-auto mb-20">
         {photoDataUri ? (
-            // START: NEW RESULTS VIEW
             <div className="flex flex-col items-center gap-8">
                 <div className="w-full max-w-sm space-y-4">
                     <h3 className="text-xl font-bold font-headline text-center">Your Photo</h3>
@@ -255,14 +257,11 @@ export default function LookbookPage() {
                     )}
                 </div>
             </div>
-            // END: NEW RESULTS VIEW
         ) : (
-            // START: INITIAL VIEW (before photo is taken)
             <div className="max-w-md mx-auto">
                 <Card className="overflow-hidden">
                     <CardContent className="p-4 sm:p-6">
                         {isCameraOn ? (
-                            // Camera is ON -> show video feed
                             <div className="space-y-4">
                                 <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-muted">
                                     <video ref={videoRef} className={cn("w-full h-full object-cover", facingMode === 'user' && "transform -scale-x-100")} autoPlay muted playsInline />
@@ -298,7 +297,6 @@ export default function LookbookPage() {
                                 </div>
                             </div>
                         ) : (
-                            // Camera is OFF -> show placeholder and "Turn On" button
                             <div className="flex flex-col items-center justify-center text-center rounded-lg bg-secondary/30 min-h-[350px] p-6">
                                 <div className="p-3 bg-primary/10 rounded-full mb-4">
                                     <Camera className="h-6 w-6 text-primary" />
@@ -334,13 +332,11 @@ export default function LookbookPage() {
                     </CardContent>
                 </Card>
             </div>
-            // END: INITIAL VIEW
         )}
       </div>
 
       <Separator className="my-16" />
 
-      {/* CURATED LOOKBOOK UI */}
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline">The Lookbook</h2>
         <p className="max-w-2xl mx-auto mt-4 text-muted-foreground">
