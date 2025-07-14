@@ -112,6 +112,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
 
         if (notificationId) {
             updates[`/notifications/${notificationId}`] = {
+                id: notificationId,
                 type: 'new_order',
                 message: notificationMessage,
                 timestamp: new Date().toISOString(),
