@@ -8,13 +8,10 @@
     "users": {
       ".indexOn": ["email"],
       "$uid": {
-        // A user can read their own profile data. Admin can read any profile.
         ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
-        // A user can write to their own profile data. Admin can write to any profile.
         ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
         "orders": {
           "$orderId": {
-            // When a user adds an order, they can only write 'true' to this path.
             ".validate": "newData.isBoolean() && newData.val() === true"
           }
         }
@@ -22,25 +19,18 @@
     },
     "orders": {
       ".indexOn": ["userId"],
-      // Admin can read all orders. Users can only read orders where their UID matches the userId field.
-      ".read": "auth.token.email === 'admin@example.com' || (auth != null && query.orderByChild === 'userId' && query.equalTo === auth.uid)",
+      ".read": "auth != null && auth.token.email === 'admin@example.com'",
       "$orderId": {
-        // A user can read a specific order if their UID matches the order's userId. Admin can read any.
         ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
-        // Users can write a new order, or update an existing one ONLY to cancel/return it. Admin can write anything.
-        ".write": "auth != null && (auth.token.email === 'admin@example.com' || (newData.child('userId').val() === auth.uid && (!data.exists() || (data.exists() && newData.child('status').val() === 'Cancelled'))))",
-        // Validate the structure of a new order being created.
-        ".validate": "newData.hasChildren(['id', 'userId', 'user', 'userEmail', 'date', 'total', 'status', 'shippingAddress', 'items', 'paymentMethod']) && newData.child('id').val() === $orderId && newData.child('userId').val() === auth.uid"
+        ".write": "auth != null && (auth.token.email === 'admin@example.com' || (newData.child('userId').val() === auth.uid && !data.exists()) || (data.child('userId').val() === auth.uid && (newData.child('status').val() === 'Cancelled' && newData.hasChild('cancellationReason'))))",
+        ".validate": "newData.hasChildren(['id', 'userId', 'user', 'userEmail', 'date', 'total', 'status', 'shippingAddress', 'items', 'paymentMethod']) && newData.child('id').isString() && newData.child('id').val() === $orderId && newData.child('userId').isString() && newData.child('userId').val() === auth.uid && newData.child('user').isString() && newData.child('userEmail').isString() && newData.child('date').isString() && newData.child('total').isNumber() && newData.child('status').isString() && newData.child('shippingAddress').isString() && newData.child('items').isArray() && newData.child('paymentMethod').isString()"
       }
     },
     "notifications": {
-      // Only the admin can read notifications.
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
-      // Any authenticated user can write a notification.
       ".write": "auth != null",
       "$notificationId": {
-        // Validate the structure and content of any new notification.
-        ".validate": "newData.hasChildren(['id', 'type', 'message', 'timestamp', 'read', 'orderId', 'userId', 'userEmail']) && newData.child('id').val() === $notificationId && newData.child('userId').val() === auth.uid && (newData.child('type').val() === 'new_order' || newData.child('type').val() === 'order_cancellation' || newData.child('type').val() === 'order_return')"
+         ".validate": "newData.hasChildren(['id', 'type', 'message', 'timestamp', 'read', 'orderId', 'userId', 'userEmail']) && newData.child('userId').val() === auth.uid && (newData.child('type').val() === 'new_order' || newData.child('type').val() === 'order_cancellation' || newData.child('type').val() === 'order_return')"
       }
     }
   }

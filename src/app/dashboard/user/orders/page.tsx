@@ -131,13 +131,23 @@ export default function UserOrdersPage() {
     };
 
     const handleConfirmCancel = async () => {
-        if (!orderToCancel || !database || !user) return;
+        if (!orderToCancel || !database || !user || !user.email) return;
+        
+        if (!cancellationReason) {
+            toast({
+                variant: 'destructive',
+                title: 'Reason Required',
+                description: 'Please provide a reason for the request.',
+            });
+            return;
+        }
+
         setIsCancelling(true);
     
         const updates: { [key: string]: any } = {};
     
         const newStatus: OrderStatus = 'Cancelled';
-        const reason = cancellationReason || 'No reason provided';
+        const reason = cancellationReason;
     
         // Path to update order status and cancellation reason
         updates[`/orders/${orderToCancel.id}/status`] = newStatus;
@@ -147,15 +157,20 @@ export default function UserOrdersPage() {
         const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
         const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id.slice(-6).toUpperCase()}.`;
         const newNotificationRef = push(ref(database, 'notifications'));
-        updates[`/notifications/${newNotificationRef.key}`] = {
-            type: notificationType,
-            message: notificationMessage,
-            timestamp: new Date().toISOString(),
-            read: false,
-            orderId: orderToCancel.id,
-            userId: user.uid,
-            userEmail: user.email,
-        };
+        const notificationId = newNotificationRef.key;
+
+        if (notificationId) {
+            updates[`/notifications/${notificationId}`] = {
+                id: notificationId,
+                type: notificationType,
+                message: notificationMessage,
+                timestamp: new Date().toISOString(),
+                read: false,
+                orderId: orderToCancel.id,
+                userId: user.uid,
+                userEmail: user.email,
+            };
+        }
     
         try {
             await update(ref(database), updates);
@@ -342,7 +357,7 @@ export default function UserOrdersPage() {
                 </AlertDialogHeader>
                 <div className="py-2">
                     <Label htmlFor="cancellation-reason" className="text-sm font-medium">
-                        Reason for {orderToCancel?.status === 'Delivered' ? 'Return' : 'Cancellation'} (Optional)
+                        Reason for {orderToCancel?.status === 'Delivered' ? 'Return' : 'Cancellation'} (Required)
                     </Label>
                     <Textarea
                         id="cancellation-reason"
