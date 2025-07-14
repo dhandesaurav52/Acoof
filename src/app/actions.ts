@@ -83,6 +83,32 @@ export async function verifyRazorpayPayment(data: {
   return { success: false, error: "Payment verification failed. This means the response from Razorpay could not be trusted. This is often caused by an incorrect 'RAZORPAY_KEY_SECRET'. Please re-verify your secret key for any typos or extra spaces and ensure it matches your account's mode (Test vs. Live)." };
 }
 
+async function createAdminNotification(order: Order): Promise<void> {
+    if (!database) return;
+    try {
+        const newNotificationRef = push(dbRef(database, 'notifications'));
+        const notificationId = newNotificationRef.key;
+
+        if (notificationId) {
+            const notificationMessage = `New order #${order.id.slice(-6).toUpperCase()} placed by ${order.userEmail}. Total: ₹${order.total.toFixed(2)}`;
+            const newNotification: Notification = {
+                id: notificationId,
+                type: 'new_order',
+                message: notificationMessage,
+                timestamp: new Date().toISOString(),
+                read: false,
+                orderId: order.id,
+                userId: order.userId,
+                userEmail: order.userEmail,
+            };
+            await set(newNotificationRef, newNotification);
+        }
+    } catch (error) {
+        // Non-critical error, so we log it but don't fail the whole process.
+        console.error("Failed to create admin notification:", error);
+    }
+}
+
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     if (!database) {
         return { success: false, error: 'Firebase is not configured. Cannot save order.' };
@@ -102,34 +128,25 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
     const finalOrderData: Order = { ...orderData, id: newId };
     
     try {
-        const updates: { [key: string]: any } = {};
-        updates[`/orders/${newId}`] = finalOrderData;
-        updates[`/users/${orderData.userId}/orders/${newId}`] = true;
+        // Step 1: Save the primary order data.
+        await set(newOrderRef, finalOrderData);
 
-        const newNotificationRef = push(dbRef(database, 'notifications'));
-        const notificationId = newNotificationRef.key;
-
-        if (notificationId) {
-            const notificationMessage = `New order #${newId.slice(-6).toUpperCase()} placed by ${orderData.userEmail}. Total: ₹${orderData.total.toFixed(2)}`;
-            const newNotification: Notification = {
-                id: notificationId,
-                type: 'new_order',
-                message: notificationMessage,
-                timestamp: new Date().toISOString(),
-                read: false,
-                orderId: newId,
-                userId: orderData.userId,
-                userEmail: orderData.userEmail,
-            };
-            updates[`/notifications/${notificationId}`] = newNotification;
+        // Step 2: Update the user's order list (less critical, can fail silently if needed).
+        try {
+            await update(dbRef(database, `users/${orderData.userId}/orders`), { [newId]: true });
+        } catch (userUpdateError) {
+             console.error(`Failed to add order ${newId} to user ${orderData.userId} list:`, userUpdateError);
         }
+        
+        // Step 3: Create the admin notification (non-blocking).
+        await createAdminNotification(finalOrderData);
 
-        await update(dbRef(database), updates);
         return { success: true, orderId: newId };
+
     } catch (error: any) {
         let errorMessage = 'An unexpected error occurred while saving the order.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Could not save the order. Please check your Firebase Realtime Database security rules to ensure they allow authenticated users to write to the 'orders', their own 'users' data path, and the 'notifications' path simultaneously.";
+            errorMessage = "Permission Denied: Could not save the order. Please check your Firebase Realtime Database security rules to ensure they allow authenticated users to write to the 'orders' path.";
         }
         console.error("Firebase saveOrder error:", error);
         return { success: false, error: errorMessage };

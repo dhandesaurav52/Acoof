@@ -7,34 +7,32 @@
     },
     "users": {
       "$uid": {
-        // Users can read their own data. Admin can read any user's data.
+        
         ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
-        // Users can write to their own data. Admin can write to any user's data.
+        
         ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
         ".validate": "newData.hasChildren(['email'])"
       },
-      // Admin needs to be able to read the entire /users node for dashboard analytics
+      
       ".read": "auth != null && auth.token.email === 'admin@example.com'"
     },
     "orders": {
-      // Admin can read the entire /orders node for the management page
+     
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
       ".indexOn": ["userId"],
       "$orderId": {
-        // Users can read their own specific orders.
+        
         ".read": "auth != null && (data.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
-        // This is the multi-location write rule.
-        // It handles new order creation, order cancellation by a user, and any modification by an admin.
+       
         ".write": "auth != null && (auth.token.email === 'admin@example.com' || (newData.child('userId').val() === auth.uid))",
         ".validate": "newData.hasChildren(['id', 'userId', 'user', 'userEmail', 'date', 'total', 'status', 'shippingAddress', 'items', 'paymentMethod']) && newData.child('items').hasChildren()"
       }
     },
     "notifications": {
-      // Admin can read all notifications
+      
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
       "$notificationId": {
-        // Users can create notifications for the admin (new order, cancellation).
-        // Admin can create/modify any notification.
+        
         ".write": "auth != null && (newData.child('userId').val() === auth.uid || auth.token.email === 'admin@example.com')",
         ".validate": "newData.hasChildren(['id', 'type', 'message', 'timestamp', 'read', 'orderId', 'userId', 'userEmail'])"
       }
