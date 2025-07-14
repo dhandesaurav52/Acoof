@@ -70,9 +70,9 @@ export default function UserOrdersPage() {
                 const orderSnapshots = await Promise.all(orderPromises);
                 
                 const ordersList: Order[] = orderSnapshots
-                    .map(snapshot => snapshot.exists() ? snapshot.val() as Order : null)
+                    .map(snapshot => snapshot.exists() ? ({ ...snapshot.val(), id: snapshot.key }) as Order : null)
                     .filter((order): order is Order => order !== null)
-                    .reverse(); // Show most recent first
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                 
                 setOrders(ordersList);
 
@@ -112,7 +112,7 @@ export default function UserOrdersPage() {
 
     const isOrderCancellable = (order: Order): { cancellable: boolean; reason: string } => {
         if (order.status !== 'Pending' && order.status !== 'Delivered') {
-            return { cancellable: false, reason: `This order cannot be returned as its status is '${order.status}'.` };
+            return { cancellable: false, reason: `This order cannot be modified as its status is '${order.status}'.` };
         }
         
         try {
@@ -139,13 +139,13 @@ export default function UserOrdersPage() {
         const newStatus: OrderStatus = 'Cancelled';
         const reason = cancellationReason || 'No reason provided';
     
-        // Prepare updates for the order itself based on the security rules
+        // Path to update order status and cancellation reason
         updates[`/orders/${orderToCancel.id}/status`] = newStatus;
         updates[`/orders/${orderToCancel.id}/cancellationReason`] = reason;
         
-        // Prepare updates for the admin notification
+        // Path to add an admin notification
         const notificationType = orderToCancel.status === 'Delivered' ? 'order_return' : 'order_cancellation';
-        const notificationMessage = `User ${user.displayName || user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id}.`;
+        const notificationMessage = `User ${user.email} ${notificationType === 'order_return' ? 'initiated a return for' : 'cancelled'} order #${orderToCancel.id}.`;
         const newNotificationRef = push(ref(database, 'notifications'));
         updates[`/notifications/${newNotificationRef.key}`] = {
             type: notificationType,
@@ -158,11 +158,8 @@ export default function UserOrdersPage() {
         };
     
         try {
-            // This single `update` call writes to multiple locations atomically.
-            // The database rules are structured to allow this specific multi-path update.
             await update(ref(database), updates);
     
-            // Update local state on success
             setOrders(prevOrders =>
                 prevOrders.map(order =>
                     order.id === orderToCancel.id ? { ...order, status: newStatus, cancellationReason: reason } : order
@@ -371,3 +368,5 @@ export default function UserOrdersPage() {
     </div>
   );
 }
+
+    
