@@ -8,29 +8,9 @@
 
 import { ai } from '@/ai/dev';
 import { z } from 'zod';
+import type { OutfitImagesInput } from '@/types';
+import { OutfitImagesInputSchema, OutfitImagesOutputSchema } from '@/types';
 
-const OutfitImagesInputSchema = z.object({
-  photoDataUri: z
-    .string()
-    .describe(
-      "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-  height: z.string().optional().describe("The user's height, e.g., 5'10\" or 178cm."),
-  bodyType: z.string().optional().describe("The user's body type, e.g., Slim, Fit, Healthy, Fat."),
-});
-export type OutfitImagesInput = z.infer<typeof OutfitImagesInputSchema>;
-
-const OutfitImagesOutputSchema = z.object({
-  images: z
-    .array(
-      z
-        .string()
-        .describe(
-          "A generated image of a person in a new outfit, as a data URI."
-        )
-    )
-    .describe('An array of three distinct outfit images as data URIs.'),
-});
 
 export async function generateOutfitImages(
   input: OutfitImagesInput
