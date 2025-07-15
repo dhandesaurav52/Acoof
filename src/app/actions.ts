@@ -10,6 +10,10 @@ import { products as localProducts } from '@/lib/data';
 // This function now uses the Admin SDK directly to verify the token and get the UID.
 // It is the standard and most secure way to handle authentication in server actions.
 async function getVerifiedUid(idToken: string): Promise<string> {
+    if (!adminAuth) {
+        // This is a server configuration issue.
+        throw new Error("The authentication service is not configured on the server. This is not a user session issue. Please check server logs.");
+    }
     if (!idToken) {
         throw new Error('Authentication token is required.');
     }
@@ -24,9 +28,6 @@ async function getVerifiedUid(idToken: string): Promise<string> {
 
 
 export async function createRazorpayOrder(amount: number, idToken: string, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
-    if (!idToken) {
-        return { error: 'User authentication is required to create a payment order.' };
-    }
     try {
         await getVerifiedUid(idToken);
     } catch (e: any) {
@@ -175,7 +176,7 @@ async function createUserNotification(order: Order, newStatus: OrderStatus): Pro
 export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderStatus, adminIdToken: string): Promise<{ success: boolean, error?: string }> {
     try {
         const adminUid = await getVerifiedUid(adminIdToken);
-        const adminUser = await adminAuth.getUser(adminUid);
+        const adminUser = await adminAuth!.getUser(adminUid);
         if (adminUser.email !== 'admin@example.com') {
             return { success: false, error: "Unauthorized: Only admins can perform this action." };
         }
@@ -202,7 +203,6 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     let verifiedUid: string;
     try {
-        // This is the critical change. We use the admin-authenticated function.
         verifiedUid = await getVerifiedUid(idToken);
     } catch (e: any) {
         return { success: false, error: e.message };
@@ -227,7 +227,6 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
     
     try {
         const updates: { [key: string]: any } = {};
-        // The server, now acting with admin privileges, can write to both locations securely.
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
