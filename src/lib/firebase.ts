@@ -6,23 +6,29 @@ import { getDatabase, type Database } from 'firebase/database';
 
 let firebaseConfig: any;
 
-// On Firebase App Hosting, the config is provided automatically as an environment variable.
-// This handles the configuration for deployed environments.
-if (process.env.FIREBASE_CONFIG) {
-    firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
+// For local development and client-side on production, the config is read from NEXT_PUBLIC_ variables.
+// These are exposed to the browser and are the primary source of configuration.
+const clientConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+};
+
+// On Firebase App Hosting, the server-side runtime gets the config automatically.
+// We use this as a fallback if the public keys aren't set for some reason.
+const serverConfig = process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG) : null;
+
+// Prioritize client-side public variables, as they are essential for the browser.
+if (clientConfig.apiKey) {
+    firebaseConfig = clientConfig;
 } else {
-    // For local development, the config is read from .env or .env.local
-    // This allows you to run the app on your own machine.
-    firebaseConfig = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-        databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-    };
+    firebaseConfig = serverConfig;
 }
+
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
