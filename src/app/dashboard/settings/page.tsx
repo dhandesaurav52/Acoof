@@ -1,26 +1,52 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Moon, Sun, Monitor } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2, Moon, Sun, Monitor, AlertCircle } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from 'next-themes';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+
+const ADMIN_EMAIL = "admin@example.com";
 
 export default function SettingsPage() {
-    const { user, loading } = useAuth();
+    const { user, loading, logout, deleteAccount } = useAuth();
     const router = useRouter();
     const { theme, setTheme } = useTheme();
+    const { toast } = useToast();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
             router.push('/login');
         }
     }, [user, loading, router]);
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteAccount();
+            toast({
+                title: "Account Deleted",
+                description: "Your account has been permanently deleted.",
+            });
+            // The logout/redirect is handled by the deleteAccount function
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Deletion Failed",
+                description: error.message,
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
     
     if (loading || !user) {
         return (
@@ -29,6 +55,8 @@ export default function SettingsPage() {
             </div>
         );
     }
+
+    const isAdmin = user.email === ADMIN_EMAIL;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -88,6 +116,45 @@ export default function SettingsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {!isAdmin && (
+                <Card className="border-destructive">
+                    <CardHeader>
+                        <CardTitle>Danger Zone</CardTitle>
+                        <CardDescription>These actions are permanent and cannot be undone.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-between items-center">
+                        <p className="text-sm font-medium">Delete your account and all data.</p>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive">
+                                    <AlertCircle className="mr-2 h-4 w-4" />
+                                    Delete Account
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                        onClick={handleDeleteAccount} 
+                                        disabled={isDeleting}
+                                        className={buttonVariants({ variant: "destructive" })}
+                                    >
+                                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Continue
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     </div>
   );

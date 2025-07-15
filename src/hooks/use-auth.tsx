@@ -2,10 +2,10 @@
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, deleteUser } from 'firebase/auth';
 import { auth, database } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { ref as dbRef, set, get, update } from "firebase/database";
+import { ref as dbRef, set, get, update, remove } from "firebase/database";
 
 export type AppUser = User & {
     phone?: string;
@@ -22,6 +22,7 @@ interface AuthContextType {
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
   updateUserProfile: (data: Partial<Omit<AppUser, 'uid' | 'photoURL' | 'emailVerified' | 'isAnonymous' | 'metadata' | 'providerData' | 'providerId' | 'tenantId' | 'delete' | 'getIdToken' | 'getIdTokenResult' | 'reload' | 'toJSON'>>) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,8 +50,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDbRef = dbRef(database, `users/${user.uid}`);
         try {
             const snapshot = await get(userDbRef);
-            // This is the key change: We use the original user object and assign properties to it.
-            // Spreading it like `{...user}` creates a new plain object and strips methods like getIdToken().
             const appUser: AppUser = user as AppUser; 
             if (snapshot.exists()) {
               const dbProfile = snapshot.val();
@@ -171,7 +170,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, loginWithEmail, signupWithEmail, logout, updateUserProfile };
+  const deleteAccount = async () => {
+    const currentUser = auth?.currentUser;
+    if (!auth || !currentUser || !database) {
+      throw new Error("Firebase not configured or user not logged in.");
+    }
+  
+    try {
+      // 1. Delete user data from Realtime Database
+      const userDbRef = dbRef(database, `users/${currentUser.uid}`);
+      await remove(userDbRef);
+  
+      // 2. Delete the user from Firebase Authentication
+      await deleteUser(currentUser);
+
+      // 3. Force logout and redirect
+      setUser(null); // Clear local state immediately
+      router.push('/'); // Redirect to home page after deletion
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      if (error.code === 'auth/requires-recent-login') {
+        throw new Error("This action is sensitive and requires recent authentication. Please log out and log back in before deleting your account.");
+      }
+      throw new Error("An error occurred while deleting your account.");
+    }
+  };
+
+  const value = { user, loading, loginWithEmail, signupWithEmail, logout, updateUserProfile, deleteAccount };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
