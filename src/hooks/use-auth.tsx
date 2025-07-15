@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
@@ -22,7 +23,7 @@ interface AuthContextType {
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
   uploadProfilePicture: (file: File) => Promise<void>;
-  updateUserProfile: (data: Partial<AppUser>) => Promise<void>;
+  updateUserProfile: (data: Partial<Omit<AppUser, 'uid' | 'photoURL' | 'emailVerified' | 'isAnonymous' | 'metadata' | 'providerData' | 'providerId' | 'tenantId' | 'delete' | 'getIdToken' | 'getIdTokenResult' | 'reload' | 'toJSON'>>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,23 +51,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDbRef = dbRef(database, `users/${user.uid}`);
         try {
             const snapshot = await get(userDbRef);
-            const appUser: AppUser = user; // Start with the real User object
+            const appUser: AppUser = user; 
             if (snapshot.exists()) {
               const dbProfile = snapshot.val();
-              Object.assign(appUser, dbProfile); // Add profile properties to it
+              Object.assign(appUser, dbProfile); 
             } else {
-              // If no profile exists, create one for users who signed up before this logic was added
               const initialProfile = {
                   email: user.email,
                   displayName: user.displayName,
               };
               await set(userDbRef, initialProfile);
-              Object.assign(appUser, initialProfile); // Add profile properties
+              Object.assign(appUser, initialProfile);
             }
-            setUser(appUser); // Set the enhanced User object in state
+            setUser(appUser);
         } catch (error: any) {
-            // Silently fall back to the basic user object if the profile can't be fetched.
-            // This prevents a crash if database security rules are not configured.
             setUser(user);
         }
       } else {
@@ -98,18 +96,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
             } catch (dbError) {
                 console.error("Database error during sign up:", dbError);
-                // Non-fatal error. User is created in Auth, but profile data might be missing in DB.
-                // This state can be recovered from later, so we don't throw an error to the user.
             }
         }
         return userCredential;
     } catch (error) {
-        // This will catch auth-related errors from createUserWithEmailAndPassword
         throw error;
     }
   }
 
-  const updateUserProfile = async (data: Partial<AppUser>) => {
+  const updateUserProfile = async (data: Partial<Omit<AppUser, 'uid' | 'photoURL' | 'emailVerified' | 'isAnonymous' | 'metadata' | 'providerData' | 'providerId' | 'tenantId' | 'delete' | 'getIdToken' | 'getIdTokenResult' | 'reload' | 'toJSON'>>) => {
     const currentUser = auth?.currentUser;
     if (!auth || !currentUser || !database) {
         throw new Error("Firebase not configured or user not logged in.");
@@ -129,8 +124,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         const userDbRef = dbRef(database, `users/${currentUser.uid}`);
-
-        const dbUpdates: { [key: string]: any } = {};
+        
+        // Create a clean object with only the fields to update
+        const dbUpdates: any = {};
         if (data.displayName) dbUpdates.displayName = data.displayName;
         if (data.email) dbUpdates.email = data.email;
         if (data.phone) dbUpdates.phone = data.phone;
@@ -139,10 +135,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.state) dbUpdates.state = data.state;
         if (data.pincode) dbUpdates.pincode = data.pincode;
 
-        const cleanDbUpdates = Object.fromEntries(Object.entries(dbUpdates).filter(([, v]) => v != null && v !== ''));
-
-        if (Object.keys(cleanDbUpdates).length > 0) {
-            await update(userDbRef, cleanDbUpdates);
+        if (Object.keys(dbUpdates).length > 0) {
+            await update(userDbRef, dbUpdates);
         }
 
         await currentUser.reload();

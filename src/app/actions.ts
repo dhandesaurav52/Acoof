@@ -4,9 +4,28 @@
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 import type { Order, Product, Notification } from '@/types';
-import { database } from '@/lib/firebase';
-import { ref as dbRef, update, push, set } from "firebase/database";
+import { database } from '@/lib/firebase-admin'; // Use Admin SDK for server actions
+import { auth as adminAuth } from 'firebase-admin';
 import { products as localProducts } from '@/lib/data';
+
+// Helper to verify user token. This is crucial for securing server actions.
+async function getVerifiedUid(authHeader?: string): Promise<string> {
+    if (!authHeader) {
+        throw new Error('No authorization header provided.');
+    }
+    const token = authHeader.split('Bearer ')[1];
+    if (!token) {
+        throw new Error('Invalid authorization header format.');
+    }
+    try {
+        const decodedToken = await adminAuth().verifyIdToken(token);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying ID token:", error);
+        throw new Error('Invalid or expired user session.');
+    }
+}
+
 
 export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -86,7 +105,7 @@ export async function verifyRazorpayPayment(data: {
 async function createAdminNotification(order: Order): Promise<void> {
     if (!database || !order.userEmail) return;
     try {
-        const newNotificationRef = push(dbRef(database, 'notifications'));
+        const newNotificationRef = database.ref('notifications').push();
         const notificationId = newNotificationRef.key;
 
         if (notificationId) {
@@ -101,10 +120,9 @@ async function createAdminNotification(order: Order): Promise<void> {
                 userId: order.userId,
                 userEmail: order.userEmail,
             };
-            await set(newNotificationRef, newNotification);
+            await newNotificationRef.set(newNotification);
         }
     } catch (error) {
-        // Non-critical error, so we log it but don't fail the whole process.
         console.error("Failed to create admin notification:", error);
     }
 }
@@ -117,40 +135,30 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
     if (!orderData.userId) {
         return { success: false, error: 'Cannot save order without a user ID.' };
     }
-
-    const newOrderRef = push(dbRef(database, 'orders'));
+    
+    const newOrderRef = database.ref('orders').push();
     const newId = newOrderRef.key;
 
     if (!newId) {
         return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
     }
     
-    // The final order object to be saved in the database.
-    // We add the generated firebase key as the main 'id'.
-    const finalOrderData: Order = {
-        ...orderData,
-        id: newId, 
-    };
+    const finalOrderData: Order = { ...orderData, id: newId };
     
     try {
         const updates: { [key: string]: any } = {};
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
-        await update(dbRef(database), updates);
+        await database.ref().update(updates);
         
-        // Non-blocking: Create the admin notification after the main transaction is successful.
         await createAdminNotification(finalOrderData);
 
         return { success: true, orderId: newId };
 
     } catch (error: any) {
-        let errorMessage = 'An unexpected error occurred while saving the order.';
-        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Could not save the order. Please check your Firebase Realtime Database security rules to ensure they allow authenticated users to write to the 'orders' path and to their own '/users/{uid}/orders' path.";
-        }
         console.error("Firebase saveOrder error:", error);
-        return { success: false, error: errorMessage };
+        return { success: false, error: 'An unexpected error occurred while saving the order. Check server logs.' };
     }
 }
 
@@ -159,7 +167,7 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
         return { success: false, error: 'Firebase is not configured. Cannot seed products.' };
     }
 
-    const productsRef = dbRef(database, 'products');
+    const productsRef = database.ref('products');
 
     try {
         const productsForFirebase = localProducts.reduce((acc, product) => {
@@ -168,16 +176,12 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
             return acc;
         }, {} as Record<string, Omit<Product, 'id'>>);
         
-        await set(productsRef, productsForFirebase);
+        await productsRef.set(productsForFirebase);
 
         return { success: true, count: localProducts.length };
 
     } catch (error: any) {
-        let errorMessage = 'An unexpected error occurred while seeding the products.';
-        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Please check your Firebase Realtime Database security rules to allow the admin to write to the 'products' path.";
-        }
         console.error("Firebase seedProducts error:", error);
-        return { success: false, error: errorMessage };
+        return { success: false, error: 'An unexpected error occurred while seeding the products.' };
     }
 }
