@@ -28,12 +28,13 @@ async function getVerifiedUid(authHeader?: string): Promise<string> {
 
 
 export async function createRazorpayOrder(amount: number, receiptId?: string, idToken?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
-    if (idToken) {
-        try {
-            await getVerifiedUid(`Bearer ${idToken}`);
-        } catch (e: any) {
-            return { error: e.message };
-        }
+    if (!idToken) {
+        return { error: 'User authentication is required to create a payment order.' };
+    }
+    try {
+        await getVerifiedUid(`Bearer ${idToken}`);
+    } catch (e: any) {
+        return { error: e.message };
     }
 
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -135,21 +136,20 @@ async function createAdminNotification(order: Order): Promise<void> {
     }
 }
 
-export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken?: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
-    if (idToken) {
-        try {
-            await getVerifiedUid(`Bearer ${idToken}`);
-        } catch (e: any) {
-            return { success: false, error: e.message };
-        }
+export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+    let verifiedUid: string;
+    try {
+        verifiedUid = await getVerifiedUid(`Bearer ${idToken}`);
+    } catch (e: any) {
+        return { success: false, error: e.message };
     }
 
     if (!database) {
         return { success: false, error: 'Firebase is not configured. Cannot save order.' };
     }
 
-    if (!orderData.userId) {
-        return { success: false, error: 'Cannot save order without a user ID.' };
+    if (!orderData.userId || orderData.userId !== verifiedUid) {
+        return { success: false, error: 'User ID does not match authenticated user. Cannot save order.' };
     }
     
     const newOrderRef = database.ref('orders').push();

@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDbRef = dbRef(database, `users/${user.uid}`);
         try {
             const snapshot = await get(userDbRef);
-            const appUser: AppUser = user; 
+            const appUser: AppUser = { ...user } as AppUser; 
             if (snapshot.exists()) {
               const dbProfile = snapshot.val();
               Object.assign(appUser, dbProfile); 
@@ -125,15 +125,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         const userDbRef = dbRef(database, `users/${currentUser.uid}`);
         
-        // Create a clean object with only the fields to update
         const dbUpdates: any = {};
         if (data.displayName) dbUpdates.displayName = data.displayName;
         if (data.email) dbUpdates.email = data.email;
-        if (data.phone) dbUpdates.phone = data.phone;
-        if (data.address) dbUpdates.address = data.address;
-        if (data.city) dbUpdates.city = data.city;
-        if (data.state) dbUpdates.state = data.state;
-        if (data.pincode) dbUpdates.pincode = data.pincode;
+        if (data.phone !== undefined) dbUpdates.phone = data.phone;
+        if (data.address !== undefined) dbUpdates.address = data.address;
+        if (data.city !== undefined) dbUpdates.city = data.city;
+        if (data.state !== undefined) dbUpdates.state = data.state;
+        if (data.pincode !== undefined) dbUpdates.pincode = data.pincode;
+
 
         if (Object.keys(dbUpdates).length > 0) {
             await update(userDbRef, dbUpdates);
@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (reloadedUser) {
             const finalSnapshot = await get(userDbRef);
             const dbProfile = finalSnapshot.exists() ? finalSnapshot.val() : {};
-            const appUser: AppUser = reloadedUser;
+            const appUser: AppUser = { ...reloadedUser } as AppUser;
             Object.assign(appUser, dbProfile);
             setUser(appUser);
         } else {
@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (reloadedUser) {
         const userDbRef = dbRef(database, `users/${reloadedUser.uid}`);
         const snapshot = await get(userDbRef);
-        const appUser: AppUser = reloadedUser;
+        const appUser: AppUser = { ...reloadedUser } as AppUser;
         if (snapshot.exists()) {
             Object.assign(appUser, snapshot.val());
         }
