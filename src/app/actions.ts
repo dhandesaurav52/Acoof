@@ -125,7 +125,12 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
         return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
     }
     
-    const finalOrderData: Order = { ...orderData, id: newId };
+    // The final order object to be saved in the database.
+    // We add the generated firebase key as the main 'id'.
+    const finalOrderData: Order = {
+        ...orderData,
+        id: newId, 
+    };
     
     try {
         // Step 1: Save the primary order data. This is the most critical part.
