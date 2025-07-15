@@ -1,16 +1,10 @@
 
 'use client';
 
-import { Separator } from '@/components/ui/separator';
-import { looks, lookCategories } from "@/lib/data";
+import { lookCategories, looks } from "@/lib/data";
 import { OutfitCard } from '@/components/OutfitCard';
 
 export default function LookbookPage() {
-  
-  const looksByCategory = lookCategories.map(category => ({
-    category,
-    looks: looks.filter(look => look.category === category)
-  })).filter(group => group.looks.length > 0);
   
   return (
     <div className="container mx-auto py-12 px-4">
@@ -22,22 +16,20 @@ export default function LookbookPage() {
       </div>
 
       <div className="space-y-16">
-        <section>
-          <div className="space-y-12">
-            {looksByCategory.map(({ category, looks }) => (
-              <div key={category}>
-                <h3 className="text-3xl font-bold tracking-tighter md:text-4xl font-headline mb-8 text-center">
-                  {category}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {looks.map((look) => (
-                    <OutfitCard key={look.id} look={look} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {lookCategories.map(category => (
+          <section key={category}>
+            <h3 className="text-3xl font-bold tracking-tighter md:text-4xl font-headline mb-8 text-center">
+              {category}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {looks
+                .filter(look => look.category === category)
+                .map((look) => (
+                  <OutfitCard key={look.id} look={look} />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

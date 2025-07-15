@@ -32,7 +32,10 @@ if (!admin.apps.length) {
         console.error("Firebase Admin initialization failed.", e);
         // Provide a more helpful error message for developers.
         if (!databaseURL) {
-            throw new Error("Firebase Admin SDK initialization failed: NEXT_PUBLIC_FIREBASE_DATABASE_URL environment variable is not set.");
+            throw new Error("Firebase Admin SDK initialization failed: NEXT_PUBLIC_FIREBASE_DATABASE_URL environment variable is not set. Please add it to your .env file.");
+        }
+        if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+             throw new Error("Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. This is required for local development.");
         }
         throw new Error("Firebase Admin SDK initialization failed. Check server logs for details.");
     }

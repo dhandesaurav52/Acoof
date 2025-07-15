@@ -266,7 +266,7 @@ export default function ProductDetailPage() {
         setIsProcessing(true);
 
         const idToken = await user.getIdToken();
-        const orderResponse = await createRazorpayOrder(product.price, `receipt_product_${product.id}`, idToken);
+        const orderResponse = await createRazorpayOrder(product.price, idToken, `receipt_product_${product.id}`);
 
         if ('error' in orderResponse) {
             toast({ variant: 'destructive', title: 'Payment Initialization Failed', description: orderResponse.error });

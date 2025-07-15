@@ -43,11 +43,11 @@ if (firebaseConfig && firebaseConfig.apiKey) {
         storage = getStorage(app);
         database = getDatabase(app);
     } catch (e) {
-        console.error("Failed to initialize Firebase", e);
+        console.error("Failed to initialize Firebase client SDK.", e);
     }
 } else {
     // This warning helps developers running the app locally without a .env file.
-    console.warn("Firebase configuration is missing or incomplete. Firebase features will be disabled. If you are running locally, please create a .env.local file with your Firebase project credentials.");
+    console.warn("Firebase configuration is missing or incomplete. Firebase client-side features will be disabled. If you are running locally, please create a .env.local file with your Firebase project's NEXT_PUBLIC_ credentials.");
 }
 
 

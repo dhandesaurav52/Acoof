@@ -209,7 +209,7 @@ export default function CartPage() {
         setIsProcessing(true);
 
         const idToken = await user.getIdToken();
-        const orderResponse = await createRazorpayOrder(cartTotal, undefined, idToken);
+        const orderResponse = await createRazorpayOrder(cartTotal, idToken);
 
         if ('error' in orderResponse) {
             toast({ variant: 'destructive', title: 'Payment Initialization Failed', description: orderResponse.error });

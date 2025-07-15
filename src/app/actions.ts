@@ -23,7 +23,7 @@ async function getVerifiedUid(idToken: string): Promise<string> {
 }
 
 
-export async function createRazorpayOrder(amount: number, receiptId?: string, idToken?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
+export async function createRazorpayOrder(amount: number, idToken: string, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     if (!idToken) {
         return { error: 'User authentication is required to create a payment order.' };
     }
