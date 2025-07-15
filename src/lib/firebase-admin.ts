@@ -15,12 +15,11 @@ if (databaseURL && serviceAccountKey && !admin.apps.length) {
     try {
         const serviceAccount = JSON.parse(serviceAccountKey);
         
-        const initializedApp = admin.initializeApp({
+        app = admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             databaseURL: databaseURL,
         });
 
-        app = initializedApp;
         database = admin.database();
         auth = admin.auth();
         storage = admin.storage();
@@ -28,7 +27,7 @@ if (databaseURL && serviceAccountKey && !admin.apps.length) {
     } catch (e: any) {
         console.error("Firebase Admin SDK initialization failed. This is expected during local development if keys are not set. For production, ensure FIREBASE_SERVICE_ACCOUNT_KEY is a valid JSON string and NEXT_PUBLIC_FIREBASE_DATABASE_URL is set in your hosting environment.", e);
     }
-} else if (admin.apps.length > 0) {
+} else if (admin.apps.length > 0 && admin.app()) {
     // If already initialized, get the existing instance
     app = admin.app();
     database = admin.database();
@@ -36,7 +35,9 @@ if (databaseURL && serviceAccountKey && !admin.apps.length) {
     storage = admin.storage();
 } else {
     // This warning helps developers who haven't set up their server-side keys.
-    console.warn("Firebase Admin SDK not initialized. Server-side Firebase features will be disabled. Ensure FIREBASE_SERVICE_ACCOUNT_KEY and NEXT_PUBLIC_FIREBASE_DATABASE_URL are set in your environment for full functionality.");
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn("Firebase Admin SDK not initialized. Server-side Firebase features will be disabled. Ensure FIREBASE_SERVICE_ACCOUNT_KEY and NEXT_PUBLIC_FIREBASE_DATABASE_URL are set in your environment for full functionality.");
+    }
 }
 
 export { app, database, auth, storage };
