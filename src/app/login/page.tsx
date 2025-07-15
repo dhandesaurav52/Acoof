@@ -36,8 +36,11 @@ export default function LoginPage() {
       }
     } catch (error: any) {
         let errorMessage = 'An unknown error occurred.';
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email' || error.code === 'auth/wrong-password') {
+        // This is a more robust error handling block
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
           errorMessage = 'Invalid email or password. Please try again.';
+        } else if (error.code === 'auth/invalid-email') {
+            errorMessage = 'Please enter a valid email address.';
         } else if (error.message) {
           errorMessage = error.message;
         }

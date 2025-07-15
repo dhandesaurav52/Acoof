@@ -1,13 +1,31 @@
-# Settings to manage and configure a Firebase App Hosting backend.
-# https://firebase.google.com/docs/app-hosting/configure
-
-buildConfig:
-  # Increase the memory available to the build process.
-  memoryMiB: 2048
+# ───────────────────────────────────────────────
+# Cloud Run runtime & scaling settings
+# ───────────────────────────────────────────────
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
-  # Increase the memory available to the running application.
-  memoryMiB: 2048
-runtime: nodejs20
+  runtime: nodejs20          # keep Node 20 (matches firebase.json)
+  cpu: 1                     # 1 vCPU (default)
+  memoryMiB: 1024            # ⬆ bumped to 1 GiB
+  timeoutSeconds: 60         # allow up to 60 s per request
+  minInstances: 0            # scale to zero when idle
+  # maxInstances: 100
+  # concurrency: 80          # leave default (80) unless you need lower
+
+# ───────────────────────────────────────────────
+# Environment variables & secrets
+# ───────────────────────────────────────────────
+env:
+  # Plain‑text env vars available at BUILD and RUNTIME
+  # (add more as needed; e.g. NEXT_PUBLIC_… keys)
+  - variable: NODE_ENV
+    value: production
+    availability:
+      - BUILD
+      - RUNTIME
+
+# Secret parameters pulled from Secret Manager
+# Each secret must already exist in Google Secret Manager
+secretEnv:
+  - variable: IMAGE_GEN_API_KEY         # ← used in firebase.json
+    secret: projects/acoof-8e92d/secrets/IMAGE_GEN_API_KEY/versions/latest
+    availability:
+      - RUNTIME

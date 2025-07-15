@@ -97,7 +97,7 @@ export function AdminDashboardContent() {
                             const d = new Date();
                             d.setMonth(d.getMonth() - i);
                             return { key: `${d.getFullYear()}-${d.getMonth()}`, name: monthNames[d.getMonth()], sales: 0 };
-                        });
+                        }).reverse();
 
                         deliveredOrders.forEach((order: any) => {
                             if (!order.date) return;
@@ -111,7 +111,7 @@ export function AdminDashboardContent() {
                                 console.warn(`Could not parse date for order ${order.id}: ${order.date}`);
                             }
                         });
-                        setSalesData(monthlySalesData.reverse().map(d => ({ name: d.name, sales: d.sales })));
+                        setSalesData(monthlySalesData.map(d => ({ name: d.name, sales: d.sales })));
                         
                         // Category Sales Chart
                         if (allProducts.length > 0) {
@@ -151,7 +151,9 @@ export function AdminDashboardContent() {
             }
         }
 
-        fetchAdminData();
+        if (allProducts) {
+          fetchAdminData();
+        }
     }, [user, authLoading, allProducts, productsLoading]);
     
     if (authLoading || loadingData || productsLoading) {
@@ -321,7 +323,3 @@ export function AdminDashboardContent() {
         </div>
     );
 }
-
-    
-
-    

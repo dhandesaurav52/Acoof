@@ -1,8 +1,4 @@
-
 {
-  "storage": {
-    "rules": "storage.rules"
-  },
   "hosting": {
     "source": ".",
     "ignore": [
@@ -11,10 +7,35 @@
       "**/node_modules/**"
     ],
     "frameworksBackend": {
-      "region": "us-central1"
-    }
+      "region": "us-central1",
+      "runtime": "nodejs20",
+      "memory": "1GiB",              
+      "timeoutSeconds": 60,
+      "secretEnv": ["IMAGE_GEN_API_KEY"]
+    },
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "ssracoof8e92d"
+      }
+    ]
   },
+
   "database": {
     "rules": "database.rules.json"
-  }
+  },
+
+  "apphosting": [
+    {
+      "backendId": "acoof-site",
+      "rootDir": ".",                
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    }
+  ]
 }
