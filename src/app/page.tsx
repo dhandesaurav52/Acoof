@@ -15,9 +15,9 @@ export default function Home() {
   const { products, loading } = useProducts();
   
   const featuredStyles = [
-    { name: 'Streetwear', image: 'https://images.pexels.com/photos/32872368/pexels-photo-32872368.jpeg' },
-    { name: 'Smart Casual', image: 'https://images.pexels.com/photos/32796204/pexels-photo-32796204.jpeg' },
-    { name: 'Night Life', image: 'https://images.pexels.com/photos/32819862/pexels-photo-32819862.jpeg' },
+    { name: 'Streetwear', image: 'https://placehold.co/600x750.png', hint: 'man street style' },
+    { name: 'Smart Casual', image: 'https://placehold.co/600x750.png', hint: 'man smart casual' },
+    { name: 'Night Life', image: 'https://placehold.co/600x750.png', hint: 'man night city' },
   ];
   
   const newArrivals = products.filter(p => p.isNew).slice(0, 8);
@@ -40,12 +40,13 @@ export default function Home() {
       <section className="relative h-[90vh] min-h-[600px] flex items-center">
         <div className="absolute inset-0">
             <Image 
-                src="https://images.pexels.com/photos/9775860/pexels-photo-9775860.jpeg" 
+                src="https://placehold.co/1920x1080.png" 
                 alt="Hero background" 
                 fill
                 className="object-cover object-center"
                 priority
                 quality={90}
+                data-ai-hint="fashion model"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/50 md:to-transparent" />
         </div>
@@ -147,6 +148,7 @@ export default function Home() {
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    data-ai-hint={style.hint}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-6">
@@ -165,7 +167,7 @@ export default function Home() {
             <div className="relative rounded-lg overflow-hidden bg-secondary p-8 md:p-16 flex items-center min-h-[400px] md:min-h-[500px]">
                 <div className="absolute inset-0 z-0">
                     <Image
-                        src="https://images.pexels.com/photos/5698847/pexels-photo-5698847.jpeg"
+                        src="https://placehold.co/1200x600.png"
                         alt="A man wearing a stylish oversized t-shirt"
                         fill
                         className="object-cover"
@@ -193,5 +195,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

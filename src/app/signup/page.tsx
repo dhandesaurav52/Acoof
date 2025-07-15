@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link"
@@ -150,11 +151,12 @@ export default function SignupPage() {
       </div>
        <div className="hidden bg-muted lg:block">
         <Image
-          src="https://images.pexels.com/photos/3768165/pexels-photo-3768165.jpeg"
+          src="https://placehold.co/1920x1080.png"
           alt="Image"
           width="1920"
           height="1080"
           className="h-full w-full object-cover dark:brightness-[0.4]"
+          data-ai-hint="fashion model smiling"
         />
       </div>
     </div>

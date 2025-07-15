@@ -118,7 +118,7 @@ export default function LoginPage() {
       </div>
       <div className="hidden bg-muted lg:block">
         <Image
-          src="https://images.pexels.com/photos/322207/pexels-photo-322207.jpeg"
+          src="https://placehold.co/1920x1080.png"
           alt="A stylish man in a leather jacket"
           width="1920"
           height="1080"
