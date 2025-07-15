@@ -31,8 +31,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${montserrat.variable} h-full`} suppressHydrationWarning>
       <head>
-        <title>Urban Attire</title>
-        <meta name="description" content="Urban Attire - Modern Menswear" />
+        <title>Acoof</title>
+        <meta name="description" content="Acoof - Modern Menswear" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background overflow-x-hidden">
         <Script
