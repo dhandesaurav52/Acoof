@@ -51,7 +51,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDbRef = dbRef(database, `users/${user.uid}`);
         try {
             const snapshot = await get(userDbRef);
-            const appUser: AppUser = { ...user } as AppUser; 
+            // This is the key change: We use the original user object and assign properties to it.
+            // Spreading it like `{...user}` creates a new plain object and strips methods like getIdToken().
+            const appUser: AppUser = user as AppUser; 
             if (snapshot.exists()) {
               const dbProfile = snapshot.val();
               Object.assign(appUser, dbProfile); 
@@ -144,7 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (reloadedUser) {
             const finalSnapshot = await get(userDbRef);
             const dbProfile = finalSnapshot.exists() ? finalSnapshot.val() : {};
-            const appUser: AppUser = { ...reloadedUser } as AppUser;
+            const appUser: AppUser = reloadedUser as AppUser;
             Object.assign(appUser, dbProfile);
             setUser(appUser);
         } else {
@@ -178,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (reloadedUser) {
         const userDbRef = dbRef(database, `users/${reloadedUser.uid}`);
         const snapshot = await get(userDbRef);
-        const appUser: AppUser = { ...reloadedUser } as AppUser;
+        const appUser: AppUser = reloadedUser as AppUser;
         if (snapshot.exists()) {
             Object.assign(appUser, snapshot.val());
         }
