@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, LayoutGrid, LogOut, Settings, Bell, Sparkles } from "lucide-react";
+import { Menu, ShoppingCart, User, Heart, Shield, ShoppingBag, Package, LayoutGrid, LogOut, Settings, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +32,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
-  { href: "/lookbook", label: "Lookbook" },
 ];
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -70,7 +69,6 @@ export function Header() {
             )}
             onClick={() => setIsMenuOpen(false)}
           >
-            {link.href === '/lookbook' && <Sparkles className={cn("h-4 w-4", isActive && "text-primary")} />}
             <span>{link.label}</span>
           </Link>
         )

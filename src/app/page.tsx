@@ -61,9 +61,6 @@ export default function Home() {
               <Button asChild size="lg" className="text-lg">
                 <Link href="/products">Shop New Arrivals <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
-               <Button asChild size="lg" variant="link" className="text-lg text-white">
-                <Link href="/lookbook">Explore The Lookbook</Link>
-              </Button>
             </div>
           </div>
         </div>
