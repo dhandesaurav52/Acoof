@@ -31,7 +31,7 @@ export default function ProductDetailPage() {
     const { addToCart } = useCart();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     
     const [selectedColor, setSelectedColor] = useState<string | undefined>();
     const [selectedSize, setSelectedSize] = useState<string | undefined>();
@@ -90,10 +90,12 @@ export default function ProductDetailPage() {
 
     const isCheckoutDisabled = useMemo(() => {
         if (isProcessing || isCodProcessing || isFetchingLocation) return true;
+        // The user must be loaded to proceed
+        if (authLoading || !user) return true;
         if (shippingAddressOption === 'default') return !user?.address || !user?.phone;
         if (shippingAddressOption === 'new') return !isNewAddressValid;
         return true;
-    }, [isProcessing, isCodProcessing, shippingAddressOption, user?.address, user?.phone, isNewAddressValid, isFetchingLocation]);
+    }, [isProcessing, isCodProcessing, shippingAddressOption, user, authLoading, isNewAddressValid, isFetchingLocation]);
 
     const handleNewAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
@@ -246,13 +248,7 @@ export default function ProductDetailPage() {
 
 
     const handleBuyNow = async () => {
-        if (!product) return;
-
-        if (!user) {
-            toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
-            router.push('/login');
-            return;
-        }
+        if (!product || !user) return; // User is checked before opening dialog
         
         const finalShippingAddress = getFinalShippingAddress();
         if (!finalShippingAddress) return;
@@ -269,7 +265,8 @@ export default function ProductDetailPage() {
 
         setIsProcessing(true);
 
-        const orderResponse = await createRazorpayOrder(product.price, `receipt_product_${product.id}`);
+        const idToken = await user.getIdToken();
+        const orderResponse = await createRazorpayOrder(product.price, `receipt_product_${product.id}`, idToken);
 
         if ('error' in orderResponse) {
             toast({ variant: 'destructive', title: 'Payment Initialization Failed', description: orderResponse.error });
@@ -314,7 +311,7 @@ export default function ProductDetailPage() {
                         paymentSignature: response.razorpay_signature,
                     };
                     
-                    const saveResult = await saveOrderToDatabase(orderData);
+                    const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
                     if (saveResult.success) {
                         toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
                         setIsBuyNowOpen(false);
@@ -348,12 +345,7 @@ export default function ProductDetailPage() {
     };
 
     const handleCodBuyNow = async () => {
-        if (!product) return;
-        if (!user) {
-            toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
-            router.push('/login');
-            return;
-        }
+        if (!product || !user) return;
 
         const finalShippingAddress = getFinalShippingAddress();
         if (!finalShippingAddress) return;
@@ -379,7 +371,7 @@ export default function ProductDetailPage() {
             paymentMethod: 'COD',
         };
         
-        const saveResult = await saveOrderToDatabase(orderData);
+        const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
         if (saveResult.success) {
             toast({ title: 'Order Placed!', description: 'Your order for has been placed. You will pay upon delivery.' });
             setIsBuyNowOpen(false);
@@ -391,6 +383,14 @@ export default function ProductDetailPage() {
         setIsCodProcessing(false);
     };
 
+    const handleBuyNowClick = () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to buy this item.' });
+            router.push('/login');
+            return;
+        }
+        setIsBuyNowOpen(true);
+    };
 
     return (
         <div className="container mx-auto py-12 px-4">
@@ -509,7 +509,7 @@ export default function ProductDetailPage() {
                         </Button>
                         <Dialog open={isBuyNowOpen} onOpenChange={setIsBuyNowOpen}>
                             <DialogTrigger asChild>
-                                <Button size="lg" className="w-full" disabled={isProcessing || isCodProcessing}>
+                                <Button size="lg" className="w-full" onClick={handleBuyNowClick} disabled={isProcessing || isCodProcessing}>
                                     <Zap className="mr-2 h-5 w-5" />
                                     Buy Now
                                 </Button>

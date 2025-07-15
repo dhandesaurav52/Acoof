@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 
 export default function CartPage() {
     const { cart, removeFromCart, updateQuantity, cartTotal, cartCount, clearCart } = useCart();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -45,10 +45,12 @@ export default function CartPage() {
     
     const isCheckoutDisabled = useMemo(() => {
         if (isProcessing || isCodProcessing || isFetchingLocation) return true;
+        // User must be loaded to check address
+        if (authLoading || !user) return true;
         if (shippingAddressOption === 'default') return !user?.address || !user?.phone;
         if (shippingAddressOption === 'new') return !isNewAddressValid;
         return true;
-    }, [isProcessing, isCodProcessing, shippingAddressOption, user?.address, user?.phone, isNewAddressValid, isFetchingLocation]);
+    }, [isProcessing, isCodProcessing, shippingAddressOption, user, authLoading, isNewAddressValid, isFetchingLocation]);
 
     const handleNewAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
@@ -206,7 +208,8 @@ export default function CartPage() {
 
         setIsProcessing(true);
 
-        const orderResponse = await createRazorpayOrder(cartTotal);
+        const idToken = await user.getIdToken();
+        const orderResponse = await createRazorpayOrder(cartTotal, undefined, idToken);
 
         if ('error' in orderResponse) {
             toast({ variant: 'destructive', title: 'Payment Initialization Failed', description: orderResponse.error });
@@ -251,7 +254,7 @@ export default function CartPage() {
                         paymentSignature: response.razorpay_signature,
                     };
                     
-                    const saveResult = await saveOrderToDatabase(orderData);
+                    const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
                     if (saveResult.success) {
                         toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
                         clearCart();
@@ -319,7 +322,7 @@ export default function CartPage() {
             paymentMethod: 'COD',
         };
         
-        const saveResult = await saveOrderToDatabase(orderData);
+        const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
         if (saveResult.success) {
             toast({ title: 'Order Placed!', description: 'Your order has been placed successfully. You will pay upon delivery.' });
             clearCart();

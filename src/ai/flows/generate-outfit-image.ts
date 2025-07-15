@@ -70,7 +70,7 @@ Generate one new image that follows these rules.`;
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
             prompt: getOutfitImagePrompt(basePrompt, stylePrompt, flowInput.photoDataUri),
             config: {
-                responseModalities: ['TEXT', 'IMAGE'],
+                responseModalities: ['IMAGE'],
             },
         });
 

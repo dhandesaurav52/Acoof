@@ -27,7 +27,15 @@ async function getVerifiedUid(authHeader?: string): Promise<string> {
 }
 
 
-export async function createRazorpayOrder(amount: number, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
+export async function createRazorpayOrder(amount: number, receiptId?: string, idToken?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
+    if (idToken) {
+        try {
+            await getVerifiedUid(`Bearer ${idToken}`);
+        } catch (e: any) {
+            return { error: e.message };
+        }
+    }
+
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -127,7 +135,15 @@ async function createAdminNotification(order: Order): Promise<void> {
     }
 }
 
-export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken?: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+    if (idToken) {
+        try {
+            await getVerifiedUid(`Bearer ${idToken}`);
+        } catch (e: any) {
+            return { success: false, error: e.message };
+        }
+    }
+
     if (!database) {
         return { success: false, error: 'Firebase is not configured. Cannot save order.' };
     }
@@ -158,6 +174,9 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
 
     } catch (error: any) {
         console.error("Firebase saveOrder error:", error);
+        if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+            return { success: false, error: "Permission Denied: Could not save the order. Please check your Firebase security rules." };
+        }
         return { success: false, error: 'An unexpected error occurred while saving the order. Check server logs.' };
     }
 }
