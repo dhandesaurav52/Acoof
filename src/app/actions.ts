@@ -3,7 +3,7 @@
 
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
-import type { Order, Product, Notification } from '@/types';
+import type { Order, Product, Notification, OrderStatus } from '@/types';
 import { database, auth as adminAuth } from '@/lib/firebase-admin'; // Use Admin SDK for server actions
 import { products as localProducts } from '@/lib/data';
 
@@ -117,6 +117,7 @@ async function createAdminNotification(order: Order): Promise<void> {
             const notificationMessage = `New order #${order.id.slice(-6).toUpperCase()} placed by ${order.userEmail}. Total: ₹${order.total.toFixed(2)}`;
             const newNotification: Notification = {
                 id: notificationId,
+                for_admin: true,
                 type: 'new_order',
                 message: notificationMessage,
                 timestamp: new Date().toISOString(),
@@ -131,6 +132,72 @@ async function createAdminNotification(order: Order): Promise<void> {
         console.error("Failed to create admin notification:", error);
     }
 }
+
+async function createUserNotification(order: Order, newStatus: OrderStatus): Promise<void> {
+    if (!database || !order.userEmail || !order.userId) return;
+    try {
+        const userNotificationsRef = database.ref(`user-notifications/${order.userId}`).push();
+        const notificationId = userNotificationsRef.key;
+
+        if (notificationId) {
+            const shortId = order.id.slice(-6).toUpperCase();
+            let message = '';
+            let type: Notification['type'] = 'new_order'; // Default
+
+            if (newStatus === 'Shipped') {
+                message = `Your order #${shortId} has been accepted and is now being processed.`;
+                type = 'order_accepted';
+            } else if (newStatus === 'Cancelled') {
+                message = `Your order #${shortId} has been rejected by the seller.`;
+                type = 'order_rejected';
+            } else {
+                return; // Don't send user notifications for other statuses automatically
+            }
+
+            const newNotification: Notification = {
+                id: notificationId,
+                for_admin: false,
+                type,
+                message,
+                timestamp: new Date().toISOString(),
+                read: false,
+                orderId: order.id,
+                userId: order.userId,
+                userEmail: order.userEmail,
+            };
+            await userNotificationsRef.set(newNotification);
+        }
+    } catch (error) {
+        console.error(`Failed to create user notification for order ${order.id}:`, error);
+    }
+}
+
+export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderStatus, adminIdToken: string): Promise<{ success: boolean, error?: string }> {
+    try {
+        const adminUid = await getVerifiedUid(adminIdToken);
+        const adminUser = await adminAuth.getUser(adminUid);
+        if (adminUser.email !== 'admin@example.com') {
+            return { success: false, error: "Unauthorized: Only admins can perform this action." };
+        }
+    } catch(e: any) {
+        return { success: false, error: e.message };
+    }
+
+    if (!database) {
+        return { success: false, error: "Database not configured" };
+    }
+
+    const orderRef = database.ref(`orders/${order.id}`);
+    try {
+        await orderRef.update({ status: newStatus });
+        await createUserNotification(order, newStatus);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to update order status:", error);
+        return { success: false, error: "Could not update order status in the database." };
+    }
+}
+
 
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     let verifiedUid: string;
