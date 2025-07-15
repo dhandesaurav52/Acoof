@@ -40,13 +40,13 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
     <Card className="group/card overflow-hidden transition-shadow duration-300 hover:shadow-lg h-full flex flex-col">
        <CardHeader className="p-0">
         <Link href={`/products/${product.id}`} className="block relative group">
-          <div className="aspect-[4/5] w-full overflow-hidden relative">
+          <div className="aspect-[4/5] w-full overflow-hidden relative bg-secondary">
             <Image
               src={product.images[0] || 'https://placehold.co/600x800.png'}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 768px) 50vw, 33vw"
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
           </div>
           {product.isNew && (
