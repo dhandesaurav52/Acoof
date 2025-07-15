@@ -133,18 +133,13 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
     };
     
     try {
-        // Step 1: Save the primary order data. This is the most critical part.
-        await set(newOrderRef, finalOrderData);
+        const updates: { [key: string]: any } = {};
+        updates[`/orders/${newId}`] = finalOrderData;
+        updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
-        // Step 2 (Non-blocking): Update the user's order list. This can fail silently if needed.
-        try {
-            const userOrdersRef = dbRef(database, `users/${orderData.userId}/orders`);
-            await update(userOrdersRef, { [newId]: true });
-        } catch (userUpdateError) {
-             console.error(`Non-critical error: Failed to add order ${newId} to user ${orderData.userId} list:`, userUpdateError);
-        }
+        await update(dbRef(database), updates);
         
-        // Step 3 (Non-blocking): Create the admin notification.
+        // Non-blocking: Create the admin notification after the main transaction is successful.
         await createAdminNotification(finalOrderData);
 
         return { success: true, orderId: newId };
@@ -152,7 +147,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>): Promise
     } catch (error: any) {
         let errorMessage = 'An unexpected error occurred while saving the order.';
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            errorMessage = "Permission Denied: Could not save the order. Please check your Firebase Realtime Database security rules to ensure they allow authenticated users to write to the 'orders' path.";
+            errorMessage = "Permission Denied: Could not save the order. Please check your Firebase Realtime Database security rules to ensure they allow authenticated users to write to the 'orders' path and to their own '/users/{uid}/orders' path.";
         }
         console.error("Firebase saveOrder error:", error);
         return { success: false, error: errorMessage };
