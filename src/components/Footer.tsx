@@ -95,8 +95,8 @@ export function Footer() {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="flex flex-col items-center gap-2 pt-4">
-                        <p className="text-lg font-mono font-semibold text-primary tracking-widest">+1 (555) 123-4567</p>
-                        <p className="text-lg text-primary">contact@urbanattire.com</p>
+                        <p className="text-lg font-mono font-semibold text-primary tracking-widest">+91 7447885505</p>
+                        <p className="text-lg text-primary">acoofindia@gmail.com</p>
                       </div>
                     </DialogContent>
                   </Dialog>
