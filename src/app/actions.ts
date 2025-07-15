@@ -4,12 +4,13 @@
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 import type { Order, Product, Notification, OrderStatus } from '@/types';
-import { database, auth as adminAuth } from '@/lib/firebase-admin'; // Use Admin SDK for server actions
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { products as localProducts } from '@/lib/data';
 
 // This function now uses the Admin SDK directly to verify the token and get the UID.
 // It is the standard and most secure way to handle authentication in server actions.
 async function getVerifiedUid(idToken: string): Promise<string> {
+    const { auth: adminAuth } = getFirebaseAdmin();
     if (!adminAuth) {
         // This is a server configuration issue.
         throw new Error("The authentication service is not configured on the server. This is not a user session issue. Please check server logs.");
@@ -109,6 +110,7 @@ export async function verifyRazorpayPayment(data: {
 }
 
 async function createAdminNotification(order: Order): Promise<void> {
+    const { database } = getFirebaseAdmin();
     if (!database || !order.userEmail) return;
     try {
         const newNotificationRef = database.ref('notifications').push();
@@ -135,6 +137,7 @@ async function createAdminNotification(order: Order): Promise<void> {
 }
 
 async function createUserNotification(order: Order, newStatus: OrderStatus): Promise<void> {
+    const { database } = getFirebaseAdmin();
     if (!database || !order.userEmail || !order.userId) return;
     try {
         const userNotificationsRef = database.ref(`user-notifications/${order.userId}`).push();
@@ -174,6 +177,7 @@ async function createUserNotification(order: Order, newStatus: OrderStatus): Pro
 }
 
 export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderStatus, adminIdToken: string): Promise<{ success: boolean, error?: string }> {
+    const { auth: adminAuth, database } = getFirebaseAdmin();
     try {
         const adminUid = await getVerifiedUid(adminIdToken);
         const adminUser = await adminAuth!.getUser(adminUid);
@@ -201,6 +205,7 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 
 
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+    const { database } = getFirebaseAdmin();
     let verifiedUid: string;
     try {
         verifiedUid = await getVerifiedUid(idToken);
@@ -246,6 +251,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
 }
 
 export async function seedProductsToDatabase(): Promise<{ success: boolean; error?: string; count?: number }> {
+    const { database } = getFirebaseAdmin();
     if (!database) {
         return { success: false, error: 'Firebase is not configured. Cannot seed products.' };
     }
