@@ -48,9 +48,9 @@ export function Footer() {
                 <h4 className="font-semibold font-headline">Shop</h4>
                 <div className="flex flex-col gap-2">
                   <Link href="/products" className="text-sm text-muted-foreground hover:text-primary">New Arrivals</Link>
-                  <Link href="/products" className="text-sm text-muted-foreground hover:text-primary">Shirts</Link>
-                  <Link href="/products" className="text-sm text-muted-foreground hover:text-primary">Pants</Link>
-                  <Link href="/products" className="text-sm text-muted-foreground hover:text-primary">Shoes</Link>
+                  <Link href="/products?category=Shirts" className="text-sm text-muted-foreground hover:text-primary">Shirts</Link>
+                  <Link href="/products?category=Pants" className="text-sm text-muted-foreground hover:text-primary">Pants</Link>
+                  <Link href="/products?category=Shoes" className="text-sm text-muted-foreground hover:text-primary">Shoes</Link>
                 </div>
               </div>
 
@@ -77,8 +77,6 @@ export function Footer() {
                       </ScrollArea>
                     </DialogContent>
                   </Dialog>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Careers</Link>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Press</Link>
                 </div>
               </div>
 
@@ -102,8 +100,6 @@ export function Footer() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary">FAQ</Link>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary">Shipping & Returns</Link>
                 </div>
               </div>
           </div>
