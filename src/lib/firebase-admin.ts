@@ -3,39 +3,31 @@ import * as admin from 'firebase-admin';
 
 let app: admin.app.App;
 
-// This URL is crucial for the Admin SDK to connect to the Realtime Database.
 const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
+const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 if (!admin.apps.length) {
-    try {
-        const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-        
-        // When running on a deployed environment like App Hosting, the config is often auto-populated.
-        // However, to prevent errors, we must explicitly provide the databaseURL.
-        const config = {
-            databaseURL: databaseURL,
-        };
+    if (!databaseURL || !serviceAccountKey) {
+        let missingVars = [];
+        if (!databaseURL) missingVars.push('NEXT_PUBLIC_FIREBASE_DATABASE_URL');
+        if (!serviceAccountKey) missingVars.push('FIREBASE_SERVICE_ACCOUNT_KEY');
+        // This clear error is crucial for debugging in production environments.
+        throw new Error(`Firebase Admin SDK initialization failed: The following required environment variables are missing: ${missingVars.join(', ')}. Please ensure they are set in your hosting environment.`);
+    }
 
-        if (serviceAccountKey) {
-            // This path is typically for local development where a service account key is provided in .env
-            const serviceAccount = JSON.parse(serviceAccountKey);
-            app = admin.initializeApp({
-                ...config,
-                credential: admin.credential.cert(serviceAccount),
-            });
-        } else {
-            // This path is for environments like App Hosting where GOOGLE_APPLICATION_CREDENTIALS are set.
-            // The credential is found automatically, but we still need to provide the databaseURL.
-            app = admin.initializeApp(config);
-        }
+    try {
+        const serviceAccount = JSON.parse(serviceAccountKey);
+        
+        app = admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: databaseURL,
+        });
+
     } catch (e: any) {
-        console.error("Firebase Admin initialization failed.", e);
-        // Provide a more helpful error message for developers.
-        if (!databaseURL) {
-            throw new Error("Firebase Admin SDK initialization failed: NEXT_PUBLIC_FIREBASE_DATABASE_URL environment variable is not set. Please add it to your .env file.");
-        }
-        if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-             throw new Error("Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. This is required for local development.");
+        console.error("Firebase Admin initialization failed with an error.", e);
+        // Provide a more specific error for common issues.
+        if (e.message.includes('json')) {
+            throw new Error("Firebase Admin SDK initialization failed: The value of FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Please ensure you have copied the entire contents of your service account key file correctly.");
         }
         throw new Error("Firebase Admin SDK initialization failed. Check server logs for details.");
     }
