@@ -4,25 +4,21 @@
 import Razorpay from 'razorpay';
 import { randomBytes, createHmac } from 'crypto';
 import type { Order, Product, Notification } from '@/types';
-import { database } from '@/lib/firebase-admin'; // Use Admin SDK for server actions
-import { auth as adminAuth } from 'firebase-admin';
+import { database, auth as adminAuth } from '@/lib/firebase-admin'; // Use Admin SDK for server actions
 import { products as localProducts } from '@/lib/data';
 
-// Helper to verify user token. This is crucial for securing server actions.
-async function getVerifiedUid(authHeader?: string): Promise<string> {
-    if (!authHeader) {
-        throw new Error('No authorization header provided.');
-    }
-    const token = authHeader.split('Bearer ')[1];
-    if (!token) {
-        throw new Error('Invalid authorization header format.');
+// This function now uses the Admin SDK directly to verify the token and get the UID.
+// It is the standard and most secure way to handle authentication in server actions.
+async function getVerifiedUid(idToken: string): Promise<string> {
+    if (!idToken) {
+        throw new Error('Authentication token is required.');
     }
     try {
-        const decodedToken = await adminAuth().verifyIdToken(token);
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
         return decodedToken.uid;
     } catch (error) {
         console.error("Error verifying ID token:", error);
-        throw new Error('Invalid or expired user session.');
+        throw new Error('Your session is invalid or has expired. Please log in again.');
     }
 }
 
@@ -32,7 +28,7 @@ export async function createRazorpayOrder(amount: number, receiptId?: string, id
         return { error: 'User authentication is required to create a payment order.' };
     }
     try {
-        await getVerifiedUid(`Bearer ${idToken}`);
+        await getVerifiedUid(idToken);
     } catch (e: any) {
         return { error: e.message };
     }
@@ -139,7 +135,8 @@ async function createAdminNotification(order: Order): Promise<void> {
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     let verifiedUid: string;
     try {
-        verifiedUid = await getVerifiedUid(`Bearer ${idToken}`);
+        // This is the critical change. We use the admin-authenticated function.
+        verifiedUid = await getVerifiedUid(idToken);
     } catch (e: any) {
         return { success: false, error: e.message };
     }
@@ -148,7 +145,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
         return { success: false, error: 'Firebase is not configured. Cannot save order.' };
     }
 
-    if (!orderData.userId || orderData.userId !== verifiedUid) {
+    if (orderData.userId !== verifiedUid) {
         return { success: false, error: 'User ID does not match authenticated user. Cannot save order.' };
     }
     
@@ -163,6 +160,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
     
     try {
         const updates: { [key: string]: any } = {};
+        // The server, now acting with admin privileges, can write to both locations securely.
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
