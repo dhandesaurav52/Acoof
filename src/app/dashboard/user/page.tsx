@@ -1,24 +1,21 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Mail, Phone, User, MapPin, Loader2, Camera, Building, Map, Mailbox } from "lucide-react";
+import { Edit, Mail, Phone, User, MapPin, Loader2, Building, Map, Mailbox } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function UserDashboardPage() {
-  const { user, loading, uploadProfilePicture, updateUserProfile } = useAuth();
+  const { user, loading, updateUserProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
@@ -31,8 +28,6 @@ export default function UserDashboardPage() {
     city: '',
     state: '',
     pincode: '',
-    avatar: '',
-    initials: ''
   });
 
   const [editedUser, setEditedUser] = useState(userProfile);
@@ -42,7 +37,6 @@ export default function UserDashboardPage() {
       router.push('/login');
     }
     if (user) {
-        const initials = (user.displayName?.split(' ').map(n => n[0]).join('') || user.email?.charAt(0).toUpperCase()) ?? 'U';
         const profileData = {
             name: user.displayName || 'Anonymous User',
             email: user.email || 'No email provided',
@@ -51,8 +45,6 @@ export default function UserDashboardPage() {
             city: user.city || '',
             state: user.state || '',
             pincode: user.pincode || '',
-            avatar: user.photoURL || `https://placehold.co/100x100.png`,
-            initials: initials
         };
         setUserProfile(profileData);
         setEditedUser(profileData);
@@ -196,33 +188,6 @@ export default function UserDashboardPage() {
     );
   };
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && user) {
-      setIsUploading(true);
-      try {
-        await uploadProfilePicture(file);
-        toast({
-          title: "Profile Picture Updated",
-          description: "Your new profile picture has been saved.",
-        });
-      } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: "Upload Failed",
-          description: error.message || "There was an error uploading your profile picture.",
-        });
-        console.error(error);
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  };
-
 
   if (loading || !user) {
     return (
@@ -237,32 +202,6 @@ export default function UserDashboardPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <Card>
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="relative group">
-                  <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border">
-                  <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-                  <AvatarFallback>{userProfile.initials}</AvatarFallback>
-                  </Avatar>
-                  <button
-                  onClick={handleAvatarClick}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-75 disabled:cursor-not-allowed"
-                  disabled={isUploading}
-                  aria-label="Change profile picture"
-                  >
-                  {isUploading ? (
-                      <Loader2 className="h-8 w-8 text-white animate-spin" />
-                  ) : (
-                      <Camera className="h-8 w-8 text-white" />
-                  )}
-                  </button>
-                  <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept="image/png, image/jpeg"
-                  disabled={isUploading}
-                  />
-              </div>
               <div className="flex-grow">
                   <CardTitle className="text-2xl sm:text-3xl">{userProfile.name}</CardTitle>
                   <CardDescription>View and manage your personal information.</CardDescription>

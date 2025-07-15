@@ -3,8 +3,7 @@
 
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, updateEmail, UserCredential } from 'firebase/auth';
-import { ref as storageDbRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, storage, database } from '@/lib/firebase';
+import { auth, database } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { ref as dbRef, set, get, update } from "firebase/database";
 
@@ -22,7 +21,6 @@ interface AuthContextType {
   loginWithEmail: (email:string, password:string) => Promise<any>;
   signupWithEmail: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
   logout: () => void;
-  uploadProfilePicture: (file: File) => Promise<void>;
   updateUserProfile: (data: Partial<Omit<AppUser, 'uid' | 'photoURL' | 'emailVerified' | 'isAnonymous' | 'metadata' | 'providerData' | 'providerId' | 'tenantId' | 'delete' | 'getIdToken' | 'getIdTokenResult' | 'reload' | 'toJSON'>>) => Promise<void>;
 }
 
@@ -163,42 +161,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const uploadProfilePicture = async (file: File) => {
-    const currentUser = auth?.currentUser;
-    if (!auth || !storage || !database || !currentUser) {
-        throw new Error("Firebase not configured or user not logged in.");
-    }
-    
-    try {
-      const fileRef = storageDbRef(storage, `profile-pictures/${currentUser.uid}`);
-      await uploadBytes(fileRef, file);
-      const photoURL = await getDownloadURL(fileRef);
-      
-      await updateProfile(currentUser, { photoURL });
-      await currentUser.reload();
-      const reloadedUser = auth.currentUser;
-      if (reloadedUser) {
-        const userDbRef = dbRef(database, `users/${reloadedUser.uid}`);
-        const snapshot = await get(userDbRef);
-        const appUser: AppUser = reloadedUser as AppUser;
-        if (snapshot.exists()) {
-            Object.assign(appUser, snapshot.val());
-        }
-        setUser(appUser);
-      } else {
-        setUser(null);
-      }
-    } catch (error: any) {
-      if (error.code === 'storage/unauthorized') {
-          throw new Error("You don't have permission to upload this file. Please check your Firebase Storage security rules.");
-      }
-      if (error.code === 'storage/object-not-found') {
-            throw new Error("File not found. The upload may have been interrupted.");
-      }
-      throw error;
-    }
-  };
-
   const logout = async () => {
     if (!auth) return;
     try {
@@ -209,7 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, loading, loginWithEmail, signupWithEmail, logout, uploadProfilePicture, updateUserProfile };
+  const value = { user, loading, loginWithEmail, signupWithEmail, logout, updateUserProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
