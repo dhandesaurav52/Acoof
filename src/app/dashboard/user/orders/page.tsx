@@ -20,6 +20,7 @@ import { differenceInDays } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
+import Link from 'next/link';
 
 
 export default function UserOrdersPage() {
@@ -296,10 +297,12 @@ export default function UserOrdersPage() {
                                                                 {order.items.map((item, idx) => (
                                                                     <TableRow key={idx}>
                                                                         <TableCell className="hidden sm:table-cell">
-                                                                            <Image src={item.imageUrl || 'https://placehold.co/80x80.png'} alt={item.productName} width={60} height={75} className="rounded-md object-cover" />
+                                                                            <Link href={`/products/${item.productId}`}>
+                                                                                <Image src={item.imageUrl || 'https://placehold.co/80x80.png'} alt={item.productName} width={60} height={75} className="rounded-md object-cover" />
+                                                                            </Link>
                                                                         </TableCell>
                                                                         <TableCell>
-                                                                            <div className="font-medium">{item.productName}</div>
+                                                                            <Link href={`/products/${item.productId}`} className="font-medium hover:underline">{item.productName}</Link>
                                                                             { (item.size || item.color) && <div className="text-xs text-muted-foreground">{item.size}{item.size && item.color && ' / '}{item.color}</div> }
                                                                         </TableCell>
                                                                         <TableCell className="text-center">{item.quantity}</TableCell>
