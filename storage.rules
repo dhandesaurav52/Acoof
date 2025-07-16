@@ -1,18 +1,25 @@
-
 rules_version = '2';
+
+// service firebase.storage {
+//   match /b/{bucket}/o {
+//     match /{allPaths=**} {
+//       allow read, write: if request.auth != null;
+//     }
+//   }
+// }
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to product images
-    match /products/{productId}/{allPaths=**} {
-      allow read: if true;
+    // This rule allows public read access to all files, which is common for product images.
+    // It's important to ensure no sensitive user data is stored here.
+    match /products/{productId}/{fileName} {
+      allow read;
       allow write: if request.auth != null && request.auth.token.email == 'admin@example.com';
     }
 
-    // Allow authenticated users to read/write their own profile pictures
-    match /profile-pictures/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
+    // You could add more specific rules for other paths here, for example:
+    // match /user-uploads/{userId}/{allPaths=**} {
+    //   allow read, write: if request.auth != null && request.auth.uid == userId;
+    // }
   }
 }
