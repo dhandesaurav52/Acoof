@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -54,7 +53,13 @@ export function AdminOrdersManager() {
                     const ordersData = snapshot.val();
                     const ordersList: Order[] = Object.keys(ordersData)
                         .map(key => ({ id: key, ...ordersData[key] }))
-                        .reverse();
+                        .sort((a, b) => {
+                            try {
+                                return new Date(b.date).getTime() - new Date(a.date).getTime();
+                            } catch (e) {
+                                return 0;
+                            }
+                        });
                     setOrders(ordersList);
                 } else {
                     setOrders([]);
