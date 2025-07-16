@@ -17,7 +17,7 @@ export default function Home() {
   const featuredStyles = [
     { name: 'Streetwear', image: 'https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/single1.png?alt=media&token=f9c6cf64-4659-4499-a3b3-a6b7b05f49ee', hint: 'man street style' },
     { name: 'Smart Casual', image: 'https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/single2.png?alt=media&token=5f916145-ab7f-4a08-be79-0994eb1b8361', hint: 'man smart casual' },
-    { name: 'Night Life', image: 'https://placehold.co/600x750.png', hint: 'man night city' },
+    { name: 'Night Life', image: 'https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/single3.png?alt=media&token=097bea0e-4d4e-4448-ab45-fe55faa05846', hint: 'man night city' },
   ];
   
   const newArrivals = products.filter(p => p.isNew).slice(0, 8);
