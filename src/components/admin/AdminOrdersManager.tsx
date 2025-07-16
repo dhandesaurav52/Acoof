@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -53,7 +54,7 @@ export function AdminOrdersManager() {
                     const ordersData = snapshot.val();
                     const ordersList: Order[] = Object.keys(ordersData)
                         .map(key => ({ id: key, ...ordersData[key] }))
-                        .reverse(); // Show newest first
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                     setOrders(ordersList);
                 } else {
                     setOrders([]);
@@ -333,3 +334,5 @@ export function AdminOrdersManager() {
         </>
     );
 }
+
+    
