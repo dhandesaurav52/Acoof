@@ -13,6 +13,7 @@ import { ref, get, update } from 'firebase/database';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -199,7 +200,18 @@ export function AdminOrdersManager() {
                                                             <TableBody>
                                                                 {order.items.map((item, idx) => (
                                                                     <TableRow key={idx}>
-                                                                        <TableCell>{item.productName}{item.color && ` (${item.color})`}</TableCell>
+                                                                        <TableCell className="flex items-center gap-2">
+                                                                            {item.imageUrl && (
+                                                                                <Image 
+                                                                                    src={item.imageUrl} 
+                                                                                    alt={item.productName} 
+                                                                                    width={40} 
+                                                                                    height={50} 
+                                                                                    className="rounded-md object-cover"
+                                                                                />
+                                                                            )}
+                                                                            <span>{item.productName}{item.color && ` (${item.color})`}</span>
+                                                                        </TableCell>
                                                                         <TableCell>{item.size || '-'}</TableCell>
                                                                         <TableCell className="text-center">{item.quantity}</TableCell>
                                                                         <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>

@@ -301,6 +301,7 @@ export default function ProductDetailPage() {
                         price: product.price,
                         size: selectedSize,
                         color: selectedColor,
+                        imageUrl: product.images[0] || '',
                     };
                     
                     const orderData: Omit<Order, 'id'> = {
@@ -366,6 +367,7 @@ export default function ProductDetailPage() {
             price: product.price,
             size: selectedSize,
             color: selectedColor,
+            imageUrl: product.images[0] || '',
         };
         
         const orderData: Omit<Order, 'id'> = {

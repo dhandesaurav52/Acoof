@@ -188,6 +188,7 @@ export default function CartPage() {
             price: item.price,
             size: item.selectedSize,
             color: item.selectedColor,
+            imageUrl: item.images[0] || '',
         }));
     };
     

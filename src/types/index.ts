@@ -37,6 +37,7 @@ export interface OrderItem {
   price: number;
   size?: string;
   color?: string;
+  imageUrl?: string;
 }
 
 export interface Order {
