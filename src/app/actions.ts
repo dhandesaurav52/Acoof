@@ -282,3 +282,4 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
         return { success: false, error: 'An unexpected error occurred while seeding the products.' };
     }
 }
+
