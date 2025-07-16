@@ -5,20 +5,21 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, FileText, Package, Truck, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { Order, OrderStatus, Notification } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { auth, database } from '@/lib/firebase';
 import { ref, get, update, push, set } from 'firebase/database';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { differenceInDays } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 
 export default function UserOrdersPage() {
@@ -241,107 +242,122 @@ export default function UserOrdersPage() {
             <Card>
                 <CardContent className="p-0">
                     {!error && orders.length > 0 ? (
-                        <Accordion type="single" collapsible className="w-full">
+                        <div className="divide-y">
                             {orders.map((order) => (
-                                <AccordionItem value={order.id} key={order.id}>
-                                    <AccordionTrigger className="px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors text-left">
-                                        <div className="flex items-center gap-2 sm:gap-4 w-full">
-                                            <div className="hidden sm:block">
-                                               {getStatusIcon(order.status)}
-                                            </div>
-                                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
-                                                <div>
-                                                    <div className="text-sm font-semibold truncate max-w-24 sm:max-w-full">{order.id}</div>
-                                                    <div className="text-xs text-muted-foreground">{order.date}</div>
+                                <div key={order.id} className="p-4 sm:p-6 flex items-center gap-4">
+                                    <div className="hidden sm:block">
+                                        {getStatusIcon(order.status)}
+                                    </div>
+                                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 items-center">
+                                        <div>
+                                            <div className="text-sm font-semibold text-primary truncate max-w-24 sm:max-w-full">#{order.id.slice(-8).toUpperCase()}</div>
+                                            <div className="text-xs text-muted-foreground">{order.date}</div>
+                                        </div>
+                                        <div className="hidden sm:block font-medium">₹{order.total.toFixed(2)}</div>
+                                        <div className="col-span-1 flex justify-end sm:justify-start">
+                                            <Badge
+                                                variant={
+                                                    order.status === 'Pending' ? 'destructive' :
+                                                    order.status === 'Shipped' ? 'default' :
+                                                    order.status === 'Delivered' ? 'secondary' :
+                                                    'outline'
+                                                }
+                                                className="w-24 justify-center"
+                                            >
+                                                {order.status}
+                                            </Badge>
+                                        </div>
+                                         <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" className="w-full sm:w-auto justify-self-end">View Details</Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="sm:max-w-3xl">
+                                                <DialogHeader>
+                                                    <DialogTitle>Order Details</DialogTitle>
+                                                    <DialogDescription>Order ID: #{order.id.slice(-8).toUpperCase()} placed on {order.date}</DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid gap-6 py-4">
+                                                    <div className="space-y-2">
+                                                        <h4 className="font-semibold">Shipping Address</h4>
+                                                        <address className="text-sm text-muted-foreground not-italic whitespace-pre-wrap">{order.shippingAddress}</address>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-semibold mb-2">Items</h4>
+                                                        <Table>
+                                                            <TableHeader>
+                                                                <TableRow>
+                                                                    <TableHead className="w-[80px] hidden sm:table-cell">Image</TableHead>
+                                                                    <TableHead>Product</TableHead>
+                                                                    <TableHead className="text-center">Quantity</TableHead>
+                                                                    <TableHead className="text-right">Price</TableHead>
+                                                                </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                {order.items.map((item, idx) => (
+                                                                    <TableRow key={idx}>
+                                                                        <TableCell className="hidden sm:table-cell">
+                                                                            <Image src={item.imageUrl || 'https://placehold.co/80x80.png'} alt={item.productName} width={60} height={75} className="rounded-md object-cover" />
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <div className="font-medium">{item.productName}</div>
+                                                                            { (item.size || item.color) && <div className="text-xs text-muted-foreground">{item.size}{item.size && item.color && ' / '}{item.color}</div> }
+                                                                        </TableCell>
+                                                                        <TableCell className="text-center">{item.quantity}</TableCell>
+                                                                        <TableCell className="text-right font-medium">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </div>
                                                 </div>
-                                                <div className="hidden sm:block text-right sm:text-left font-medium">₹{order.total.toFixed(2)}</div>
-                                                <div className="col-span-1 flex justify-end sm:justify-start">
-                                                   <Badge 
-                                                        variant={
-                                                            order.status === 'Pending' ? 'destructive' :
-                                                            order.status === 'Shipped' ? 'default' :
-                                                            order.status === 'Delivered' ? 'secondary' :
-                                                            'outline'
+                                                <DialogFooter className="sm:justify-between items-center pt-4 border-t">
+                                                    <div className="font-semibold text-lg">
+                                                        Total: ₹{order.total.toFixed(2)}
+                                                    </div>
+                                                    {(() => {
+                                                        const { cancellable, reason } = isOrderCancellable(order);
+                                                        const buttonText = order.status === 'Delivered' ? 'Return Order' : 'Cancel Order';
+                                                        if (cancellable) {
+                                                            return (
+                                                                <Button
+                                                                    variant="destructive"
+                                                                    onClick={() => setOrderToCancel(order)}
+                                                                >
+                                                                    <XCircle className="mr-2 h-4 w-4" />
+                                                                    {buttonText}
+                                                                </Button>
+                                                            );
+                                                        } else {
+                                                            return (
+                                                                <TooltipProvider>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <span tabIndex={0}>
+                                                                                <Button
+                                                                                    variant="destructive"
+                                                                                    disabled
+                                                                                    className="pointer-events-none"
+                                                                                >
+                                                                                    <XCircle className="mr-2 h-4 w-4" />
+                                                                                    {buttonText}
+                                                                                </Button>
+                                                                            </span>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>
+                                                                            <p>{reason}</p>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                </TooltipProvider>
+                                                            );
                                                         }
-                                                        className="w-24 justify-center"
-                                                    >
-                                                        {order.status}
-                                                    </Badge>
-                                                </div>
-                                                <div className="hidden sm:block text-right text-muted-foreground">{order.items.length} item(s)</div>
-                                            </div>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="bg-secondary/20">
-                                        <div className="p-6">
-                                            <h4 className="font-semibold mb-4 text-lg">Order Details</h4>
-                                             <div className="mb-6 space-y-2">
-                                                <p><span className="font-semibold">Shipping Address:</span> {order.shippingAddress}</p>
-                                             </div>
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>Product</TableHead>
-                                                        <TableHead className="text-center">Quantity</TableHead>
-                                                        <TableHead className="text-right">Price</TableHead>
-                                                        <TableHead className="text-right">Subtotal</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {order.items.map(item => (
-                                                        <TableRow key={item.productId}>
-                                                            <TableCell className="font-medium">{item.productName}</TableCell>
-                                                            <TableCell className="text-center">{item.quantity}</TableCell>
-                                                            <TableCell className="text-right">₹{item.price.toFixed(2)}</TableCell>
-                                                            <TableCell className="text-right font-medium">₹{(item.quantity * item.price).toFixed(2)}</TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                            <div className="mt-6 flex justify-end">
-                                                {(() => {
-                                                    const { cancellable, reason } = isOrderCancellable(order);
-                                                    const buttonText = order.status === 'Delivered' ? 'Return Order' : 'Cancel Order';
-                                                    if (cancellable) {
-                                                        return (
-                                                            <Button
-                                                                variant="destructive"
-                                                                onClick={() => setOrderToCancel(order)}
-                                                            >
-                                                                <XCircle className="mr-2 h-4 w-4" />
-                                                                {buttonText}
-                                                            </Button>
-                                                        );
-                                                    } else {
-                                                        return (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <span tabIndex={0}>
-                                                                            <Button
-                                                                                variant="destructive"
-                                                                                disabled
-                                                                                className="pointer-events-none"
-                                                                            >
-                                                                                <XCircle className="mr-2 h-4 w-4" />
-                                                                                {buttonText}
-                                                                            </Button>
-                                                                        </span>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>
-                                                                        <p>{reason}</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        );
-                                                    }
-                                                })()}
-                                            </div>
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
+                                                    })()}
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
                             ))}
-                        </Accordion>
+                        </div>
                     ) : (
                         !error && (
                             <div className="text-center p-12 text-muted-foreground">
