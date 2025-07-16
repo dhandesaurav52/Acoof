@@ -1,4 +1,3 @@
-
  'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -230,6 +229,12 @@ export default function ProductDetailPage() {
         }
     };
     
+    const handleAddToCart = () => {
+        if (product) {
+            addToCart(product, 1, selectedSize, selectedColor);
+        }
+    };
+
     const getFinalShippingAddress = (): string | null => {
         if (shippingAddressOption === 'new') {
             if (!isNewAddressValid) {
@@ -294,6 +299,8 @@ export default function ProductDetailPage() {
                         productName: product.name,
                         quantity: 1,
                         price: product.price,
+                        size: selectedSize,
+                        color: selectedColor,
                     };
                     
                     const orderData: Omit<Order, 'id'> = {
@@ -357,6 +364,8 @@ export default function ProductDetailPage() {
             productName: product.name,
             quantity: 1,
             price: product.price,
+            size: selectedSize,
+            color: selectedColor,
         };
         
         const orderData: Omit<Order, 'id'> = {
@@ -503,7 +512,7 @@ export default function ProductDetailPage() {
 
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Button size="lg" variant="outline" className="w-full" onClick={() => addToCart(product)} disabled={isProcessing || isCodProcessing}>
+                        <Button size="lg" variant="outline" className="w-full" onClick={handleAddToCart} disabled={isProcessing || isCodProcessing}>
                             <ShoppingCart className="mr-2 h-5 w-5" />
                             Add to Cart
                         </Button>

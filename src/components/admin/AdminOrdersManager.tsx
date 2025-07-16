@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -192,6 +191,7 @@ export function AdminOrdersManager() {
                                                             <TableHeader>
                                                                 <TableRow>
                                                                     <TableHead>Product</TableHead>
+                                                                    <TableHead>Size</TableHead>
                                                                     <TableHead className="text-center">Qty</TableHead>
                                                                     <TableHead className="text-right">Subtotal</TableHead>
                                                                 </TableRow>
@@ -199,7 +199,8 @@ export function AdminOrdersManager() {
                                                             <TableBody>
                                                                 {order.items.map((item, idx) => (
                                                                     <TableRow key={idx}>
-                                                                        <TableCell>{item.productName}</TableCell>
+                                                                        <TableCell>{item.productName}{item.color && ` (${item.color})`}</TableCell>
+                                                                        <TableCell>{item.size || '-'}</TableCell>
                                                                         <TableCell className="text-center">{item.quantity}</TableCell>
                                                                         <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
                                                                     </TableRow>

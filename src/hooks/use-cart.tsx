@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
@@ -8,7 +7,7 @@ import { useAuth } from './use-auth';
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: Product) => void;
+    addToCart: (product: Product, quantity?: number, selectedSize?: string, selectedColor?: string) => void;
     removeFromCart: (productId: string) => void;
     updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;
@@ -87,15 +86,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [cart, user, loading, authLoading, getCartKey]);
 
-    const addToCart = useCallback((product: Product) => {
+    const addToCart = useCallback((product: Product, quantity = 1, selectedSize?: string, selectedColor?: string) => {
         setCart(prevCart => {
             const existingItem = prevCart.find(item => item.id === product.id);
             if (existingItem) {
                 return prevCart.map(item =>
-                    item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                    item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
                 );
             }
-            return [...prevCart, { ...product, quantity: 1 }];
+            return [...prevCart, { ...product, quantity: 1, selectedSize, selectedColor }];
         });
         toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` });
     }, [toast]);

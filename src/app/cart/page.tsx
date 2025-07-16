@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -180,6 +179,17 @@ export default function CartPage() {
         }
         return `${user.address}, ${user.city}, ${user.state} ${user.pincode}\nPhone: ${user.phone}`;
     };
+
+    const createOrderItems = (): OrderItem[] => {
+        return cart.map(item => ({
+            productId: item.id,
+            productName: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.selectedSize,
+            color: item.selectedColor,
+        }));
+    };
     
     const handleCheckout = async () => {
         if (!user) {
@@ -232,12 +242,7 @@ export default function CartPage() {
                 });
 
                 if (verificationResult.success) {
-                    const orderItems: OrderItem[] = cart.map(item => ({
-                        productId: item.id,
-                        productName: item.name,
-                        quantity: item.quantity,
-                        price: item.price,
-                    }));
+                    const orderItems = createOrderItems();
                     
                     const orderData: Omit<Order, 'id'> = {
                         userId: user.uid,
@@ -303,12 +308,7 @@ export default function CartPage() {
     
         setIsCodProcessing(true);
     
-        const orderItems: OrderItem[] = cart.map(item => ({
-            productId: item.id,
-            productName: item.name,
-            quantity: item.quantity,
-            price: item.price,
-        }));
+        const orderItems = createOrderItems();
         
         const orderData: Omit<Order, 'id'> = {
             userId: user.uid,
@@ -372,6 +372,11 @@ export default function CartPage() {
                                         <div className="flex-grow flex flex-col justify-between py-1">
                                             <div>
                                                 <div className="text-sm font-medium leading-tight">{item.name}</div>
+                                                {(item.selectedSize || item.selectedColor) && (
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {item.selectedSize}{item.selectedSize && item.selectedColor && ', '}{item.selectedColor}
+                                                    </div>
+                                                )}
                                                 <div className="text-sm text-muted-foreground">₹{(item.price * item.quantity).toFixed(2)}</div>
                                             </div>
                                             <div className="flex items-center justify-between mt-2">
@@ -415,6 +420,11 @@ export default function CartPage() {
                                                     <TableCell>
                                                         <div className="font-medium">{item.name}</div>
                                                         <div className="text-sm text-muted-foreground">{item.category}</div>
+                                                        {(item.selectedSize || item.selectedColor) && (
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {item.selectedSize}{item.selectedSize && item.selectedColor && ' / '}{item.selectedColor}
+                                                            </div>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         <QuantityControl itemId={item.id} quantity={item.quantity} />

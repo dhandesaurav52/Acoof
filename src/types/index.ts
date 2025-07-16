@@ -12,7 +12,11 @@ export interface Product {
   sizes: string[];
 }
 
-export type CartItem = Product & { quantity: number };
+export type CartItem = Product & { 
+  quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+};
 
 export type LookCategory = 'Streetwear' | 'Smart Casual' | 'Weekend' | 'Summer';
 
@@ -31,6 +35,8 @@ export interface OrderItem {
   productName: string;
   quantity: number;
   price: number;
+  size?: string;
+  color?: string;
 }
 
 export interface Order {
