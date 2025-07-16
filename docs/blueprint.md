@@ -1,4 +1,4 @@
-# **App Name**: Urban Attire Lookbook
+# **App Name**: Acoof
 
 ## Core Features:
 
