@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ProductsProvider } from '@/hooks/use-products';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { CartProvider } from '@/hooks/use-cart';
-import { Inter, Montserrat } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import Script from 'next/script';
 
 const inter = Inter({
@@ -16,19 +16,13 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-montserrat',
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${montserrat.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
         <title>Acoof</title>
         <meta name="description" content="Acoof - Modern Menswear" />
