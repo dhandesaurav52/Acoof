@@ -40,13 +40,12 @@ export default function Home() {
       <section className="relative h-[90vh] min-h-[600px] flex items-center">
         <div className="absolute inset-0">
             <Image 
-                src="https://placehold.co/1920x1080.png" 
+                src="https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/homepage1.png?alt=media&token=ea898370-fc8f-4217-b550-1ee94ad49a40" 
                 alt="Hero background" 
                 fill
                 className="object-cover object-center"
                 priority
                 quality={90}
-                data-ai-hint="fashion model"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent md:bg-gradient-to-r md:from-black/50 md:to-transparent" />
         </div>
