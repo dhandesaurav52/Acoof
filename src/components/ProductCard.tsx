@@ -82,4 +82,6 @@ const ProductCardComponent = ({ product }: ProductCardProps) => {
   );
 };
 
+// Memoizing the component prevents unnecessary re-renders when parent state changes,
+// as long as the `product` prop itself hasn't changed.
 export const ProductCard = React.memo(ProductCardComponent);

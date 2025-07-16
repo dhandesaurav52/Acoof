@@ -203,7 +203,7 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 }
 
 
-export async function saveOrderToDatabase(orderData: Omit<Order, 'id' | 'status'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     const { database } = getFirebaseAdmin();
     let verifiedUid: string;
     try {
@@ -234,18 +234,20 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id' | 'status'
     };
     
     try {
+        // Use a multi-location update to write to both paths atomically.
+        // This is the correct way to perform multiple writes that depend on each other.
         const updates: { [key: string]: any } = {};
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
         await database.ref().update(updates);
         
+        // Create the admin notification after the order is successfully saved.
         await createAdminNotification(finalOrderData);
 
         return { success: true, orderId: newId };
 
-    } catch (error: any)
-        {
+    } catch (error: any) {
         console.error("Firebase saveOrder error:", error);
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
             return { success: false, error: "Permission Denied: Could not save the order. Please check your Firebase security rules." };
@@ -263,6 +265,8 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
     const productsRef = database.ref('products');
 
     try {
+        // The `reduce` method here correctly transforms the local product array
+        // into the object format that Firebase's `set` method expects.
         const productsForFirebase = localProducts.reduce((acc, product) => {
             const { id, ...productData } = product;
             acc[id] = productData;

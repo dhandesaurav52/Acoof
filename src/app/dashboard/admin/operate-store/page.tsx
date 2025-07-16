@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, type ReactNode } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -54,7 +54,7 @@ export default function ManageStorePage() {
     const [isAddSubmitting, setIsAddSubmitting] = useState(false);
     const [isSeeding, setIsSeeding] = useState(false);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-    const { register: registerAdd, handleSubmit: handleSubmitAdd, control: controlAdd, watch: watchAdd, setValue: setValueAdd, reset: resetAdd, formState: { errors: errorsAdd } } = useForm<AddProductFormValues>({
+    const { register: registerAdd, handleSubmit: handleSubmitAdd, watch: watchAdd, setValue: setValueAdd, reset: resetAdd, formState: { errors: errorsAdd } } = useForm<AddProductFormValues>({
         resolver: zodResolver(addProductSchema),
         defaultValues: { isNew: true, name: '', description: '', price: 0, category: '', colors: '', sizesText: '', sizesNumeric: '', images: undefined }
     });
@@ -77,7 +77,7 @@ export default function ManageStorePage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOption, setSortOption] = useState('default');
     
-    const { register: registerEdit, handleSubmit: handleSubmitEdit, control: controlEdit, reset: resetEdit, watch: watchEdit, setValue: setValueEdit, formState: { errors: errorsEdit } } = useForm<EditProductFormValues>({
+    const { register: registerEdit, handleSubmit: handleSubmitEdit, reset: resetEdit, watch: watchEdit, setValue: setValueEdit, formState: { errors: errorsEdit } } = useForm<EditProductFormValues>({
         resolver: zodResolver(editProductSchema),
     });
 

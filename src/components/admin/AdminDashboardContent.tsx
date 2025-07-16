@@ -9,7 +9,7 @@ import { ref, get } from 'firebase/database';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { database } from '@/lib/firebase';
-import type { OrderItem } from '@/types';
+import type { Order, OrderItem } from '@/types';
 import { useProducts } from '@/hooks/use-products';
 
 const ADMIN_EMAIL = "admin@example.com";
@@ -151,8 +151,11 @@ export function AdminDashboardContent() {
             }
         }
 
-        if (allProducts) {
+        if (allProducts.length > 0) {
           fetchAdminData();
+        } else if (!productsLoading) {
+            // Handle case where products are loaded but empty
+            fetchAdminData();
         }
     }, [user, authLoading, allProducts, productsLoading]);
     
