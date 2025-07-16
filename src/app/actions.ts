@@ -204,7 +204,7 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 }
 
 
-export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
+export async function saveOrderToDatabase(orderData: Omit<Order, 'id' | 'status'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     const { database } = getFirebaseAdmin();
     let verifiedUid: string;
     try {
@@ -228,7 +228,13 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
         return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
     }
     
-    const finalOrderData: Order = { ...orderData, id: newId };
+    // **FIX**: Explicitly set the status to 'Pending' for all new orders.
+    // This ensures the data being written to Firebase is valid according to the security rules.
+    const finalOrderData: Order = { 
+        ...orderData, 
+        id: newId, 
+        status: 'Pending' 
+    };
     
     try {
         const updates: { [key: string]: any } = {};
@@ -241,7 +247,8 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
 
         return { success: true, orderId: newId };
 
-    } catch (error: any) {
+    } catch (error: any)
+        {
         console.error("Firebase saveOrder error:", error);
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
             return { success: false, error: "Permission Denied: Could not save the order. Please check your Firebase security rules." };
@@ -274,3 +281,5 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
         return { success: false, error: 'An unexpected error occurred while seeding the products.' };
     }
 }
+
+    
