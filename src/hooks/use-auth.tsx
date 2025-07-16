@@ -192,7 +192,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error.code === 'auth/requires-recent-login') {
         throw new Error("This action is sensitive and requires recent authentication. Please log out and log back in before deleting your account.");
       }
-      throw new Error("An error occurred while deleting your account.");
+      throw new Error("An unexpected error occurred while deleting your account.");
     }
   };
 
