@@ -73,13 +73,7 @@ export default function UserOrdersPage() {
                 const ordersList: Order[] = orderSnapshots
                     .map(snapshot => snapshot.exists() ? ({ ...snapshot.val(), id: snapshot.key }) as Order : null)
                     .filter((order): order is Order => order !== null)
-                    .sort((a, b) => {
-                        try {
-                            return new Date(b.date).getTime() - new Date(a.date).getTime();
-                        } catch (e) {
-                            return 0;
-                        }
-                    });
+                    .reverse(); // Show newest first
                 
                 setOrders(ordersList);
 

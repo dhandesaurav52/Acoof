@@ -53,13 +53,7 @@ export function AdminOrdersManager() {
                     const ordersData = snapshot.val();
                     const ordersList: Order[] = Object.keys(ordersData)
                         .map(key => ({ id: key, ...ordersData[key] }))
-                        .sort((a, b) => {
-                            try {
-                                return new Date(b.date).getTime() - new Date(a.date).getTime();
-                            } catch (e) {
-                                return 0;
-                            }
-                        });
+                        .reverse(); // Show newest first
                     setOrders(ordersList);
                 } else {
                     setOrders([]);
