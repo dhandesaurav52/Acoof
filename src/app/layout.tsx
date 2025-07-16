@@ -32,6 +32,8 @@ export default function RootLayout({
       <head>
         <title>Acoof</title>
         <meta name="description" content="Acoof - Modern Menswear" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#FF9800" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background overflow-x-hidden">
         <Script
