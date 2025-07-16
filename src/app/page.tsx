@@ -15,7 +15,7 @@ export default function Home() {
   const { products, loading } = useProducts();
   
   const featuredStyles = [
-    { name: 'Streetwear', image: 'https://placehold.co/600x750.png', hint: 'man street style' },
+    { name: 'Streetwear', image: 'https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/single1.png?alt=media&token=f9c6cf64-4659-4499-a3b3-a6b7b05f49ee', hint: 'man street style' },
     { name: 'Smart Casual', image: 'https://placehold.co/600x750.png', hint: 'man smart casual' },
     { name: 'Night Life', image: 'https://placehold.co/600x750.png', hint: 'man night city' },
   ];
