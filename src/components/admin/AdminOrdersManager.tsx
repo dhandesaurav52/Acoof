@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -14,6 +15,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const ADMIN_EMAIL = "admin@example.com";
 
@@ -200,17 +202,19 @@ export function AdminOrdersManager() {
                                                             <TableBody>
                                                                 {order.items.map((item, idx) => (
                                                                     <TableRow key={idx}>
-                                                                        <TableCell className="flex items-center gap-2">
-                                                                            {item.imageUrl && (
-                                                                                <Image 
-                                                                                    src={item.imageUrl} 
-                                                                                    alt={item.productName} 
-                                                                                    width={40} 
-                                                                                    height={50} 
-                                                                                    className="rounded-md object-cover"
-                                                                                />
-                                                                            )}
-                                                                            <span>{item.productName}{item.color && ` (${item.color})`}</span>
+                                                                        <TableCell>
+                                                                            <Link href={`/products/${item.productId}`} className="flex items-center gap-2 hover:underline" target="_blank" rel="noopener noreferrer">
+                                                                                {item.imageUrl && (
+                                                                                    <Image 
+                                                                                        src={item.imageUrl} 
+                                                                                        alt={item.productName} 
+                                                                                        width={40} 
+                                                                                        height={50} 
+                                                                                        className="rounded-md object-cover"
+                                                                                    />
+                                                                                )}
+                                                                                <span>{item.productName}{item.color && ` (${item.color})`}</span>
+                                                                            </Link>
                                                                         </TableCell>
                                                                         <TableCell>{item.size || '-'}</TableCell>
                                                                         <TableCell className="text-center">{item.quantity}</TableCell>
