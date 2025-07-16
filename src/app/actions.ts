@@ -160,7 +160,6 @@ async function createUserNotification(order: Order, newStatus: OrderStatus): Pro
 
             const newNotification: Notification = {
                 id: notificationId,
-                for_admin: false,
                 type,
                 message,
                 timestamp: new Date().toISOString(),
@@ -228,8 +227,6 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id' | 'status'
         return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
     }
     
-    // **FIX**: Explicitly set the status to 'Pending' for all new orders.
-    // This ensures the data being written to Firebase is valid according to the security rules.
     const finalOrderData: Order = { 
         ...orderData, 
         id: newId, 
@@ -281,5 +278,3 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
         return { success: false, error: 'An unexpected error occurred while seeding the products.' };
     }
 }
-
-    

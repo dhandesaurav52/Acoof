@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Package, Tag, Bell, AlertCircle, ShoppingCart, UserX, Check, X, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Loader2, Package, Bell, AlertCircle, ShoppingCart, UserX, Check, X, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { database } from '@/lib/firebase';
@@ -32,10 +32,10 @@ const getNotificationColor = (type: NotificationType['type']) => {
     switch(type) {
         case 'order_cancellation': return 'text-destructive';
         case 'order_return': return 'text-yellow-500';
-        case 'new_order': return 'text-blue-500';
+        case 'new_order': return 'text-primary';
         case 'order_accepted': return 'text-green-500';
         case 'order_rejected': return 'text-destructive';
-        default: return 'text-blue-500';
+        default: return 'text-primary';
     }
 }
 

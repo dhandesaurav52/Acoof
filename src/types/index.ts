@@ -52,7 +52,7 @@ export interface Order {
 
 export interface Notification {
   id: string;
-  for_admin: boolean;
+  for_admin?: boolean;
   type: 'order_cancellation' | 'order_return' | 'new_order' | 'order_accepted' | 'order_rejected';
   message: string;
   timestamp: string;
