@@ -64,6 +64,10 @@ export async function createRazorpayOrder(amount: number, idToken: string, recei
         
         const order = await razorpay.orders.create(options);
 
+        if (!order || !order.id || typeof order.amount !== 'number') {
+            throw new Error("Razorpay response was incomplete.");
+        }
+
         return {
             id: order.id,
             amount: order.amount,
@@ -282,4 +286,5 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
         return { success: false, error: 'An unexpected error occurred while seeding the products.' };
     }
 }
+
 
