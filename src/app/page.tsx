@@ -166,7 +166,7 @@ export default function Home() {
             <div className="relative rounded-lg overflow-hidden bg-secondary p-8 md:p-16 flex items-center min-h-[400px] md:min-h-[500px]">
                 <div className="absolute inset-0 z-0">
                     <Image
-                        src="https://placehold.co/1200x600.png"
+                        src="https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/homepage2.png?alt=media&token=0316b387-4980-4f26-945c-e51b6464ff93"
                         alt="A man wearing a stylish oversized t-shirt"
                         fill
                         className="object-cover"
