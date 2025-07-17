@@ -28,11 +28,10 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          # We no longer need to pass the service account here, as the environment variable handles it.
-          # firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          # This is the required input for the action.
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           channelId: live
           projectId: acoof-8e92d
         env:
           # This flag enables the automatic detection and build of Next.js
           FIREBASE_CLI_EXPERIMENTS: webframeworks
-
