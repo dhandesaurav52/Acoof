@@ -9,6 +9,9 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +23,7 @@ jobs:
           service_account: github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com
 
       - name: Enable required Google Cloud API
-        run: gcloud services enable firebaseextensions.googleapis.com
+        run: gcloud services enable firebaseextensions.googleapis.com --project acoof-8e92d
 
       - name: Get Razorpay Secret
         uses: google-github-actions/get-secretmanager-secrets@v2
