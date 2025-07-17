@@ -19,7 +19,7 @@ jobs:
       - id: 'get-secrets'
         uses: 'google-github-actions/get-secretmanager-secrets@v2'
         with:
-          project_id: ${{ secrets.PROJECT_ID }}
+          project_id: acoof-8e92d
           secrets: |-
             RAZORPAY_KEY_SECRET:RAZORPAY_KEY_SECRET
             FIREBASE_SERVICE_ACCOUNT_KEY:FIREBASE_SERVICE_ACCOUNT_KEY
@@ -42,3 +42,5 @@ jobs:
           projectId: acoof-8e92d
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
+          RAZORPAY_KEY_SECRET: ${{ secrets.get-secrets.outputs.RAZORPAY_KEY_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.get-secrets.outputs.FIREBASE_SERVICE_ACCOUNT_KEY }}
