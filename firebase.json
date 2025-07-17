@@ -15,29 +15,5 @@
   },
   "storage": {
     "rules": "storage.rules"
-  },
-  "apphosting": [
-    {
-      "backendId": "acoof-site",
-      "rootDir": ".",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    },
-    {
-      "backendId": "acoof-site",
-      "rootDir": ".",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    }
-  ]
+  }
 }

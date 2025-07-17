@@ -40,7 +40,7 @@ The service account associated with the key you just created needs specific perm
 1.  Go to the [IAM page in your Google Cloud Console](https://console.cloud.google.com/iam-admin/iam?project=acoof-8e92d).
 2.  Find the service account you are using (its email address is in the JSON key file).
 3.  Click the pencil icon (Edit principal) for that service account.
-4.  Click **"Add another role"** and add the following roles one by one. This is the complete list:
+4.  Click **"Add another role"** and add the following roles one by one. This is the complete list needed:
     *   `Cloud Functions Admin` (Fixes function list permission error)
     *   `Cloud Run Admin` (Manages the Next.js backend service)
     *   `Firebase Hosting Admin` (Deploys to Firebase Hosting)
