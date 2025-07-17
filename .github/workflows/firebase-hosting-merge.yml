@@ -16,13 +16,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/959363353593/locations/global/workloadIdentityPools/github-com/providers/github-provider'
+          service_account: 'github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com'
+
       - id: 'get-secrets'
         uses: 'google-github-actions/get-secretmanager-secrets@v2'
         with:
-          project_id: acoof-8e92d
           secrets: |-
-            RAZORPAY_KEY_SECRET:RAZORPAY_KEY_SECRET
-            FIREBASE_SERVICE_ACCOUNT_KEY:FIREBASE_SERVICE_ACCOUNT_KEY
+            RAZORPAY_KEY_SECRET
+            FIREBASE_SERVICE_ACCOUNT_KEY
 
       - name: Install dependencies
         run: npm install
@@ -37,10 +42,10 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
+          firebaseServiceAccount: '{{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}'
           channelId: live
           projectId: acoof-8e92d
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
-          RAZORPAY_KEY_SECRET: ${{ secrets.get-secrets.outputs.RAZORPAY_KEY_SECRET }}
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.get-secrets.outputs.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          RAZORPAY_KEY_SECRET: ${{ steps.get-secrets.outputs.RAZORPAY_KEY_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ steps.get-secrets.outputs.FIREBASE_SERVICE_ACCOUNT_KEY }}
