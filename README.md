@@ -4,17 +4,31 @@ This is a Next.js e-commerce application built with Firebase Studio. It features
 
 ## Final Steps for Live Deployment
 
-To make your live application fully functional, you must link a billing account to your project, create a dedicated service account, and give it the correct permissions on both the **Project** and the **Billing Account**. This guide provides the definitive, tested steps to ensure a successful deployment.
+To make your live application fully functional, you must link a billing account to your project, enable the correct APIs, create a dedicated service account, and give it the correct permissions on both the **Project** and the **Billing Account**. This guide provides the definitive, tested steps to ensure a successful deployment.
 
-### 1. Enable Billing for Your Project
+### 1. Enable Billing and Required APIs
+
+#### A. Link Billing Account
 
 Modern web framework deployments on Firebase Hosting require the underlying Google Cloud project to be on the "Blaze" (Pay-as-you-go) plan.
 
 1.  **Go to the Google Cloud Billing page for your project:**
     [https://console.cloud.google.com/billing/linkedaccount?project=acoof-8e92d](https://console.cloud.google.com/billing/linkedaccount?project=acoof-8e92d)
-2.  If the project is not linked to a billing account, click **"LINK A BILLING ACCOUNT"** and follow the prompts to link it to your active billing account.
+2.  If the project is not linked to a billing account, click **"LINK A BILLING ACCOUNT"** and follow the prompts. **This is a required step.**
 
-**This is a required step. The deployment will fail without it.**
+#### B. Enable Google Cloud APIs
+
+The deployment requires several Google Cloud services to be active. Click each link below and click the blue **"ENABLE"** button on each page.
+
+1.  **Cloud Billing API:**
+    [https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d)
+
+2.  **Cloud Run API:**
+    [https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d)
+
+3.  **Compute Engine API:**
+    [https://console.cloud.google.com/apis/library/compute.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/compute.googleapis.com?project=acoof-8e92d)
+
 
 ### 2. Create a Service Account and Generate a Key
 
