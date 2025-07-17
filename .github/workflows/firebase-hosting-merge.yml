@@ -8,16 +8,30 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - id: 'get-secrets'
+        uses: 'google-github-actions/get-secretmanager-secrets@v2'
+        with:
+          project_id: ${{ secrets.PROJECT_ID }}
+          secrets: |-
+            RAZORPAY_KEY_SECRET:RAZORPAY_KEY_SECRET
+            FIREBASE_SERVICE_ACCOUNT_KEY:FIREBASE_SERVICE_ACCOUNT_KEY
 
       - name: Install dependencies
         run: npm install
 
       - name: Build the project
         run: npm run build
+        env:
+          RAZORPAY_KEY_SECRET: ${{ steps.get-secrets.outputs.RAZORPAY_KEY_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ steps.get-secrets.outputs.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
