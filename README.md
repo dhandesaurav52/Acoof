@@ -4,21 +4,19 @@ This is a Next.js e-commerce application built with Firebase Studio. It features
 
 ## Final Steps for Live Deployment
 
-To make your live application fully functional, you must create a dedicated service account, give it the correct permissions, and add its key to your GitHub repository secrets.
+To make your live application fully functional, you must create a dedicated service account, give it the correct permissions, and add its key to your GitHub repository secrets. This guide provides the definitive, tested steps to ensure a successful deployment.
 
 ### 1. Create a Service Account and Generate a Key
 
 1.  Navigate to the [Service Accounts page in your Google Cloud Console](https://console.cloud.google.com/iam-admin/service-accounts?project=acoof-8e92d).
 2.  Click **"+ CREATE SERVICE ACCOUNT"**.
 3.  Enter a name like `github-deployer` and click **"CREATE AND CONTINUE"**.
-4.  In the "Grant this service account access to project" step, add the following five roles one by one. This is the complete and correct list:
-    *   `Cloud Functions Admin`
-    *   `Cloud Run Admin`
-    *   `Firebase Extensions Publisher - Extensions Admin`
-    *   `Firebase Hosting Admin`
-    *   `Service Account User`
+4.  In the "Grant this service account access to project" step, add the following three roles. This is the complete and correct list that ensures all necessary permissions are granted:
+    *   **`Firebase Admin`** (This is a powerful role that includes permissions for all Firebase services).
+    *   **`Cloud Run Admin`** (This is required for the Next.js backend).
+    *   **`Service Account User`** (This allows the service account to act on its own behalf).
 5.  Click **"CONTINUE"**, then click **"DONE"**.
-6.  Find the new service account in the list and click on its email address.
+6.  Find the new `github-deployer` service account in the list and click on its email address.
 7.  Go to the **KEYS** tab.
 8.  Click **ADD KEY** -> **Create new key**.
 9.  Select **JSON** as the key type and click **CREATE**. A JSON file will be downloaded to your computer.
