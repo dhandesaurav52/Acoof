@@ -12,18 +12,27 @@ jobs:
     # These environment variables are used by the Firebase CLI during deployment
     env:
       RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
-      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+      # This explicitly tells Google Cloud SDKs where to find the credentials.
+      # It can resolve authentication issues in some CI/CD environments.
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-credentials.json
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      # The service account key is written to a temporary file that the
+      # GOOGLE_APPLICATION_CREDENTIALS environment variable points to.
+      - name: Create Service Account File
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp-credentials.json
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          # We no longer need to pass the service account here, as the environment variable handles it.
+          # firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           channelId: live
           projectId: acoof-8e92d
         env:
           # This flag enables the automatic detection and build of Next.js
           FIREBASE_CLI_EXPERIMENTS: webframeworks
+
