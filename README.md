@@ -43,10 +43,11 @@ This is the most critical step to fix deployment errors. You must give the deplo
 1.  Go to the **IAM** page in your Google Cloud Console: [IAM & Admin](https://console.cloud.google.com/iam-admin/iam?project=acoof-8e92d).
 2.  Find the service account (Principal) named **`github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com`**.
 3.  Click the **pencil icon** (Edit principal) on that row.
-4.  Click **"ADD ANOTHER ROLE"** and add the following three roles:
+4.  Click **"ADD ANOTHER ROLE"** and add the following four roles:
     *   **Cloud Run Admin**: Allows creating and managing the backend service.
     *   **Firebase Hosting Admin**: Allows deploying new site versions.
     *   **Secret Manager Secret Accessor**: Allows reading the secrets you created.
+    *   **Firebase Extensions Admin**: Allows managing underlying services required for deployment.
 5.  Click **"SAVE"**.
 
 ---
