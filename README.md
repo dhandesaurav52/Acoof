@@ -25,7 +25,7 @@ Modern web framework deployments on Firebase Hosting require the underlying Goog
     *   **`Firebase Admin`** (This is a powerful role that includes permissions for all Firebase services).
     *   **`Cloud Run Admin`** (This is required for the Next.js backend).
     *   **`Service Account User`** (This allows the service account to act on its own behalf).
-    *   **`Billing Account Viewer`** (This is required to verify the project's billing status during deployment).
+    *   **`Project Billing Manager`** (This is required to verify the project's billing status during deployment).
 5.  Click **"CONTINUE"**, then click **"DONE"**.
 6.  Find the new `github-deployer` service account in the list and click on its email address.
 7.  Go to the **KEYS** tab.
