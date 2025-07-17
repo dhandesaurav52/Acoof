@@ -21,13 +21,14 @@ export function getFirebaseAdmin(): FirebaseAdminInstances {
     }
 
     const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
-    // On the server (Cloud Run via App Hosting), this variable is provided by apphosting.yaml
     const serviceAccountKeyString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
     if (databaseURL && serviceAccountKeyString) {
         try {
-            // The service account key is passed as a string, so it needs to be parsed into a JSON object.
-            const serviceAccount = JSON.parse(serviceAccountKeyString);
+            // The service account key is passed as a string with literal newlines.
+            // JSON.parse cannot handle literal newlines, so they must be escaped.
+            const sanitizedKey = serviceAccountKeyString.replace(/\n/g, '\\n');
+            const serviceAccount = JSON.parse(sanitizedKey);
             
             app = admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
