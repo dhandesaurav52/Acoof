@@ -4,11 +4,11 @@ This is a Next.js e-commerce application built with Firebase Studio. It features
 
 ## Final Steps for Live Deployment
 
-Your application code is complete. To make your live application fully functional, you need to configure the production secrets. This is a critical security step.
+Your application code is complete. To make your live application fully functional, you must complete the following configuration steps in your Google Cloud project.
 
-### 1. Set Up Production Secrets
+### 1. Create Secrets in Secret Manager
 
-Your live app needs two secret keys to function: one for Firebase Admin (to manage orders) and one for Razorpay (to process payments). You must store these in **Google Secret Manager**.
+Your live app needs two secret keys to function. You must store these in **Google Secret Manager**.
 
 **A. Get Your Firebase Service Account Key:**
 
@@ -34,9 +34,24 @@ Your live app needs two secret keys to function: one for Firebase Admin (to mana
     *   **Secret value:** Paste your Razorpay Key Secret here.
     *   Click **"Create secret"**.
 
-### 2. Deploy the Application
+---
 
-With your secrets configured, you are ready to deploy. All you need to do is commit the latest code changes and push them to GitHub.
+### 2. **(CRUCIAL) Grant Permissions to the Service Account**
+
+This is the most critical step to fix the deployment error. You must give the deployment service account permission to read the secrets you just created.
+
+1.  Go to the **IAM** page in your Google Cloud Console: [IAM & Admin](https://console.cloud.google.com/iam-admin/iam?project=acoof-8e92d).
+2.  Find the service account named **`firebase-hosting-deploy@acoof-8e92d.iam.gserviceaccount.com`**.
+3.  Click the **pencil icon** (Edit principal) on that row.
+4.  Click **"ADD ANOTHER ROLE"**.
+5.  In the "Select a role" filter box, type **`Secret Manager Secret Accessor`** and select it from the list.
+6.  Click **"SAVE"**.
+
+---
+
+### 3. Deploy the Application
+
+With your secrets configured and permissions granted, you are ready to deploy. All you need to do is commit the latest code changes and push them to GitHub.
 
 Run these commands in your Studio terminal:
 
@@ -52,10 +67,3 @@ git push origin main
 ```
 
 This will start the deployment workflow in the **Actions** tab of your GitHub repository. Once it finishes successfully, your order placement and all other features will work on the live URL.
-
-### 3. (Optional) Add a Custom Domain
-
-After your site is live, you can connect your own domain (e.g., `www.yourstore.com`).
-
-1.  Go to the **Hosting** section of your [Firebase Project](https://console.firebase.google.com/project/acoof-8e92d/hosting).
-2.  Click **"Add custom domain"** and follow the instructions.
