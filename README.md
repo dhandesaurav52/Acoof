@@ -41,7 +41,7 @@ Your live app needs two secret keys to function. You must store these in **Googl
 This is the most critical step to fix the deployment error. You must give the deployment service account permission to read the secrets you just created.
 
 1.  Go to the **IAM** page in your Google Cloud Console: [IAM & Admin](https://console.cloud.google.com/iam-admin/iam?project=acoof-8e92d).
-2.  Find the service account named **`firebase-hosting-deploy@acoof-8e92d.iam.gserviceaccount.com`**.
+2.  Find the service account (Principal) named **`github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com`**.
 3.  Click the **pencil icon** (Edit principal) on that row.
 4.  Click **"ADD ANOTHER ROLE"**.
 5.  In the "Select a role" filter box, type **`Secret Manager Secret Accessor`** and select it from the list.
