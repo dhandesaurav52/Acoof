@@ -1,3 +1,4 @@
+
 name: Deploy to Firebase Hosting on merge
 
 on:
@@ -8,27 +9,18 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v2'
-        with:
-          workload_identity_provider: 'projects/959363353593/locations/global/workloadIdentityPools/github-com/providers/github-provider'
-          service_account: 'github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com'
-
-      - id: 'get-secrets'
-        uses: 'google-github-actions/get-secretmanager-secrets@v2'
+      - name: Get secrets from Google Secret Manager
+        uses: google-github-actions/get-secretmanager-secrets@v2
         with:
           project_id: acoof-8e92d
           secrets: |-
             RAZORPAY_KEY_SECRET
             FIREBASE_SERVICE_ACCOUNT_KEY
+          credentials: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
 
       - name: Install dependencies
         run: npm install
