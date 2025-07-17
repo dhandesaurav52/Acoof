@@ -16,10 +16,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/959363353593/locations/global/workloadIdentityPools/github-com/providers/github-provider'
+          service_account: 'firebase-hosting-deploy@acoof-8e92d.iam.gserviceaccount.com'
+
       - id: 'get-secrets'
         uses: 'google-github-actions/get-secretmanager-secrets@v2'
         with:
-          project_id: ${{ secrets.PROJECT_ID }}
+          project_id: acoof-8e92d
           secrets: |-
             RAZORPAY_KEY_SECRET:RAZORPAY_KEY_SECRET
             FIREBASE_SERVICE_ACCOUNT_KEY:FIREBASE_SERVICE_ACCOUNT_KEY
