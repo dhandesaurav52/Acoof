@@ -11,7 +11,10 @@ interface FirebaseAdminInstances {
 }
 
 export function getFirebaseAdmin(): FirebaseAdminInstances {
-    if (app) {
+    // If the app is already initialized, return the existing instances.
+    // This prevents re-initializing the app on every server-side call in development.
+    if (admin.apps.length > 0 && admin.app()) {
+        app = admin.app();
         return {
             app,
             database: admin.database(),
@@ -20,46 +23,26 @@ export function getFirebaseAdmin(): FirebaseAdminInstances {
         };
     }
 
-    const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
-    const serviceAccountKeyString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    try {
+        // In a deployed Google Cloud environment (like Firebase Hosting for Next.js),
+        // the Admin SDK automatically discovers credentials and configuration.
+        // We do not need to pass any arguments to initializeApp().
+        // The service account key from apphosting.yaml or the environment's
+        // runtime service account will be used automatically.
+        app = admin.initializeApp();
 
-    if (databaseURL && serviceAccountKeyString) {
-        try {
-            // The service account key is passed as a string with literal newlines.
-            // JSON.parse cannot handle literal newlines, so they must be escaped.
-            const sanitizedKey = serviceAccountKeyString.replace(/\n/g, '\\n');
-            const serviceAccount = JSON.parse(sanitizedKey);
-            
-            app = admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-                databaseURL: databaseURL,
-            });
+        return {
+            app,
+            database: admin.database(),
+            auth: admin.auth(),
+            storage: admin.storage(),
+        };
 
-            return {
-                app,
-                database: admin.database(),
-                auth: admin.auth(),
-                storage: admin.storage(),
-            };
-
-        } catch (e: any) {
-            // This handles the case where the app is already initialized, which can happen in development.
-            if (!/already exists/u.test(e.message)) {
-                console.error('Firebase Admin SDK initialization error:', e);
-            }
-            if (admin.apps.length) {
-                app = admin.app();
-                return {
-                    app,
-                    database: admin.database(),
-                    auth: admin.auth(),
-                    storage: admin.storage(),
-                };
-            }
-        }
+    } catch (e: any) {
+        console.error('Firebase Admin SDK initialization error:', e);
     }
     
-    // Return null instances if initialization fails
-    console.warn("Firebase Admin SDK could not be initialized. Server-side actions like saving orders will fail. Ensure FIREBASE_SERVICE_ACCOUNT_KEY and NEXT_PUBLIC_FIREBASE_DATABASE_URL are set.");
+    // Return null instances if initialization fails for any reason.
+    console.error("Firebase Admin SDK could not be initialized. Server-side actions will fail.");
     return { app: null, database: null, auth: null, storage: null };
 }
