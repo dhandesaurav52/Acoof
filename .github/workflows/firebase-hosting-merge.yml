@@ -23,6 +23,12 @@ jobs:
       # GOOGLE_APPLICATION_CREDENTIALS environment variable points to.
       - name: Create Service Account File
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp-credentials.json
+      
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Next.js app
+        run: npm run build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
