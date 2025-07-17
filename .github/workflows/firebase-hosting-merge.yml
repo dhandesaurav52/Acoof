@@ -13,16 +13,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/1020136778/locations/global/workloadIdentityPools/github-com/providers/github-provider
+          service_account: github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com
+
+      - name: Enable required Google Cloud API
+        run: gcloud services enable firebaseextensions.googleapis.com
+
+      - name: Get Razorpay Secret
+        uses: google-github-actions/get-secretmanager-secrets@v2
+        with:
+          secrets: |-
+            RAZORPAY_KEY_SECRET:RAZORPAY_KEY_SECRET
+
+      - name: Get Firebase Service Account Key
+        uses: google-github-actions/get-secretmanager-secrets@v2
+        with:
+          secrets: |-
+            FIREBASE_SERVICE_ACCOUNT_KEY:FIREBASE_SERVICE_ACCOUNT_KEY
+      
       - name: Install dependencies
         run: npm install
 
       - name: Build the project
         run: npm run build
         env:
-          # These secrets are automatically populated by the `action-hosting-deploy` action below
-          # They are referenced here to ensure they are available during the build step.
-          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          RAZORPAY_KEY_SECRET: ${{ env.RAZORPAY_KEY_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ env.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -32,5 +51,4 @@ jobs:
           channelId: live
           projectId: acoof-8e92d
         env:
-          # This line exposes the required secrets to the Firebase CLI and the Next.js runtime
           FIREBASE_CLI_EXPERIMENTS: webframeworks
