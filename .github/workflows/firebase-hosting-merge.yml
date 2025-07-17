@@ -13,23 +13,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get secrets from Google Secret Manager
-        uses: google-github-actions/get-secretmanager-secrets@v2
-        with:
-          project_id: acoof-8e92d
-          secrets: |-
-            RAZORPAY_KEY_SECRET
-            FIREBASE_SERVICE_ACCOUNT_KEY
-          credentials: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
-
       - name: Install dependencies
         run: npm install
 
       - name: Build the project
         run: npm run build
         env:
-          RAZORPAY_KEY_SECRET: ${{ steps.get-secrets.outputs.RAZORPAY_KEY_SECRET }}
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ steps.get-secrets.outputs.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          # These secrets are automatically populated by the `action-hosting-deploy` action below
+          # They are referenced here to ensure they are available during the build step.
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -39,6 +32,5 @@ jobs:
           channelId: live
           projectId: acoof-8e92d
         env:
+          # This line exposes the required secrets to the Firebase CLI and the Next.js runtime
           FIREBASE_CLI_EXPERIMENTS: webframeworks
-          RAZORPAY_KEY_SECRET: ${{ steps.get-secrets.outputs.RAZORPAY_KEY_SECRET }}
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ steps.get-secrets.outputs.FIREBASE_SERVICE_ACCOUNT_KEY }}

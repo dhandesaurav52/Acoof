@@ -14,7 +14,7 @@ env:
     value: "acoof-8e92d"
 
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "acoof-8e92d.firebasestorage.app"
+    value: "acoof-8e92d.appspot.com"
 
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     value: "791754268594"
@@ -29,11 +29,11 @@ env:
     value: "AIzaSyC3lFev4khzeaFLcZ_VwWnjBrMnbPJf31g"
 
   - variable: NEXT_PUBLIC_RAZORPAY_KEY_ID
-    value: "rzp_live_XR2ZuStUe6ydxT"
+    value: "rzp_test_5S1CizbQk8qbF5"
 
   # 🔐 Secrets - linked from Secret Manager
   - variable: RAZORPAY_KEY_SECRET
-    secret: "RAZORPAY_KEY_SECRET"
+    secret: RAZORPAY_KEY_SECRET
 
   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
-    secret: "FIREBASE_SERVICE_ACCOUNT_KEY"
+    secret: FIREBASE_SERVICE_ACCOUNT_KEY
