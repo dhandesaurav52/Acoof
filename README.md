@@ -14,7 +14,7 @@ To make your live application fully functional, you must create a dedicated serv
 4.  In the "Grant this service account access to project" step, add the following five roles one by one. This is the complete and correct list:
     *   `Cloud Functions Admin`
     *   `Cloud Run Admin`
-    *   `Firebase Extensions Admin`
+    *   `Firebase Extensions Publisher - Extensions Admin`
     *   `Firebase Hosting Admin`
     *   `Service Account User`
 5.  Click **"CONTINUE"**, then click **"DONE"**.
