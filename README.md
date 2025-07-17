@@ -4,9 +4,25 @@ This is a Next.js e-commerce application built with Firebase Studio. It features
 
 ## Final Steps for Live Deployment
 
-To make your live application fully functional, you must add your secret keys to your GitHub repository and ensure the service account has the correct permissions.
+To make your live application fully functional, you must create a dedicated service account, give it the correct permissions, and add its key to your GitHub repository secrets.
 
-### 1. Configure GitHub Secrets
+### 1. Create a Service Account and Generate a Key
+
+1.  Navigate to the [Service Accounts page in your Google Cloud Console](https://console.cloud.google.com/iam-admin/service-accounts?project=acoof-8e92d).
+2.  Click **"+ CREATE SERVICE ACCOUNT"**.
+3.  Enter a name like `github-deployer` and click **"CREATE AND CONTINUE"**.
+4.  In the "Grant this service account access to project" step, add the following four roles one by one. This is the complete and correct list:
+    *   `Cloud Functions Admin`
+    *   `Cloud Run Admin`
+    *   `Firebase Hosting Admin`
+    *   `Service Account User`
+5.  Click **"CONTINUE"**, then click **"DONE"**.
+6.  Find the new service account in the list and click on its email address.
+7.  Go to the **KEYS** tab.
+8.  Click **ADD KEY** -> **Create new key**.
+9.  Select **JSON** as the key type and click **CREATE**. A JSON file will be downloaded to your computer.
+
+### 2. Configure GitHub Secrets
 
 Navigate to your repository's secrets page:
 `https://github.com/[YOUR_USERNAME]/[YOUR_REPO_NAME]/settings/secrets/actions`
@@ -15,8 +31,8 @@ You will need to create two secrets. Click **"New repository secret"** for each 
 
 **A. Add Your Firebase Service Account Key:**
 
-1.  If you don't have it, generate a new key from your [Firebase Project Settings](https://console.firebase.google.com/project/acoof-8e92d/settings/serviceaccounts/adminsdk) by clicking **"Generate new private key"**.
-2.  Open the downloaded JSON file and copy its **entire contents**.
+1.  Open the JSON file you just downloaded.
+2.  Copy its **entire contents**.
 3.  In GitHub, create a new secret:
     *   **Name:** `FIREBASE_SERVICE_ACCOUNT_KEY`
     *   **Secret value:** Paste the entire contents of the JSON file here.
@@ -32,21 +48,6 @@ You will need to create two secrets. Click **"New repository secret"** for each 
     *   **Name:** `RAZORPAY_KEY_SECRET`
     *   **Secret value:** Paste your Razorpay Key Secret here.
     *   Click **"Add secret"**.
-
-### 2. Set IAM Permissions in Google Cloud
-
-The service account associated with the key you just created needs specific permissions to deploy the application.
-
-1.  Go to the [IAM page in your Google Cloud Console](https://console.cloud.google.com/iam-admin/iam?project=acoof-8e92d).
-2.  Find the service account you are using (its email address is in the JSON key file).
-3.  Click the pencil icon (Edit principal) for that service account.
-4.  Click **"Add another role"** and add the following roles one by one. This is the complete list needed:
-    *   `Cloud Functions Admin` (Fixes function list permission error)
-    *   `Cloud Run Admin` (Manages the Next.js backend service)
-    *   `Firebase Hosting Admin` (Deploys to Firebase Hosting)
-    *   `Service Account User` (Allows services to act on behalf of each other)
-
-5.  Click **Save**.
 
 ### 3. Deploy the Application
 
