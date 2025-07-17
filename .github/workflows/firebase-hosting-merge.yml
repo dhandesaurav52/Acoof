@@ -9,33 +9,23 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: projects/1020136778/locations/global/workloadIdentityPools/github-com/providers/github-provider
-          service_account: github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com
-
-      - name: Enable required Google Cloud API
-        run: gcloud services enable firebaseextensions.googleapis.com --project acoof-8e92d
 
       - name: Get Razorpay Secret
         uses: google-github-actions/get-secretmanager-secrets@v2
         with:
           secrets: |-
             RAZORPAY_KEY_SECRET:RAZORPAY_KEY_SECRET
+          service_account_key: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
 
       - name: Get Firebase Service Account Key
         uses: google-github-actions/get-secretmanager-secrets@v2
         with:
           secrets: |-
             FIREBASE_SERVICE_ACCOUNT_KEY:FIREBASE_SERVICE_ACCOUNT_KEY
+          service_account_key: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
       
       - name: Install dependencies
         run: npm install
