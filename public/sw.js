@@ -26,24 +26,28 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // We only want to cache GET requests.
-  if (event.request.method !== 'GET') {
-    return;
-  }
+  if (event.request.method !== 'GET') return;
 
-  // Network falling back to cache strategy
+  const url = new URL(event.request.url);
+
+  // 🔒 Ignore unsupported protocols like chrome-extension://
+  if (url.protocol.startsWith('chrome-extension')) return;
+
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return fetch(event.request)
         .then((response) => {
-          // If the response is valid, cache it and return it
-          if (response.status === 200) {
-            cache.put(event.request.url, response.clone());
+          // Only cache valid responses
+          if (
+            response &&
+            response.status === 200 &&
+            response.type === 'basic'
+          ) {
+            cache.put(event.request, response.clone());
           }
           return response;
         })
         .catch(() => {
-          // If the network fails, try to serve from cache
           return cache.match(event.request);
         });
     })
