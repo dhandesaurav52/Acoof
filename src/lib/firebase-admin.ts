@@ -21,7 +21,7 @@ export function getFirebaseAdmin(): FirebaseAdminInstances {
     }
 
     const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
-    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
 
     if (databaseURL && serviceAccountKey) {
         try {
