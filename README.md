@@ -4,9 +4,19 @@ This is a Next.js e-commerce application built with Firebase Studio. It features
 
 ## Final Steps for Live Deployment
 
-To make your live application fully functional, you must create a dedicated service account, give it the correct permissions, and add its key to your GitHub repository secrets. This guide provides the definitive, tested steps to ensure a successful deployment.
+To make your live application fully functional, you must link a billing account to your project, create a dedicated service account, give it the correct permissions, and add its key to your GitHub repository secrets. This guide provides the definitive, tested steps to ensure a successful deployment.
 
-### 1. Create a Service Account and Generate a Key
+### 1. Enable Billing for Your Project
+
+Modern web framework deployments on Firebase Hosting require the underlying Google Cloud project to be on the "Blaze" (Pay-as-you-go) plan.
+
+1.  **Go to the Google Cloud Billing page for your project:**
+    [https://console.cloud.google.com/billing/linkedaccount?project=acoof-8e92d](https://console.cloud.google.com/billing/linkedaccount?project=acoof-8e92d)
+2.  If the project is not linked to a billing account, click **"LINK A BILLING ACCOUNT"** and follow the prompts. You may need to create a new billing account if you don't have one.
+
+**This is a required step. The deployment will fail without it.**
+
+### 2. Create a Service Account and Generate a Key
 
 1.  Navigate to the [Service Accounts page in your Google Cloud Console](https://console.cloud.google.com/iam-admin/service-accounts?project=acoof-8e92d).
 2.  Click **"+ CREATE SERVICE ACCOUNT"**.
@@ -15,13 +25,14 @@ To make your live application fully functional, you must create a dedicated serv
     *   **`Firebase Admin`** (This is a powerful role that includes permissions for all Firebase services).
     *   **`Cloud Run Admin`** (This is required for the Next.js backend).
     *   **`Service Account User`** (This allows the service account to act on its own behalf).
+    *   **`Billing Account Viewer`** (This is required to verify the project's billing status during deployment).
 5.  Click **"CONTINUE"**, then click **"DONE"**.
 6.  Find the new `github-deployer` service account in the list and click on its email address.
 7.  Go to the **KEYS** tab.
 8.  Click **ADD KEY** -> **Create new key**.
 9.  Select **JSON** as the key type and click **CREATE**. A JSON file will be downloaded to your computer.
 
-### 2. Configure GitHub Secrets
+### 3. Configure GitHub Secrets
 
 Navigate to your repository's secrets page:
 `https://github.com/[YOUR_USERNAME]/[YOUR_REPO_NAME]/settings/secrets/actions`
@@ -48,7 +59,7 @@ You will need to create two secrets. Click **"New repository secret"** for each 
     *   **Secret value:** Paste your Razorpay Key Secret here.
     *   Click **"Add secret"**.
 
-### 3. Deploy the Application
+### 4. Deploy the Application
 
 With your secrets and permissions configured, you are ready to deploy. All you need to do is commit the latest code changes and push them to GitHub.
 
