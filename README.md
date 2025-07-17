@@ -11,9 +11,10 @@ To make your live application fully functional, you must create a dedicated serv
 1.  Navigate to the [Service Accounts page in your Google Cloud Console](https://console.cloud.google.com/iam-admin/service-accounts?project=acoof-8e92d).
 2.  Click **"+ CREATE SERVICE ACCOUNT"**.
 3.  Enter a name like `github-deployer` and click **"CREATE AND CONTINUE"**.
-4.  In the "Grant this service account access to project" step, add the following four roles one by one. This is the complete and correct list:
+4.  In the "Grant this service account access to project" step, add the following five roles one by one. This is the complete and correct list:
     *   `Cloud Functions Admin`
     *   `Cloud Run Admin`
+    *   `Firebase Extensions Admin`
     *   `Firebase Hosting Admin`
     *   `Service Account User`
 5.  Click **"CONTINUE"**, then click **"DONE"**.
