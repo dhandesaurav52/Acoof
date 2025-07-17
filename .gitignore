@@ -9,9 +9,18 @@
 # testing
 /coverage
 
-# next.js
+# Next.js
 /.next/
 /out/
+/.next/
+/out/
+/.next/cache
+.next/static
+
+# Firebase Functions (.next in serverless builds)
+/.firebase/**/functions/.next/
+/firebase/**/functions/.next/cache
+/firebase/**/functions/.next/static
 
 # production
 /build
@@ -20,22 +29,22 @@
 .DS_Store
 *.pem
 
-# debug
+# debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# local env files
+# environment files
 .env*.local
 .env
 
-# vercel
+# vercel deployment
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-# project IDX
+# Project IDX (Web IDE)
 .idx
