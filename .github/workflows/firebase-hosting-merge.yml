@@ -25,6 +25,7 @@ jobs:
       - id: 'get-secrets'
         uses: 'google-github-actions/get-secretmanager-secrets@v2'
         with:
+          project_id: acoof-8e92d
           secrets: |-
             RAZORPAY_KEY_SECRET
             FIREBASE_SERVICE_ACCOUNT_KEY
@@ -42,7 +43,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: '{{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}'
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
           channelId: live
           projectId: acoof-8e92d
         env:
