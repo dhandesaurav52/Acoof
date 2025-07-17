@@ -4,57 +4,42 @@ This is a Next.js e-commerce application built with Firebase Studio. It features
 
 ## Final Steps for Live Deployment
 
-Your application code is complete. To make your live application fully functional, you must complete the following configuration steps in your Google Cloud project.
+Your application code is complete. To make your live application fully functional, you must add your secret keys to your GitHub repository so the deployment workflow can use them.
 
-### 1. Create Secrets in Secret Manager
+### 1. Go to GitHub Repository Settings
 
-Your live app needs two secret keys to function. You must store these in **Google Secret Manager**.
+Navigate to your repository's secrets page. You can use this direct link:
+[https://github.com/dhandesaurav52/Acoof/settings/secrets/actions](https://github.com/dhandesaurav52/Acoof/settings/secrets/actions)
 
-**A. Get Your Firebase Service Account Key:**
+### 2. Add Repository Secrets
 
-1.  Go to your [Firebase Project Settings](https://console.firebase.google.com/project/acoof-8e92d/settings/serviceaccounts/adminsdk).
-2.  Select the **"Service accounts"** tab.
-3.  Click **"Generate new private key"**. A JSON file will be downloaded.
-4.  Open the JSON file and copy its **entire contents**.
-5.  Go to [Google Secret Manager](https://console.cloud.google.com/security/secret-manager?project=acoof-8e92d).
-6.  Click **"Create Secret"**.
-    *   **Name:** `FIREBASE_SERVICE_ACCOUNT_KEY` (must be this exact name).
+You will need to create two secrets here. Click **"New repository secret"** for each one.
+
+**A. Add Your Firebase Service Account Key:**
+
+1.  If you don't have it, generate a new key from your [Firebase Project Settings](https://console.firebase.google.com/project/acoof-8e92d/settings/serviceaccounts/adminsdk) by clicking **"Generate new private key"**.
+2.  Open the downloaded JSON file and copy its **entire contents**.
+3.  In GitHub, create a new secret:
+    *   **Name:** `FIREBASE_SERVICE_ACCOUNT_KEY` (must be this exact name)
     *   **Secret value:** Paste the entire contents of the JSON file here.
-    *   Click **"Create secret"**.
+    *   Click **"Add secret"**.
 
-**B. Get Your Razorpay Secret Key:**
+**B. Add Your Razorpay Secret Key:**
 
 1.  Log in to your [Razorpay Dashboard](https://dashboard.razorpay.com/).
 2.  Navigate to **Settings -> API Keys**.
 3.  Generate a new **Live Key** if you haven't already.
 4.  Copy the **Key Secret**.
-5.  Go back to [Google Secret Manager](https://console.cloud.google.com/security/secret-manager?project=acoof-8e92d).
-6.  Click **"Create Secret"** again.
-    *   **Name:** `RAZORPAY_KEY_SECRET` (must be this exact name).
+5.  In GitHub, create another new secret:
+    *   **Name:** `RAZORPAY_KEY_SECRET` (must be this exact name)
     *   **Secret value:** Paste your Razorpay Key Secret here.
-    *   Click **"Create secret"**.
-
----
-
-### 2. **(CRUCIAL) Grant Permissions to the Service Account**
-
-This is the most critical step to fix deployment errors. You must give the deployment service account permission to deploy your app and read the secrets you just created.
-
-1.  Go to the **IAM** page in your Google Cloud Console: [IAM & Admin](https://console.cloud.google.com/iam-admin/iam?project=acoof-8e92d).
-2.  Find the service account (Principal) named **`github-action-1020136778@acoof-8e92d.iam.gserviceaccount.com`**.
-3.  Click the **pencil icon** (Edit principal) on that row.
-4.  Click **"ADD ANOTHER ROLE"** and add the following four roles:
-    *   **Cloud Run Admin**: Allows creating and managing the backend service.
-    *   **Firebase Hosting Admin**: Allows deploying new site versions.
-    *   **Secret Manager Secret Accessor**: Allows reading the secrets you created.
-    *   **Firebase Extensions Admin**: Allows managing underlying services required for deployment.
-5.  Click **"SAVE"**.
+    *   Click **"Add secret"**.
 
 ---
 
 ### 3. Deploy the Application
 
-With your secrets configured and permissions granted, you are ready to deploy. All you need to do is commit the latest code changes and push them to GitHub.
+With your secrets configured in GitHub, you are ready to deploy. All you need to do is commit the latest code changes and push them to GitHub.
 
 Run these commands in your Studio terminal:
 

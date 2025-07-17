@@ -13,34 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get Razorpay Secret
-        uses: google-github-actions/get-secretmanager-secrets@v2
-        with:
-          secrets: |-
-            RAZORPAY_KEY_SECRET:RAZORPAY_KEY_SECRET
-          service_account_key: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
-
-      - name: Get Firebase Service Account Key
-        uses: google-github-actions/get-secretmanager-secrets@v2
-        with:
-          secrets: |-
-            FIREBASE_SERVICE_ACCOUNT_KEY:FIREBASE_SERVICE_ACCOUNT_KEY
-          service_account_key: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
-      
       - name: Install dependencies
         run: npm install
 
       - name: Build the project
         run: npm run build
         env:
-          RAZORPAY_KEY_SECRET: ${{ env.RAZORPAY_KEY_SECRET }}
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ env.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ACOOF_8E92D }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           channelId: live
           projectId: acoof-8e92d
         env:
