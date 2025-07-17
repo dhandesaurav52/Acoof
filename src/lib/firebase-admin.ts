@@ -21,12 +21,13 @@ export function getFirebaseAdmin(): FirebaseAdminInstances {
     }
 
     const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
-    // This is the corrected line. It now looks for the same secret name as the deployment workflow.
-    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    // On the server (Cloud Run via App Hosting), this variable is provided by apphosting.yaml
+    const serviceAccountKeyString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-    if (databaseURL && serviceAccountKey) {
+    if (databaseURL && serviceAccountKeyString) {
         try {
-            const serviceAccount = JSON.parse(serviceAccountKey);
+            // The service account key is passed as a string, so it needs to be parsed into a JSON object.
+            const serviceAccount = JSON.parse(serviceAccountKeyString);
             
             app = admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
@@ -41,6 +42,7 @@ export function getFirebaseAdmin(): FirebaseAdminInstances {
             };
 
         } catch (e: any) {
+            // This handles the case where the app is already initialized, which can happen in development.
             if (!/already exists/u.test(e.message)) {
                 console.error('Firebase Admin SDK initialization error:', e);
             }
@@ -57,5 +59,6 @@ export function getFirebaseAdmin(): FirebaseAdminInstances {
     }
     
     // Return null instances if initialization fails
+    console.warn("Firebase Admin SDK could not be initialized. Server-side actions like saving orders will fail. Ensure FIREBASE_SERVICE_ACCOUNT_KEY and NEXT_PUBLIC_FIREBASE_DATABASE_URL are set.");
     return { app: null, database: null, auth: null, storage: null };
 }
