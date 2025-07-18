@@ -16,25 +16,25 @@ const firebaseConfig = {
     databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let storage: FirebaseStorage | null = null;
-let database: Database | null = null;
+let app: FirebaseApp;
+let auth: Auth;
+let storage: FirebaseStorage;
+let database: Database;
 
-// Initialize Firebase only if the config is valid and present.
-if (firebaseConfig && firebaseConfig.apiKey) {
-    try {
-        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-        auth = getAuth(app);
-        storage = getStorage(app);
-        database = getDatabase(app);
-    } catch (e) {
-        console.error("Failed to initialize Firebase client SDK.", e);
+// This is a more robust way to initialize Firebase on the client-side.
+// It ensures that we don't try to re-initialize the app if it's already been set up.
+if (firebaseConfig.apiKey) {
+    if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
     }
+    auth = getAuth(app);
+    storage = getStorage(app);
+    database = getDatabase(app);
 } else {
     // This warning helps developers running the app locally without a .env file.
     console.warn("Firebase configuration is missing or incomplete. Firebase client-side features will be disabled. If you are running locally, please create a .env.local file with your Firebase project's NEXT_PUBLIC_ credentials.");
 }
-
 
 export { app, auth, storage, database };
