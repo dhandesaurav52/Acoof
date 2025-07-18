@@ -214,8 +214,8 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     // This is the main server-side function. We wrap it completely to catch any possible error.
     try {
-        const { database } = getFirebaseAdmin();
-        if (!database) {
+        const { database, auth } = getFirebaseAdmin();
+        if (!database || !auth) {
             console.error("DATABASE_SAVE_ERROR: Firebase Admin Database is not initialized.");
             return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
         }
@@ -251,7 +251,9 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
-        await database.ref().update(updates);
+        // Perform the update with admin privileges to bypass client-side rules
+        await database.ref().child('orders').child(newId).set(finalOrderData);
+        await database.ref().child('users').child(orderData.userId).child('orders').child(newId).set(true);
         
         // Non-critical, so if it fails, the order is still saved.
         await createAdminNotification(finalOrderData);
