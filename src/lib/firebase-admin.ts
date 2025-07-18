@@ -27,11 +27,11 @@ export function getFirebaseAdmin(): FirebaseAdminInstances {
 
     try {
         // In a deployed Google Cloud environment (like Firebase Hosting for Next.js),
-        // the Admin SDK automatically discovers credentials and configuration.
-        // We do not need to pass any arguments to initializeApp().
-        // The service account key from apphosting.yaml or the environment's
-        // runtime service account will be used automatically.
-        app = admin.initializeApp();
+        // we explicitly provide the databaseURL to ensure the SDK connects to the
+        // correct regional database. This is a common fix for server-side issues.
+        app = admin.initializeApp({
+          databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+        });
 
         return {
             app,
