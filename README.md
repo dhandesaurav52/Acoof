@@ -9,7 +9,7 @@ To make your live application fully functional, you must link a billing account 
 
 ### 1. Link Billing Account & Enable APIs
 
-Deploying modern web frameworks to Firebase Hosting requires the underlying Google Cloud project to be on the "Blaze" (Pay-as-you-go) plan.
+Deploying modern web frameworks to Firebase Hosting requires the underlying Google Cloud project to be on the "Blaze" (Pay-as-you-go) plan. This is the most common reason for server errors (like 500 errors) on a newly deployed app.
 
 #### A. Link Billing Account
 
@@ -22,13 +22,13 @@ Deploying modern web frameworks to Firebase Hosting requires the underlying Goog
 Click each link below and ensure you click the blue **"ENABLE"** button on each page.
 
 1.  **Cloud Run API:**
-    [https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/run.googleapis.com/project=acoof-8e92d)
+    [https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d)
 2.  **Cloud Billing API:**
-    [https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com/project=acoof-8e92d)
+    [https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d)
 3.  **Identity and Access Management (IAM) API:**
-    [https://console.cloud.google.com/apis/library/iam.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/iam.googleapis.com/project=acoof-8e92d)
+    [https://console.cloud.google.com/apis/library/iam.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/iam.googleapis.com?project=acoof-8e92d)
 4.  **Cloud Resource Manager API:**
-    [https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com/project=acoof-8e92d)
+    [https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com?project=acoof-8e92d)
 
 ### 2. Grant Permissions and Generate a Key
 
@@ -66,7 +66,7 @@ You will need to create two secrets.
 
 1.  Open the JSON file you just downloaded.
 2.  Copy its **entire contents**.
-3.  In GitHub, create a new repository secret:
+3.  In GitHub, create a new repository secret (or update the existing one):
     *   **Name:** `FIREBASE_SERVICE_ACCOUNT_KEY`
     *   **Secret value:** Paste the entire contents of the JSON file here.
     *   Click **"Add secret"**.
@@ -84,12 +84,12 @@ You will need to create two secrets.
 
 ### 4. Deploy the Application
 
-With your secrets and permissions configured, you are ready to deploy. All you need to do is commit your latest code changes and push them to GitHub.
+With your billing, permissions, and secrets configured, you are ready to deploy. All you need to do is commit your latest code changes and push them to GitHub.
 
 Run these commands in your Studio terminal:
 
 ```bash
-# 1. Add all recent changes
+# 1. Add all recent changes (including this updated README)
 git add .
 
 # 2. Commit the changes
