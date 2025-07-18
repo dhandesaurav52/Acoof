@@ -14,7 +14,7 @@ Deploying modern web frameworks to Firebase Hosting requires the underlying Goog
 #### A. Link Billing Account
 
 1.  **Go to the Google Cloud Billing page for your project:**
-    [https://console.cloud.google.com/billing/linkedaccount?project=acoof-8e92d](https://console.cloud.google.com/billing/linkedaccount?project=acoof-8e92d)
+    [https://console.cloud.google.com/billing/linkedaccount?project=acoof-8e92d](https://console.cloud.goxogle.com/billing/linkedaccount?project=acoof-8e92d)
 2.  If your project is not linked to a billing account, click **"LINK A BILLING ACCOUNT"** and follow the prompts. **This step is mandatory.**
 
 #### B. Enable Required Google Cloud APIs
@@ -24,7 +24,7 @@ Click each link below and ensure you click the blue **"ENABLE"** button on each 
 1.  **Cloud Run API:**
     [https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d)
 2.  **Cloud Billing API:**
-    [https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d)
+    [https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com/project=acoof-8e92d)
 3.  **Identity and Access Management (IAM) API:**
     [https://console.cloud.google.com/apis/library/iam.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/iam.googleapis.com?project=acoof-8e92d)
 4.  **Cloud Resource Manager API:**
