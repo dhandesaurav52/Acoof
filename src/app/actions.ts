@@ -212,7 +212,6 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 
 
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
-    // This is the main server-side function. We wrap it completely to catch any possible error.
     try {
         const { database, auth } = getFirebaseAdmin();
         if (!database || !auth) {
@@ -251,17 +250,13 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
-        // Perform the update with admin privileges to bypass client-side rules
-        await database.ref().child('orders').child(newId).set(finalOrderData);
-        await database.ref().child('users').child(orderData.userId).child('orders').child(newId).set(true);
+        await database.ref().update(updates);
         
-        // Non-critical, so if it fails, the order is still saved.
         await createAdminNotification(finalOrderData);
 
         return { success: true, orderId: newId };
 
     } catch (error: any) {
-        // This is the critical new logging. It will print the exact error to the server logs.
         console.error('\n\n--- UNHANDLED ERROR IN saveOrderToDatabase ---');
         console.error('Timestamp:', new Date().toISOString());
         console.error('Error Code:', error.code);
