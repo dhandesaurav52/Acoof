@@ -26,5 +26,7 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           channelId: live
           projectId: acoof-8e92d
+          env: |
+            RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
