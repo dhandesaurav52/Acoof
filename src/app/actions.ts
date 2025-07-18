@@ -209,6 +209,10 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
     const { database } = getFirebaseAdmin();
+    if (!database) {
+        return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
+    }
+
     let verifiedUid: string;
     try {
         verifiedUid = await getVerifiedUid(idToken);
@@ -216,9 +220,6 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
         return { success: false, error: e.message };
     }
 
-    if (!database) {
-        return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
-    }
 
     if (orderData.userId !== verifiedUid) {
         return { success: false, error: 'User ID does not match authenticated user. Cannot save order.' };
