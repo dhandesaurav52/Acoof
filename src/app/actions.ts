@@ -217,7 +217,8 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
     }
 
     if (!database) {
-        return { success: false, error: 'Firebase is not configured. Cannot save order.' };
+        // This was the missing return statement that caused the hang.
+        return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
     }
 
     if (orderData.userId !== verifiedUid) {
@@ -286,5 +287,3 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
         return { success: false, error: 'An unexpected error occurred while seeding the products.' };
     }
 }
-
-
