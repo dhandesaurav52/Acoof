@@ -32,25 +32,25 @@ Click each link below and ensure you click the blue **"ENABLE"** button on each 
 
 ### 2. Grant Permissions and Generate a Key
 
-We will use the default `firebase-service-account` for deployment to keep things simple.
+We will use the **`firebase-adminsdk`** service account for deployment.
 
 #### A. Go to the Service Accounts Page
 1.  Navigate to the [Service Accounts page in your Google Cloud Console](https://console.cloud.google.com/iam-admin/service-accounts?project=acoof-8e92d).
-2.  Find the service account with the **`firebase-service-account`** in its name. The full email will look like `firebase-service-account@acoof-8e92d.iam.gserviceaccount.com`.
+2.  Find the service account with the **Name** `firebase-adminsdk`. The full email will look like `firebase-adminsdk-fbsvc@acoof-8e92d.iam.gserviceaccount.com`.
 
 #### B. Grant Required Roles
 
 1.  Go to the main [IAM & Admin page](https://console.cloud.google.com/iam?project=acoof-8e92d).
-2.  Find the **`firebase-service-account`** in the list of principals. Click the pencil icon (Edit principal) on the far right of its row.
+2.  Find the **`firebase-adminsdk-fbsvc@...`** account in the list of principals. Click the pencil icon (Edit principal) on the far right of its row.
 3.  Click **"+ ADD ANOTHER ROLE"** and add the following roles if they are not already present. The complete list of required roles is:
-    *   **`Editor`** (This is a default role that should already be present).
+    *   **`Firebase Admin`** (This is a powerful base role).
     *   **`Cloud Run Admin`** (Required for the Next.js backend).
     *   **`Service Account User`** (Allows the service account to act on its own behalf during deployment).
 4.  Click **"SAVE"**.
 
 #### C. Generate a Service Account Key
 
-1.  Go back to the [Service Accounts page](https://console.cloud.google.com/iam-admin/service-accounts?project=acoof-8e92d) and click on the email address of the **`firebase-service-account`**.
+1.  Go back to the [Service Accounts page](https://console.cloud.google.com/iam-admin/service-accounts?project=acoof-8e92d) and click on the email address of the **`firebase-adminsdk-fbsvc@...`** service account.
 2.  Go to the **KEYS** tab.
 3.  Click **ADD KEY** -> **Create new key**.
 4.  Select **JSON** as the key type and click **CREATE**. A JSON file will be downloaded to your computer.
