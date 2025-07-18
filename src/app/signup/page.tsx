@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link"
-import Image from "next/image"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"
@@ -62,101 +61,89 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-       <div className="flex items-center justify-center py-12">
-        <div className="mx-auto grid w-[350px] gap-6">
-            <div className="grid gap-2 text-center">
-              <Logo width={156} height={48} className="mx-auto mb-4" />
-              <h1 className="text-3xl font-bold">Sign Up</h1>
-              <p className="text-balance text-muted-foreground">
-                Enter your information to create an account
-              </p>
-            </div>
-            <form onSubmit={handleSignup} className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="first-name">First name</Label>
-                  <Input id="first-name" placeholder="Max" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="last-name">Last name</Label>
-                  <Input id="last-name" placeholder="Robinson" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                </div>
+    <div className="flex items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4">
+      <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+            <Logo width={156} height={48} className="mx-auto mb-4" />
+            <h1 className="text-3xl font-bold">Sign Up</h1>
+            <p className="text-balance text-muted-foreground">
+              Enter your information to create an account
+            </p>
+          </div>
+          <form onSubmit={handleSignup} className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="first-name">First name</Label>
+                <Input id="first-name" placeholder="Max" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="last-name">Last name</Label>
+                <Input id="last-name" placeholder="Robinson" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  className="pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
+                 <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    className="pr-10"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                   <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirm-password"
-                    type={showConfirmPassword ? "text" : "password"}
-                    required
-                    className="pr-10"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                   <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-              <Button type="submit" className="w-full">
-                Create an account
-              </Button>
-            </form>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/login" className="underline">
-                Login
-              </Link>
             </div>
-        </div>
-      </div>
-       <div className="hidden bg-muted lg:block">
-        <Image
-          src="https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/Signup.png?alt=media&token=2c7ffb52-df68-495f-97a5-24a2e50780c7"
-          alt="Image"
-          width="1920"
-          height="1080"
-          className="h-full w-full object-cover dark:brightness-[0.4]"
-          data-ai-hint="fashion model smiling"
-        />
+            <div className="grid gap-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  className="pr-10"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                 <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+            <Button type="submit" className="w-full">
+              Create an account
+            </Button>
+          </form>
+          <div className="mt-4 text-center text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="underline">
+              Login
+            </Link>
+          </div>
       </div>
     </div>
   )
