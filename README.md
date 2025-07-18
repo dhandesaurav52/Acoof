@@ -22,7 +22,7 @@ Deploying modern web frameworks to Firebase Hosting requires the underlying Goog
 Click each link below and ensure you click the blue **"ENABLE"** button on each page.
 
 1.  **Cloud Run API:**
-    [https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d)
+    [https://console.cloud.google.com/apis/library/run.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/run.googleapis.com/project=acoof-8e92d)
 2.  **Cloud Billing API:**
     [https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com/project=acoof-8e92d)
 3.  **Identity and Access Management (IAM) API:**
