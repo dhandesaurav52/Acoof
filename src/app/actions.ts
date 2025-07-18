@@ -1,3 +1,4 @@
+
 'use server';
 
 import Razorpay from 'razorpay';
@@ -29,6 +30,8 @@ async function getVerifiedUid(idToken: string): Promise<string> {
 
 export async function createRazorpayOrder(amount: number, idToken: string, receiptId?: string): Promise<{ id: string; amount: number; currency: string; } | { error: string }> {
     try {
+        // Explicitly get the admin app instance at the start of the function call.
+        getFirebaseAdmin();
         await getVerifiedUid(idToken);
     } catch (e: any) {
         return { error: e.message };

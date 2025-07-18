@@ -1,6 +1,8 @@
 
 import * as admin from 'firebase-admin';
 
+// This is a more robust way to handle initialization in serverless environments.
+// We store the initialized app in a global variable to prevent re-initialization on hot reloads.
 let app: admin.app.App | null = null;
 
 interface FirebaseAdminInstances {
