@@ -119,7 +119,7 @@ export default function LoginPage() {
       </div>
       <div className="hidden bg-muted lg:block">
         <Image
-          src="https://placehold.co/1920x1080.png"
+          src="https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/Login.png?alt=media&token=cdfbc9d4-602b-4b28-8525-45a730959070"
           alt="A stylish man in a leather jacket"
           width="1920"
           height="1080"

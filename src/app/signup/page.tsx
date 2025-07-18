@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link"
@@ -151,7 +150,7 @@ export default function SignupPage() {
       </div>
        <div className="hidden bg-muted lg:block">
         <Image
-          src="https://placehold.co/1920x1080.png"
+          src="https://firebasestorage.googleapis.com/v0/b/acoof-8e92d.firebasestorage.app/o/Signup.png?alt=media&token=2c7ffb52-df68-495f-97a5-24a2e50780c7"
           alt="Image"
           width="1920"
           height="1080"
