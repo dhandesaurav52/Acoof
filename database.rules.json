@@ -9,7 +9,7 @@
       ".read": "auth != null && auth.token.email === 'admin@example.com'",
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
-        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'admin@example.com')",
+        ".write": "auth != null && auth.uid === $uid",
         "orders": {
           ".write": "auth != null && auth.uid === $uid"
         }
