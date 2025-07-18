@@ -268,7 +268,7 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
         console.error('--- END OF saveOrderToDatabase ERROR ---\n\n');
 
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-            return { success: false, error: "Permission Denied: Could not save the order. Please check your Firebase security rules." };
+            return { success: false, error: "Permission Denied: Could not save the order. This is a critical configuration error. Please go to your Google Cloud Project's IAM page and ensure the `firebase-adminsdk` service account has the `Firebase Realtime Database Admin` role. This is the most likely cause of this failure." };
         }
         return { success: false, error: 'A critical error occurred on the server while saving the order. The issue has been logged.' };
     }
