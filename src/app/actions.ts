@@ -217,7 +217,6 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
     }
 
     if (!database) {
-        // This was the missing return statement that caused the hang.
         return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
     }
 
@@ -239,15 +238,12 @@ export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken:
     };
     
     try {
-        // Use a multi-location update to write to both paths atomically.
-        // This is the correct way to perform multiple writes that depend on each other.
         const updates: { [key: string]: any } = {};
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
         await database.ref().update(updates);
         
-        // Create the admin notification after the order is successfully saved.
         await createAdminNotification(finalOrderData);
 
         return { success: true, orderId: newId };
@@ -270,8 +266,6 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
     const productsRef = database.ref('products');
 
     try {
-        // The `reduce` method here correctly transforms the local product array
-        // into the object format that Firebase's `set` method expects.
         const productsForFirebase = localProducts.reduce((acc, product) => {
             const { id, ...productData } = product;
             acc[id] = productData;
@@ -287,5 +281,3 @@ export async function seedProductsToDatabase(): Promise<{ success: boolean; erro
         return { success: false, error: 'An unexpected error occurred while seeding the products.' };
     }
 }
-
-    
