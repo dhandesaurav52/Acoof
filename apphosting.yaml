@@ -2,6 +2,13 @@
 runConfig:
   minInstances: 0
 
+# The service account your backend runs as.
+# The value is a reference to a service account in the same project.
+# It is recommended to use a dedicated service account.
+# For more details, see:
+# https://cloud.google.com/appengine/docs/standard/build-cfg/app-yaml#service_account
+serviceAccount: firebase-service-account
+
 # Environment variables and secrets.
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
