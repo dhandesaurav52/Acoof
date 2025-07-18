@@ -1,3 +1,4 @@
+
  'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -271,6 +272,12 @@ export default function ProductDetailPage() {
         setIsProcessing(true);
 
         const idToken = await user.getIdToken();
+        if (!idToken) {
+            toast({ variant: 'destructive', title: 'Authentication Error', description: 'Could not get user session. Please log in again.' });
+            setIsProcessing(false);
+            return;
+        }
+
         const orderResponse = await createRazorpayOrder(product.price, idToken, `receipt_product_${product.id}`);
 
         if ('error' in orderResponse) {
@@ -319,7 +326,8 @@ export default function ProductDetailPage() {
                         paymentSignature: response.razorpay_signature,
                     };
                     
-                    const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
+                    const freshIdToken = await user.getIdToken(true);
+                    const saveResult = await saveOrderToDatabase(orderData, freshIdToken);
                     if (saveResult.success) {
                         toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
                         setIsBuyNowOpen(false);
@@ -359,6 +367,12 @@ export default function ProductDetailPage() {
         if (!finalShippingAddress) return;
         
         setIsCodProcessing(true);
+        const idToken = await user.getIdToken();
+        if (!idToken) {
+            toast({ variant: 'destructive', title: 'Authentication Error', description: 'Could not get user session. Please log in again.' });
+            setIsCodProcessing(false);
+            return;
+        }
     
         const orderItem: OrderItem = {
             productId: product.id,
@@ -382,7 +396,7 @@ export default function ProductDetailPage() {
             paymentMethod: 'COD',
         };
         
-        const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
+        const saveResult = await saveOrderToDatabase(orderData, idToken);
         if (saveResult.success) {
             toast({ title: 'Order Placed!', description: 'Your order for has been placed. You will pay upon delivery.' });
             setIsBuyNowOpen(false);
@@ -650,3 +664,5 @@ export default function ProductDetailPage() {
         </div>
     );
 }
+
+    

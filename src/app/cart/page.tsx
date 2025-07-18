@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -218,8 +219,13 @@ export default function CartPage() {
         }
 
         setIsProcessing(true);
-
         const idToken = await user.getIdToken();
+        if (!idToken) {
+            toast({ variant: 'destructive', title: 'Authentication Error', description: 'Could not get user session. Please log in again.' });
+            setIsProcessing(false);
+            return;
+        }
+
         const orderResponse = await createRazorpayOrder(cartTotal, idToken);
 
         if ('error' in orderResponse) {
@@ -260,7 +266,8 @@ export default function CartPage() {
                         paymentSignature: response.razorpay_signature,
                     };
                     
-                    const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
+                    const freshIdToken = await user.getIdToken(true);
+                    const saveResult = await saveOrderToDatabase(orderData, freshIdToken);
                     if (saveResult.success) {
                         toast({ title: 'Payment Successful', description: 'Your order has been placed!' });
                         clearCart();
@@ -308,6 +315,12 @@ export default function CartPage() {
         if (!finalShippingAddress) return;
     
         setIsCodProcessing(true);
+        const idToken = await user.getIdToken();
+        if (!idToken) {
+            toast({ variant: 'destructive', title: 'Authentication Error', description: 'Could not get user session. Please log in again.' });
+            setIsCodProcessing(false);
+            return;
+        }
     
         const orderItems = createOrderItems();
         
@@ -323,7 +336,7 @@ export default function CartPage() {
             paymentMethod: 'COD',
         };
         
-        const saveResult = await saveOrderToDatabase(orderData, await user.getIdToken());
+        const saveResult = await saveOrderToDatabase(orderData, idToken);
         if (saveResult.success) {
             toast({ title: 'Order Placed!', description: 'Your order has been placed successfully. You will pay upon delivery.' });
             clearCart();
@@ -571,3 +584,5 @@ export default function CartPage() {
         </div>
     );
 }
+
+    
