@@ -29,6 +29,11 @@ Click each link below and ensure you click the blue **"ENABLE"** button on each 
     [https://console.cloud.google.com/apis/library/iam.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/iam.googleapis.com?project=acoof-8e92d)
 4.  **Cloud Resource Manager API:**
     [https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com?project=acoof-8e92d)
+5.  **Firebase Security Rules API:**
+    [https://console.cloud.google.com/apis/library/firebaserules.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/firebaserules.googleapis.com?project=acoof-8e92d)
+6.  **Firebase Management API:**
+    [https://console.cloud.google.com/apis/library/firebase.googleapis.com?project=acoof-8e92d](https://console.cloud.google.com/apis/library/firebase.googleapis.com?project=acoof-8e92d)
+
 
 ### 2. Grant Permissions and Generate a Key
 
@@ -46,6 +51,7 @@ We will use the **`firebase-adminsdk`** service account for deployment.
     *   **`Firebase Admin`** (This is a powerful base role).
     *   **`Cloud Run Admin`** (Required for the Next.js backend).
     *   **`Service Account User`** (Allows the service account to act on its own behalf during deployment).
+    *   **`Firebase Realtime Database Admin`** (CRITICAL: Allows the server to read/write order data).
 4.  Click **"SAVE"**.
 
 #### C. Generate a Service Account Key
