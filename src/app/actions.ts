@@ -38,7 +38,8 @@ export async function createRazorpayOrder(amount: number, idToken: string, recei
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
     if (!keyId || !keySecret) {
-        const errorMessage = "Payment gateway is not configured on the server. One or more Razorpay API keys are missing from the .env file. Please check that `NEXT_PUBLIC_RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are both set.";
+        const errorMessage = "Payment gateway is not configured on the server. One or more Razorpay API keys are missing. Please check that `NEXT_PUBLIC_RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are both set.";
+        console.error(`RAZORPAY_ERROR: ${errorMessage}`);
         return { error: errorMessage };
     }
 
@@ -94,7 +95,7 @@ export async function verifyRazorpayPayment(data: {
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
   if (!keySecret) {
-      console.error("Razorpay secret key not found in .env file");
+      console.error("Razorpay secret key not found. Payment verification is not configured on the server.");
       return { success: false, error: 'Payment verification is not configured on the server. The secret key is missing.' };
   }
   
@@ -113,9 +114,10 @@ export async function verifyRazorpayPayment(data: {
 }
 
 async function createAdminNotification(order: Order): Promise<void> {
-    const { database } = getFirebaseAdmin();
-    if (!database || !order.userEmail) return;
     try {
+        const { database } = getFirebaseAdmin();
+        if (!database || !order.userEmail) return;
+
         const newNotificationRef = database.ref('notifications').push();
         const notificationId = newNotificationRef.key;
 
@@ -140,9 +142,10 @@ async function createAdminNotification(order: Order): Promise<void> {
 }
 
 async function createUserNotification(order: Order, newStatus: OrderStatus): Promise<void> {
-    const { database } = getFirebaseAdmin();
-    if (!database || !order.userEmail || !order.userId) return;
     try {
+        const { database } = getFirebaseAdmin();
+        if (!database || !order.userEmail || !order.userId) return;
+
         const userNotificationsRef = database.ref(`user-notifications/${order.userId}`).push();
         const notificationId = userNotificationsRef.key;
 
@@ -207,53 +210,65 @@ export async function updateOrderStatusAndNotify(order: Order, newStatus: OrderS
 
 
 export async function saveOrderToDatabase(orderData: Omit<Order, 'id'>, idToken: string): Promise<{ success: boolean; error?: string; orderId?: string; }> {
-    const { database } = getFirebaseAdmin();
-    if (!database) {
-        return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
-    }
-
-    let verifiedUid: string;
+    // This is the main server-side function. We wrap it completely to catch any possible error.
     try {
-        verifiedUid = await getVerifiedUid(idToken);
-    } catch (e: any) {
-        return { success: false, error: e.message };
-    }
+        const { database } = getFirebaseAdmin();
+        if (!database) {
+            console.error("DATABASE_SAVE_ERROR: Firebase Admin Database is not initialized.");
+            return { success: false, error: 'Firebase is not configured on the server. Cannot save order.' };
+        }
 
+        let verifiedUid: string;
+        try {
+            verifiedUid = await getVerifiedUid(idToken);
+        } catch (e: any) {
+            console.error("DATABASE_SAVE_ERROR: Failed to verify user ID token.", e);
+            return { success: false, error: e.message };
+        }
 
-    if (orderData.userId !== verifiedUid) {
-        return { success: false, error: 'User ID does not match authenticated user. Cannot save order.' };
-    }
-    
-    const newOrderRef = database.ref('orders').push();
-    const newId = newOrderRef.key;
+        if (orderData.userId !== verifiedUid) {
+            console.error(`DATABASE_SAVE_ERROR: User ID mismatch. Authenticated UID: ${verifiedUid}, Order UID: ${orderData.userId}`);
+            return { success: false, error: 'User ID does not match authenticated user. Cannot save order.' };
+        }
+        
+        const newOrderRef = database.ref('orders').push();
+        const newId = newOrderRef.key;
 
-    if (!newId) {
-        return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
-    }
-    
-    const finalOrderData: Order = { 
-        ...orderData, 
-        id: newId, 
-        status: 'Pending' 
-    };
-    
-    try {
+        if (!newId) {
+            console.error("DATABASE_SAVE_ERROR: Failed to generate a unique order ID from Firebase.");
+            return { success: false, error: 'Failed to generate a unique order ID from Firebase.' };
+        }
+        
+        const finalOrderData: Order = { 
+            ...orderData, 
+            id: newId, 
+            status: 'Pending' 
+        };
+        
         const updates: { [key: string]: any } = {};
         updates[`/orders/${newId}`] = finalOrderData;
         updates[`/users/${orderData.userId}/orders/${newId}`] = true;
 
         await database.ref().update(updates);
         
+        // Non-critical, so if it fails, the order is still saved.
         await createAdminNotification(finalOrderData);
 
         return { success: true, orderId: newId };
 
     } catch (error: any) {
-        console.error("Firebase saveOrder error:", error);
+        // This is the critical new logging. It will print the exact error to the server logs.
+        console.error('\n\n--- UNHANDLED ERROR IN saveOrderToDatabase ---');
+        console.error('Timestamp:', new Date().toISOString());
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+        console.error('Full Error Object:', JSON.stringify(error, null, 2));
+        console.error('--- END OF saveOrderToDatabase ERROR ---\n\n');
+
         if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
             return { success: false, error: "Permission Denied: Could not save the order. Please check your Firebase security rules." };
         }
-        return { success: false, error: 'An unexpected error occurred while saving the order. Check server logs.' };
+        return { success: false, error: 'A critical error occurred on the server while saving the order. The issue has been logged.' };
     }
 }
 
