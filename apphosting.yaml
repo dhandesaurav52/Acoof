@@ -41,6 +41,3 @@ env:
   # 🔐 Secrets - linked from Secret Manager
   - variable: RAZORPAY_KEY_SECRET
     secret: RAZORPAY_KEY_SECRET
-
-  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
-    secret: FIREBASE_SERVICE_ACCOUNT_KEY
